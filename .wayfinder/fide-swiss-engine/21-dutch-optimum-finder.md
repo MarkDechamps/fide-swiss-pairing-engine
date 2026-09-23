@@ -2,7 +2,7 @@
 title: Exact optimum finder for Dutch brackets
 labels: [wayfinder:prototype]
 status: open
-assignee:
+assignee: mark
 blocked_by: [11-dutch-algorithm]
 ---
 
