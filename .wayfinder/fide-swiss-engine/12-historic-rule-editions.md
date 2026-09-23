@@ -2,7 +2,7 @@
 title: Historic rule editions
 labels: [wayfinder:grilling]
 status: open
-assignee:
+assignee: mark
 blocked_by: []
 ---
 
