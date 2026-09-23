@@ -1,0 +1,27 @@
+#!/bin/sh
+# Pre-commit hook: run the test suite and block the commit if it fails.
+# Enable with: git config core.hooksPath .githooks
+
+top=$(git rev-parse --show-toplevel) || exit 1
+cd "$top" || exit 1
+
+if [ -f mvnw ]; then
+    cmd="./mvnw -q test"
+elif [ -f pom.xml ]; then
+    cmd="mvn -q test"
+elif [ -f gradlew ]; then
+    cmd="./gradlew test"
+elif [ -f build.gradle ] || [ -f build.gradle.kts ]; then
+    cmd="gradle test"
+else
+    echo "pre-commit: no build file found yet (pom.xml/build.gradle); skipping tests."
+    exit 0
+fi
+
+echo "pre-commit: running '$cmd'..."
+if ! sh -c "$cmd"; then
+    echo "pre-commit: tests FAILED ('$cmd'). Commit aborted." >&2
+    echo "pre-commit: fix the failures, or bypass with 'git commit --no-verify' if you must." >&2
+    exit 1
+fi
+echo "pre-commit: tests passed."

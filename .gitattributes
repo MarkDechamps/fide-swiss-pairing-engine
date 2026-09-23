@@ -1,0 +1,2 @@
+# Hooks must keep LF endings or the shebang breaks under core.autocrlf=true
+.githooks/* text eol=lf
