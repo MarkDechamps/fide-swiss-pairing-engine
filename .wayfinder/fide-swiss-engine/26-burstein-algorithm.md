@@ -2,7 +2,7 @@
 title: Readable Burstein pairing algorithm
 labels: [wayfinder:prototype]
 status: open
-assignee:
+assignee: markdechamps
 blocked_by: []
 ---
 
