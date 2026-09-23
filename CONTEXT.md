@@ -32,6 +32,27 @@ _Avoid_: Start number, seed, ID
 **Basic Rules**:
 The FIDE rules that apply to every Swiss Pairing System (C.04.1), refined by each system.
 
+### Pairing a bracket
+
+**Bracket**:
+The group of participants paired together at one step: the residents of a scoregroup plus any moved-down participants left over from the bracket above (Dutch 1.3.2).
+_Avoid_: Group, pool
+
+**Downfloater**:
+A participant left unpaired in a bracket and moved to the next one, where it is a **Moved-Down Participant** (MDP).
+_Avoid_: Floater (without direction), leftover
+
+**Limbo**:
+The MDPs of a bracket who are not paired in it and are bound to float again (Dutch 3.2.4).
+
+**Candidate**:
+One complete proposal for pairing a bracket: its pairs and its downfloaters, produced in the order the system's text defines and judged by the criteria in priority order.
+_Avoid_: Solution, option
+
+**Criteria Vector**:
+How badly a candidate fails each criterion, in priority order; the lower vector wins and ties go to the candidate generated first.
+_Avoid_: Score (a Score is points), weight
+
 ### Scores
 
 **Score**:
