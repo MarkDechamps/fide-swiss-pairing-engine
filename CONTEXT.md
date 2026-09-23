@@ -75,6 +75,22 @@ _Avoid_: Ranking list, leaderboard
 The ordered tie-breaks a tournament declares for its Standings, written in the Technical Commission's code syntax (for example `BH/C1, SB, DE`).
 _Avoid_: Tie-break order, tiebreakers
 
+**Unplayed Round**:
+A round in which a participant, paired or not, played no game (or, in a team event, no match): a bye, a forfeit, or a round after a Withdrawal (C.07 15.1).
+_Avoid_: Missing game, non-game
+
+**Voluntary Unplayed Round**:
+An Unplayed Round the participant chose: a half-point or zero-point Requested Bye, a round after a Withdrawal, or a forfeit loss (VUR, C.07 16.1.2).
+_Avoid_: Voluntary bye, absence
+
+**Adjusted Score**:
+A participant's Score as its opponents' tie-breaks see it: its Requested Byes after which it played no more games (including every round after a Withdrawal) count as draws (C.07 16.3).
+_Avoid_: Virtual score, corrected score
+
+**Dummy Opponent**:
+The imagined opponent that each of a participant's own Unplayed Rounds is scored against in its own tie-breaks. Its score is the participant's Score, capped as the Tie-break Edition prescribes (C.07 16.4).
+_Avoid_: Virtual opponent (the abolished pre-2023 concept)
+
 ### Tournament history
 
 **Late Entry**:
