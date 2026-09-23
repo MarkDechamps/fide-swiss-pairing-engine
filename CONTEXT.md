@@ -75,6 +75,32 @@ _Avoid_: Ranking list, leaderboard
 The ordered tie-breaks a tournament declares for its Standings, written in the Technical Commission's code syntax (for example `BH/C1, SB, DE`).
 _Avoid_: Tie-break order, tiebreakers
 
+### Tournament history
+
+**Late Entry**:
+A participant who is only taken into account for the pairing of rounds after the first (GHR 2.4).
+_Avoid_: Latecomer, added player
+
+**Requested Bye**:
+A round a participant asked in advance not to be paired in, scored as the tournament rules allow (full, half or zero point).
+_Avoid_: Absence, voluntary bye
+
+**Withdrawal**:
+A participant leaving the tournament, so it is no longer paired from a given round onwards.
+_Avoid_: Dropout, retirement
+
+**Correction**:
+A change to a recorded result, colour or rating (GHR 4.3); it affects future pairings only, never re-pairs a past round.
+_Avoid_: Edit, amendment
+
+**Proposed Pairing**:
+A pairing for the next round that did not come from the library (an arbiter's manual pairing, another program's output), to be checked against the rules and the system.
+_Avoid_: Manual pairing (when not made by hand), external pairing
+
+**Pairing Trace**:
+The record of how a Pairing System reached a round's pairing: bye decisions, each bracket's chosen candidate with its criteria vector, and the article behind each colour (BR 9, GHR 1.3).
+_Avoid_: Log, debug output
+
 ### Configuration
 
 **Swiss Rules Edition**:
