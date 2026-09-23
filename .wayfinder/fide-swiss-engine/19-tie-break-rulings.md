@@ -2,7 +2,7 @@
 title: Tie-break interpretation rulings
 labels: [wayfinder:grilling]
 status: open
-assignee:
+assignee: markdechamps
 blocked_by: []
 ---
 
