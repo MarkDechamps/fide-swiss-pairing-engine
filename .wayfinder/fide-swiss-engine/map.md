@@ -27,6 +27,7 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - [Tie-break regulations](07-tie-breaks.md): C.07 2026 (from 1 Mar 2026), 26 tie-breaks plus modifiers in the Technical Commission's code syntax; unplayed rounds use adjusted and capped-dummy scores; no official 2026 test data or open-source reference.
 - [FIDE endorsement process and tooling](05-fide-endorsement.md): C.04.A was replaced by C.02.03 §7 technical acceptance, for full programs only (the library gets in by being embedded); needs a checker CLI + TRF26 generator; tested on 50k tournaments; only Dutch has accepted programs, and Gacrux (MIT) is TEC's reference tooling.
 - [Swiss Team System 2026](03-swiss-team-system.md): top-down scoregroups (bye first, choose upfloaters, then first-best pairing in identifier order), colour decided afterwards and never blocking, no endorsed program; Gacrux has the only C.04.6 module; several articles are ambiguous.
+- [TRF file format](06-trf-format.md): TRF26 is current (TRF16/06 must still be read); it standardises most JaVaFo XX? lines; the de-facto CLI is JaVaFo's `-p`; JaVaFo 2.2 and bbpPairings read different dialects; no team reply format exists.
 
 ## Not yet specified
 
@@ -34,7 +35,7 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - How acceleration methods plug into the pairing systems.
 - Tie-break module design and how standings are modelled, including rulings on the 12 C.07 ambiguities (see Tie-break regulations) and how fixtures re-derived from the 2023 exercise set get validated (international arbiter review?).
 - Public library API (how a client hands over tournament state and receives pairings/standings).
-- TRF CLI surface, and TRF extensions for systems/data the TRF16 format can't express.
+- TRF CLI surface (JaVaFo/bbp-compatible `-p`/`-check`/generator), our team-pairing reply format, and how to handle what TRF26 can't express (Lim `192` code, XXS→162 losses).
 - Publishing: Maven Central coordinates, release/versioning.
 - Acceptance route: how the library reaches FIDE recognition given only full programs are accepted (partner program, own thin program, or offering to TEC as the reference for the systems that have none).
 - An eventual performance budget, once real workloads show problems.

@@ -12,4 +12,4 @@ How do we prove the library is endorsement-grade: which oracles per system (endo
 
 ## Context
 
-From FIDE endorsement process and tooling: acceptance requires a `-check` CLI and a TRF26 random generator, tested on 50k tournaments in both directions. Only Dutch has accepted oracles (JaVaFo, bbpPairings); Gacrux (MIT) offers a checker, generator and 120k test tournaments. The non-Dutch systems have no oracle at all.
+From FIDE endorsement process and tooling: acceptance requires a `-check` CLI and a TRF26 random generator, tested on 50k tournaments in both directions. Only Dutch has accepted oracles (JaVaFo, bbpPairings); Gacrux (MIT) offers a checker, generator and 120k test tournaments. The non-Dutch systems have no oracle at all. From TRF file format: both JaVaFo 2.2 and bbpPairings v6.0.0 run locally via `input -p`, but they read different dialects (JaVaFo: TRF16 + XX?; bbp: TRF26 + XXR/XXC/XXA/XXP), so oracle runs need dialect-specific writers.
