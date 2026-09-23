@@ -26,6 +26,14 @@ The FIDE rules that apply to every Swiss Pairing System (C.04.1), refined by eac
 
 ### Configuration
 
+**Swiss Rules Edition**:
+A dated release of the C.04 rules package: the Basic Rules, the General Handling Rules and every Pairing System's text, taken together (for example 2026 or pre-2026).
+_Avoid_: Version, ruleset, rules year
+
+**Tie-break Edition**:
+A dated release of the FIDE Tie-break Regulations (C.07), chosen independently of the Swiss Rules Edition (for example 2026-03 or 2024-08).
+_Avoid_: Tie-break version
+
 **Profile**:
 A named, ready-made set of tournament settings (Pairing System, scoring, byes, acceleration, tie-breaks) for a common kind of event, such as a simple club Swiss.
 _Avoid_: Preset, template, mode

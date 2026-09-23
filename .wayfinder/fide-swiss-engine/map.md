@@ -37,6 +37,7 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - [Probe Gacrux on Swiss Team edge cases](13-probe-gacrux-team.md): Gacrux has a real bracket-order bug and two crashes; 6 of its 7 readings are defensible, 3 need a TEC ruling (C6, Type B last round, floaters under acceleration); it can serve as an oracle only with the bug worked around.
 - [Project foundation](08-project-foundation.md): Java 25 and Maven with a wrapper, Apache-2.0, `io.github.markdechamps:fide-swiss-pairing-engine-*`; modules core (zero dependencies) / trf / cli / oracle-it, each with a module-info; JUnit 6 + AssertJ without mocks; Spotless, PIT nightly; GitHub Actions; this repo goes public with the map and research.
 - [Contact FIDE Technical Commission](15-contact-fide-tec.md): deferred; no contact with TEC or the Gacrux/JaVaFo authors until the author asks. Open questions are settled by our own documented readings, configurable where the text allows both.
+- [Historic rule editions](12-historic-rule-editions.md): editions are first-class. The Swiss Rules Edition (2026 or pre-2026, one C.04 package) and the Tie-break Edition (2026-03 or 2024-08) are separate explicit settings; 2026 everywhere plus Dutch 2017 and C.07 2024-08 as verification anchors; each edition is a composition of per-article rule objects.
 
 ## Not yet specified
 
