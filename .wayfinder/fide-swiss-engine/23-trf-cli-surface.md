@@ -12,4 +12,4 @@ What exactly does the `cli` module accept and print? Covers the JaVaFo/bbpPairin
 
 ## Context
 
-Graduated from the "TRF CLI surface" fog once Public library API fixed the operations the CLI wraps: `pairNextRound()` → `RoundPairing` (with `PairingTrace`), `check(ProposedPairing)` → `PairingCheck`, and the error model. Evidence: `docs/research/trf-format.md` (TRF26, JaVaFo `-p`, dialect differences between JaVaFo 2.2 and bbp). The generator's own CLI is the Random tournament generator ticket.
+Graduated from the "TRF CLI surface" fog once Public library API fixed the operations the CLI wraps: `pairNextRound()` → `RoundPairing` (with `PairingTrace`), `check(ProposedPairing)` → `PairingCheck`, and the error model. Evidence: `docs/research/trf-format.md` (TRF26, JaVaFo `-p`, dialect differences between JaVaFo 2.2 and bbp). The generator's `generate` subcommand and JaVaFo-style `-g` form are fixed in Random tournament generator; this ticket fixes the executable name and the shared exit-code table they use.

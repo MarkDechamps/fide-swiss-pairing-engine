@@ -148,3 +148,11 @@ _Avoid_: Secondary oracle
 **Known Divergence**:
 A recorded, justified difference between the library and an Oracle or Witness, citing the article and the reading the library follows.
 _Avoid_: Known bug, exception, waiver
+
+**Random Tournament Generator**:
+A tool that produces complete, valid tournaments by having the library pair every round of a simulated field, with results drawn from a Result Model. It is FIDE's RTG.
+_Avoid_: Fuzzer, simulator, test data generator
+
+**Result Model**:
+The probability rule that decides a simulated game's outcome from the two players' ratings and colours (by default Milvang's model).
+_Avoid_: Outcome distribution, score model
