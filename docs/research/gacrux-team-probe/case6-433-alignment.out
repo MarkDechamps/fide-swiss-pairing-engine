@@ -1,0 +1,25 @@
+$ (cd gacrux && python pairingchecker.py -i case6-433-alignment.trf -p -n 5 -dT)
+3
+1 2
+5 3
+6 4
+
+$ GACRUX=<clone> python probe.py case6-433-alignment.trf 5
+== Round 5 (Gacrux pairingchecker ver. 1.10.62)
+ TPN  score  num  CD  csq       cop  flt  history
+   1  6.0      3  -1  bwb       nc   down Z 4b 5w 3b
+   2  6.0      3  -1  bwb       nc   -    3b 5w 6b Z
+   3  2.0      4   4  wwww      b2   up   2w 6w 4w 1w
+   4  2.0      3   1  wwb       nc   -    5w 1w 3b Z
+   5  1.0      3  -3  bbb       w2   -    4b 2b 1b Z
+   6  1.0      2   0  bw        nc   -    Z 3b 2w Z
+
+-- bracket scorelevel 3: bsn order [1, 2], upfloaters []
+   quality {'QC4': 0, 'QC5': [0, 0, 0], 'QC6': 1, 'QC7': 0, 'QC8': 0, 'QC9': 0, 'QC10': 0, 'IW': None}
+     1 -   2   (colour rule 4.3.8)
+-- bracket scorelevel 2: bsn order [3, 4, 5, 6], upfloaters [5, 6]
+   quality {'QC4': 2, 'QC5': [0, 2], 'QC6': 0, 'QC7': 0, 'QC8': 0, 'QC9': 0, 'QC10': 0, 'IW': None}
+     5 -   3   (colour rule 4.3.3)
+     6 -   4   (colour rule 4.3.5)
+
+Pairing (board order, white - black): 1-2, 5-3, 6-4

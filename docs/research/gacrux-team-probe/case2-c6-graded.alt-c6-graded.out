@@ -1,0 +1,30 @@
+$ GACRUX=<clone> python alt.py c6-graded case2-c6-graded.trf 4
+[c6-graded] chosen key (upfloaters needed next, C7, index) = (2, 0, 1)
+[c6-graded] chosen key (upfloaters needed next, C7, index) = (1, 0, 0)
+[c6-graded] chosen key (upfloaters needed next, C7, index) = (0, 0, 0)
+== Round 4 (Gacrux pairingchecker ver. 1.10.62)
+ TPN  score  num  CD  csq       cop  flt  history
+   1  6.0      3   3  www       b2   down 7w 9w 10w
+   2  3.0      3   3  www       b2   down 8w 10w 9w
+   3  3.0      3   3  www       b2   -    4w 5w 6w
+   4  3.0      3   1  bww       b2   -    3b 6w 5w
+   5  3.0      3  -1  wbb       w2   -    6w 3b 4b
+   6  3.0      3  -3  bbb       w2   -    5b 4b 3b
+   7  0.0      1  -1  b         nc   -    1b Z Z
+   8  1.0      1  -1  b         nc   -    2b Z Z
+   9  1.0      2  -2  bb        w2   up   Z 1b 2b
+  10  1.0      2  -2  bb        w2   up   Z 2b 1b
+
+-- bracket scorelevel 4: bsn order [1, 3], upfloaters [3]
+   quality {'QC4': 1, 'QC5': [0, 0, 0, 1], 'QC6': 1, 'QC7': 0, 'QC8': 1, 'QC9': 0, 'QC10': 0, 'IW': None}
+     3 -   1   (colour rule 4.3.7)
+-- bracket scorelevel 3: bsn order [2, 4, 5, 6, 8, 9], upfloaters [8, 9]
+   quality {'QC4': 2, 'QC5': [0, 0, 2], 'QC6': 0, 'QC7': 0, 'QC8': 0, 'QC9': 0, 'QC10': 0, 'IW': None}
+     6 -   2   (colour rule 4.3.3)
+     9 -   4   (colour rule 4.3.3)
+     5 -   8   (colour rule 4.3.2)
+-- bracket scorelevel 2: bsn order [10, 7], upfloaters [7]
+   quality {'QC4': 1, 'QC5': [0, 1], 'QC6': 0, 'QC7': 0, 'QC8': 0, 'QC9': 0, 'QC10': 0, 'IW': None}
+    10 -   7   (colour rule 4.3.2)
+
+Pairing (board order, white - black): 3-1, 6-2, 9-4, 5-8, 10-7

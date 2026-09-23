@@ -1,0 +1,25 @@
+$ (cd gacrux && python pairingchecker.py -i case4a-forfeit-c1.trf -p -n 2 -dT)
+3
+5 3
+4 6
+1 2
+
+$ GACRUX=<clone> python probe.py case4a-forfeit-c1.trf 2
+== Round 2 (Gacrux pairingchecker ver. 1.10.62)
+ TPN  score  num  CD  csq       cop  flt  history
+   1  0.0      0   0            nc   -    -
+   2  0.0      0   0            nc   -    -
+   3  1.0      1   1  w         nc   -    4w
+   4  1.0      1  -1  b         nc   -    3b
+   5  1.0      1   1  w         nc   -    6w
+   6  1.0      1  -1  b         nc   -    5b
+
+-- bracket scorelevel 2: bsn order [3, 4, 5, 6], upfloaters []
+   quality {'QC4': 0, 'QC5': [0, 0], 'QC6': 0, 'QC7': 0, 'QC8': 0, 'QC9': 0, 'QC10': 0, 'IW': None}
+     5 -   3   (colour rule 4.3.8)
+     4 -   6   (colour rule 4.3.8)
+-- bracket scorelevel 1: bsn order [1, 2], upfloaters []
+   quality {'QC4': 0, 'QC5': [0], 'QC6': 0, 'QC7': 0, 'QC8': 0, 'QC9': 0, 'QC10': 0, 'IW': None}
+     1 -   2   (colour rule 4.3.1)
+
+Pairing (board order, white - black): 5-3, 4-6, 1-2

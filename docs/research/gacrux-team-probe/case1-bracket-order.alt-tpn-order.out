@@ -1,0 +1,24 @@
+$ GACRUX=<clone> python alt.py tpn-order case1-bracket-order.trf 2
+== Round 2 (Gacrux pairingchecker ver. 1.10.62)
+ TPN  score  num  CD  csq       cop  flt  history
+   1  2.0      1   1  w         nc   -    5w
+   2  2.0      1   1  w         nc   -    6w
+   3  1.0      1   1  w         nc   -    7w
+   4  2.0      1   1  w         nc   -    8w
+   5  0.0      1  -1  b         nc   -    1b
+   6  0.0      1  -1  b         nc   -    2b
+   7  1.0      1  -1  b         nc   -    3b
+   8  0.0      1  -1  b         nc   -    4b
+
+-- bracket scorelevel 3: bsn order [1, 2, 4, 3], upfloaters [3]
+   quality {'QC4': 1, 'QC5': [0, 0, 1], 'QC6': 0, 'QC7': 0, 'QC8': 0, 'QC9': 0, 'QC10': 0, 'IW': None}
+     3 -   1   (colour rule 4.3.8)
+     4 -   2   (colour rule 4.3.8)
+-- bracket scorelevel 2: bsn order [7, 5], upfloaters [5]
+   quality {'QC4': 1, 'QC5': [0, 1], 'QC6': 0, 'QC7': 0, 'QC8': 0, 'QC9': 0, 'QC10': 0, 'IW': None}
+     7 -   5   (colour rule 4.3.8)
+-- bracket scorelevel 1: bsn order [6, 8], upfloaters []
+   quality {'QC4': 0, 'QC5': [0], 'QC6': 0, 'QC7': 0, 'QC8': 0, 'QC9': 0, 'QC10': 0, 'IW': None}
+     6 -   8   (colour rule 4.3.8)
+
+Pairing (board order, white - black): 4-2, 3-1, 7-5, 6-8

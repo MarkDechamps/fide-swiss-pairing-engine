@@ -1,0 +1,33 @@
+$ (cd gacrux && python pairingchecker.py -i case2-c6-graded.trf -p -n 4 -dT)
+5
+2 1
+9 3
+10 4
+5 8
+6 7
+
+$ GACRUX=<clone> python probe.py case2-c6-graded.trf 4
+== Round 4 (Gacrux pairingchecker ver. 1.10.62)
+ TPN  score  num  CD  csq       cop  flt  history
+   1  6.0      3   3  www       b2   down 7w 9w 10w
+   2  3.0      3   3  www       b2   down 8w 10w 9w
+   3  3.0      3   3  www       b2   -    4w 5w 6w
+   4  3.0      3   1  bww       b2   -    3b 6w 5w
+   5  3.0      3  -1  wbb       w2   -    6w 3b 4b
+   6  3.0      3  -3  bbb       w2   -    5b 4b 3b
+   7  0.0      1  -1  b         nc   -    1b Z Z
+   8  1.0      1  -1  b         nc   -    2b Z Z
+   9  1.0      2  -2  bb        w2   up   Z 1b 2b
+  10  1.0      2  -2  bb        w2   up   Z 2b 1b
+
+-- bracket scorelevel 4: bsn order [1, 2], upfloaters [2]
+   quality {'QC4': 1, 'QC5': [0, 0, 0, 1], 'QC6': 1, 'QC7': 0, 'QC8': 1, 'QC9': 0, 'QC10': 0, 'IW': None}
+     2 -   1   (colour rule 4.3.7)
+-- bracket scorelevel 3: bsn order [3, 4, 5, 6, 8, 9, 10, 7], upfloaters [8, 9, 10, 7]
+   quality {'QC4': 4, 'QC5': [0, 1, 3], 'QC6': 0, 'QC7': 0, 'QC8': 0, 'QC9': 0, 'QC10': 0, 'IW': None}
+     9 -   3   (colour rule 4.3.3)
+    10 -   4   (colour rule 4.3.3)
+     5 -   8   (colour rule 4.3.2)
+     6 -   7   (colour rule 4.3.2)
+
+Pairing (board order, white - black): 2-1, 9-3, 10-4, 5-8, 6-7
