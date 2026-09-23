@@ -6,7 +6,7 @@ status: open
 
 ## Destination
 
-An implementation-ready spec for an open-source Java **reference library** implementing every FIDE Swiss pairing system (Dutch, Swiss Team 2026, Dubov, Burstein, Lim, Double-Swiss, plus acceleration), the Basic and General Handling Rules (C.04.1/C.04.2) and tie-breaks (C.07). It is a library core plus a TRF CLI, endorsement-grade (pairings identical to the endorsed reference programs), and the spec includes its verification strategy. It must be ready to hand straight to a build effort.
+An implementation-ready spec for an open-source Java **reference library** implementing every FIDE Swiss pairing system (Dutch, Swiss Team 2026, Dubov, Burstein, Lim, Double-Swiss, Olympiad Pairing Rules, plus acceleration), the Basic and General Handling Rules (C.04.1/C.04.2) and tie-breaks (C.07). It is a library core plus a TRF CLI, endorsement-grade (pairings identical to the endorsed reference programs), and the spec includes its verification strategy. It must be ready to hand straight to a build effort.
 
 ## Notes
 
@@ -17,6 +17,7 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - TDD, clean architecture and clean code are paramount. Skills every session should consult: `tdd`, `clean-java`, `clean-code`, `codebase-design`, `domain-modeling`.
 - Open source, for the author's own use and for distribution; the aim is to become *the* reference library.
 - Delivery shape: library core + TRF CLI wrapper.
+- **Everything possible, good defaults**: every FIDE-defined system and option is in scope so it *can* be used, but the library ships sensible defaults packaged as profiles (e.g. "a simple club Swiss tournament"). The common case must stay simple.
 - Research findings live on `research/<name>` branches as `docs/research/<name>.md`; each research ticket points at its branch.
 
 ## Decisions so far
@@ -30,6 +31,7 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - [TRF file format](06-trf-format.md): TRF26 is current (TRF16/06 must still be read); it standardises most JaVaFo XX? lines; the de-facto CLI is JaVaFo's `-p`; JaVaFo 2.2 and bbpPairings read different dialects; no team reply format exists.
 - [Dubov, Burstein, Lim, Double-Swiss and acceleration](04-other-swiss-systems.md): all reissued 2026-02-01; none endorsed, so they are verified by tracing rules to the text, the handbook's examples and witnesses (Vega, chesspairing); acceleration is a pluggable virtual-points layer; Lim riskiest, do it last.
 - [Dutch System and its reference programs](02-dutch-system.md): C.04.3 2026 (C1–C21, completion check in every bracket, new bye criteria); bbpPairings v6 (Apache-2.0, matching-based) is the only 2026 oracle; JaVaFo 2.2 is 2017-only and closed; the two agree fully on 2017 rules.
+- [Olympiad Pairing Rules scope](16-olympiad-rules-scope.md): in scope. The principle behind it is that everything FIDE defines is possible, with good defaults as profiles.
 
 ## Not yet specified
 
