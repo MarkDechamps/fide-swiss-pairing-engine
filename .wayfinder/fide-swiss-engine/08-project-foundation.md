@@ -2,7 +2,7 @@
 title: Project foundation
 labels: [wayfinder:grilling]
 status: open
-assignee:
+assignee: mark
 blocked_by: [02-dutch-system]
 ---
 
