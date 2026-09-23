@@ -67,3 +67,17 @@ _Avoid_: Tie-break version
 **Profile**:
 A named, ready-made set of tournament settings (Pairing System, scoring, byes, acceleration, tie-breaks) for a common kind of event, such as a simple club Swiss.
 _Avoid_: Preset, template, mode
+
+### Verification
+
+**Oracle**:
+An external pairing or tie-break program whose output for a given scope must match the library's exactly (for example bbpPairings for the Dutch System 2026).
+_Avoid_: Reference, golden program
+
+**Witness**:
+An external program that is compared with the library for a scope with no Oracle; differences are explained but never block a release.
+_Avoid_: Secondary oracle
+
+**Known Divergence**:
+A recorded, justified difference between the library and an Oracle or Witness, citing the article and the reading the library follows.
+_Avoid_: Known bug, exception, waiver

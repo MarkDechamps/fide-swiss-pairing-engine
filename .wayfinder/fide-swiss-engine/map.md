@@ -42,12 +42,13 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - [Contact FIDE Technical Commission](15-contact-fide-tec.md): deferred; no contact with TEC or the Gacrux/JaVaFo authors until the author asks. Open questions are settled by our own documented readings, configurable where the text allows both.
 - [Historic rule editions](12-historic-rule-editions.md): editions are first-class. The Swiss Rules Edition (2026 or pre-2026, one C.04 package) and the Tie-break Edition (2026-03 or 2024-08) are separate explicit settings; 2026 everywhere plus Dutch 2017 and C.07 2024-08 as verification anchors; each edition is a composition of per-article rule objects.
 - [Shared domain model across all systems](09-shared-domain-model.md): immutable `Tournament` snapshot (settings hold the system and editions) with `pairNextRound()` and `standings()`; one `Participant` with a stable id apart from its per-round Pairing Number; round-centric facts, derived shared history, per-system float rules; distinct `Score` and `PairingScore`; tie-breaks as composable objects with an unplayed-round policy.
+- [Verification strategy](10-verification-strategy.md): Oracles (bbp v6 for Dutch 2026; JaVaFo 2.2 + bbp v5 for Dutch 2017; patched Gacrux for Swiss Team) must match exactly; Witnesses for the other systems are reviewed but never gate; our own invariant checker runs on everything; testing runs in both directions (PR gate: committed corpus, nightly: 5k, release: 50k) with zero unexplained differences, justified ones kept in a Known Divergence register; a per-system definition of done drives the README status.
 
 ## Not yet specified
 
 - Algorithm design for each remaining system (Swiss Team once its rulings are made, Dubov, Burstein, Lim, Double-Swiss), probably one prototype per system once the Dutch prototype sets the pattern.
 - Acceleration details: the shape is settled (a virtual-points layer feeding `PairingScore`); still open are the Double-Swiss virtual-point value and floats under acceleration (see Swiss Team interpretation rulings).
-- TRF CLI surface (JaVaFo/bbp-compatible `-p`/`-check`/generator), our team-pairing reply format, and how to handle what TRF26 can't express (Lim `192` code, XXS→162 losses).
+- TRF CLI surface (JaVaFo/bbp-compatible `-p`/`-check`; the generator's own design is the Random tournament generator ticket), our team-pairing reply format, and how to handle what TRF26 can't express (Lim `192` code, XXS→162 losses).
 - Publishing: release process, versioning and signing for Maven Central (coordinates fixed in Project foundation).
 - Acceptance route: how the library reaches FIDE recognition given only full programs are accepted (partner program, own thin program, or offering to TEC as the reference for the systems that have none)). On hold: no contact with FIDE until the author asks.
 - An eventual performance budget, once real workloads show problems.
