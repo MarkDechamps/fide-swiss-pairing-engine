@@ -25,6 +25,7 @@ An implementation-ready spec for an open-source Java **reference library** imple
 
 - [Basic and General Handling Rules](01-basic-handling-rules.md): 2026 editions of C.04.1/C.04.2 in force; points and PAB value are configuration; unplayed rounds leave the colour history; floats are defined per system; round-record model with per-system hooks.
 - [Tie-break regulations](07-tie-breaks.md): C.07 2026 (from 1 Mar 2026), 26 tie-breaks plus modifiers in the Technical Commission's code syntax; unplayed rounds use adjusted and capped-dummy scores; no official 2026 test data or open-source reference.
+- [FIDE endorsement process and tooling](05-fide-endorsement.md): C.04.A was replaced by C.02.03 §7 technical acceptance, for full programs only (the library gets in by being embedded); needs a checker CLI + TRF26 generator; tested on 50k tournaments; only Dutch has accepted programs, and Gacrux (MIT) is TEC's reference tooling.
 
 ## Not yet specified
 
@@ -33,7 +34,8 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - Tie-break module design and how standings are modelled, including rulings on the 12 C.07 ambiguities (see Tie-break regulations) and how fixtures re-derived from the 2023 exercise set get validated (international arbiter review?).
 - Public library API (how a client hands over tournament state and receives pairings/standings).
 - TRF CLI surface, and TRF extensions for systems/data the TRF16 format can't express.
-- Publishing: Maven Central coordinates, release/versioning, and the FIDE endorsement submission itself.
+- Publishing: Maven Central coordinates, release/versioning.
+- Acceptance route: how the library reaches FIDE recognition given only full programs are accepted (partner program, own thin program, or offering to TEC as the reference for the systems that have none).
 - An eventual performance budget, once real workloads show problems.
 
 ## Out of scope
