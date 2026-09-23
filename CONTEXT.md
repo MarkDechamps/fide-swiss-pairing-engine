@@ -26,8 +26,12 @@ The entity that gets paired: a player in an individual tournament, a team in a t
 _Avoid_: Player (when a team is meant), competitor, entrant
 
 **Pairing Number**:
-The number (TPN) a participant carries for pairing in a given round, from ranking by strength, title and a declared key. It can change between rounds, so it is not the participant's identity.
+The number (TPN) a Numbered Participant carries for pairing in a given round, from ranking by strength, title and a declared key. It can change between rounds, so it is not the participant's identity. A participant not yet taken into account for pairing has none.
 _Avoid_: Start number, seed, ID
+
+**Numbered Participant**:
+A participant taken into account for the pairing of the current round or an earlier one. Only these hold a Pairing Number, and a participant who is numbered once stays numbered, even after a Withdrawal.
+_Avoid_: Valid player, active participant
 
 **Basic Rules**:
 The FIDE rules that apply to every Swiss Pairing System (C.04.1), refined by each system.
