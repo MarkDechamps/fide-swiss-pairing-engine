@@ -18,6 +18,7 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - Open source, for the author's own use and for distribution; the aim is to become *the* reference library.
 - Delivery shape: library core + TRF CLI wrapper.
 - **Everything possible, good defaults**: every FIDE-defined system and option is in scope so it *can* be used, but the library ships sensible defaults packaged as profiles (e.g. "a simple club Swiss tournament"). The common case must stay simple.
+- **Functional README**: during development keep `README.md` clear and current. It states what the library does and exactly which FIDE specs and editions it implements, with their status. The spec must make this part of the build's definition of done.
 - Research findings live on `research/<name>` branches as `docs/research/<name>.md`; each research ticket points at its branch.
 
 ## Decisions so far
