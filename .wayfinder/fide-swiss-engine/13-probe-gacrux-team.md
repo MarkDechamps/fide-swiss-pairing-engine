@@ -2,7 +2,7 @@
 title: Probe Gacrux on Swiss Team edge cases
 labels: [wayfinder:task]
 status: open
-assignee:
+assignee: mark
 blocked_by: []
 ---
 
@@ -13,3 +13,5 @@ How does Gacrux (TEC's MIT-licensed reference tooling, C.04.6 module since July 
 ## Context
 
 From Swiss Team System 2026 (`research/swiss-team-system`, open questions 1–7).
+
+Findings: branch `research/gacrux-team-probe`, file `docs/research/gacrux-team-probe.md`.
