@@ -13,6 +13,7 @@ A Java reference library for the FIDE Swiss pairing systems: it pairs the next r
 | C.04.1 | Basic Rules for Swiss Systems | 2026 | planned |
 | C.04.2 | General Handling Rules for Swiss Tournaments | 2026 | planned |
 | C.04.3 | Dutch System | 2026 | planned |
+| C.04.1–C.04.3 | Basic Rules, General Handling Rules and Dutch System (historic, for replaying older tournaments) | 2017 / pre-2026 | planned |
 | C.04.4.1 | Dubov System | 2026 | planned |
 | C.04.4.2 | Burstein System | 2026 | planned |
 | C.04.4.3 | Lim System | 2026 | planned |
@@ -20,8 +21,11 @@ A Java reference library for the FIDE Swiss pairing systems: it pairs the next r
 | C.04.6 | Swiss Team Pairing System | 2026 | planned |
 | C.04.7 | Acceleration methods | 2026 | planned |
 | D.02 | Olympiad Pairing Rules | current | planned |
-| C.07 | Tie-break Regulations | 2026 | planned |
+| C.07 | Tie-break Regulations | 2026-03 | planned |
+| C.07 | Tie-break Regulations (historic) | 2024-08 | planned |
 | — | TRF26 (reads TRF16 and the JaVaFo dialect) | 2026 | planned |
+
+The Swiss rules edition and the tie-break edition are chosen explicitly per tournament; the latest is the default.
 
 ## Modules
 
