@@ -23,6 +23,8 @@ An implementation-ready spec for an open-source Java **reference library** imple
 
 <!-- one line per closed ticket -->
 
+- [Basic and General Handling Rules](01-basic-handling-rules.md): 2026 editions of C.04.1/C.04.2 in force; points and PAB value are configuration; unplayed rounds leave the colour history; floats are defined per system; round-record model with per-system hooks.
+
 ## Not yet specified
 
 - Algorithm design for each remaining system (Swiss Team, Dubov, Burstein, Lim, Double-Swiss), probably one prototype per system once the Dutch prototype sets the pattern.
