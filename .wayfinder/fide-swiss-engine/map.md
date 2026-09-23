@@ -36,6 +36,7 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - [Olympiad Pairing Rules scope](16-olympiad-rules-scope.md): in scope. The principle behind it is that everything FIDE defines is possible, with good defaults as profiles.
 - [Probe Gacrux on Swiss Team edge cases](13-probe-gacrux-team.md): Gacrux has a real bracket-order bug and two crashes; 6 of its 7 readings are defensible, 3 need a TEC ruling (C6, Type B last round, floaters under acceleration); it can serve as an oracle only with the bug worked around.
 - [Project foundation](08-project-foundation.md): Java 25 and Maven with a wrapper, Apache-2.0, `io.github.markdechamps:fide-swiss-pairing-engine-*`; modules core (zero dependencies) / trf / cli / oracle-it, each with a module-info; JUnit 6 + AssertJ without mocks; Spotless, PIT nightly; GitHub Actions; this repo goes public with the map and research.
+- [Contact FIDE Technical Commission](15-contact-fide-tec.md): deferred; no contact with TEC or the Gacrux/JaVaFo authors until the author asks. Open questions are settled by our own documented readings, configurable where the text allows both.
 
 ## Not yet specified
 
@@ -45,7 +46,7 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - Public library API (how a client hands over tournament state and receives pairings/standings).
 - TRF CLI surface (JaVaFo/bbp-compatible `-p`/`-check`/generator), our team-pairing reply format, and how to handle what TRF26 can't express (Lim `192` code, XXS→162 losses).
 - Publishing: release process, versioning and signing for Maven Central (coordinates fixed in Project foundation).
-- Acceptance route: how the library reaches FIDE recognition given only full programs are accepted (partner program, own thin program, or offering to TEC as the reference for the systems that have none).
+- Acceptance route: how the library reaches FIDE recognition given only full programs are accepted (partner program, own thin program, or offering to TEC as the reference for the systems that have none)). On hold: no contact with FIDE until the author asks.
 - An eventual performance budget, once real workloads show problems.
 
 ## Out of scope

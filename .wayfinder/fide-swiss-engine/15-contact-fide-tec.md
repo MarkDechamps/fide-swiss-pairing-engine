@@ -1,8 +1,8 @@
 ---
 title: Contact FIDE Technical Commission
 labels: [wayfinder:task]
-status: open
-assignee:
+status: closed
+assignee: mark
 blocked_by: []
 ---
 
@@ -13,3 +13,11 @@ blocked_by: []
 ## Context
 
 Consolidates open questions from FIDE endorsement process and tooling, TRF file format, Swiss Team System 2026 and Dubov, Burstein, Lim, Double-Swiss and acceleration. Add Swiss Team ambiguities once Probe Gacrux on Swiss Team edge cases has narrowed them. From Dutch System research, also ask: whether a 2026 JaVaFo is coming (or ask its author, Roberto Ricca); which endorsements carry over to 2026; the 2026 Terms and Definitions page (HTTP 404); whether a TEC endorsement test corpus is available. From Probe Gacrux on Swiss Team edge cases, the Swiss Team questions for TEC: C6 pass/fail vs graded; Type B last round after two same colours; floaters under acceleration (pairing score vs real score); forfeits for C1/"matches played" and partly played matches; "complies" = best attainable (C7–C10); from-the-end colour comparison (4.3.6). Separately, report to Otto Milvang (Gacrux): the (score, TPN) bracket-order bug and the 503/510 crashes, with the reproducers from `research/gacrux-team-probe`.
+
+## Resolution
+
+Deferred by the author on 2026-09-23: no external contact (FIDE TEC, Otto Milvang for Gacrux, Roberto Ricca for JaVaFo) until the author asks for it. The spec does not wait on any reply:
+
+- Every question above is settled by our own documented reading of the text, made configurable where the text allows both readings (Swiss Team interpretation rulings does this for C.04.6).
+- The Gacrux bracket-order bug and the 503/510 crashes are worked around in `oracle-it` instead of being reported.
+- The question list stays here, ready to send if the author reopens contact.

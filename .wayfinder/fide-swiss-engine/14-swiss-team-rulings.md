@@ -8,7 +8,7 @@ blocked_by: [13-probe-gacrux-team]
 
 ## Question
 
-For each ambiguous C.04.6 article, which reading does the library adopt: follow Gacrux, follow our own reading of the text (and report the difference to TEC), or make it configurable? Record each ruling (probably as ADRs), and decide whether to seek official TEC clarification before the spec is final.
+For each ambiguous C.04.6 article, which reading does the library adopt: follow Gacrux, follow our own reading of the text, or make it configurable? Record each ruling (probably as ADRs). No TEC clarification is sought (see Contact FIDE Technical Commission), so each ruling must stand on the text alone.
 
 ## Context
 
