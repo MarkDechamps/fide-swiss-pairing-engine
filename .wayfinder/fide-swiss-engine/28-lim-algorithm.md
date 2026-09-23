@@ -13,3 +13,5 @@ Can the Lim System (C.04.4.3, 2026) be written literally and readably? Its proce
 ## Context
 
 Graduated from the "Algorithm design for each remaining system" fog; last on purpose ("Lim riskiest, do it last", Dubov, Burstein, Lim, Double-Swiss and acceleration). Evidence: `docs/research/other-swiss-systems.md` §5 (numerous ambiguities; no `192` code in TRF26), Witnesses Vega and chesspairing (Maxi as a boolean).
+
+From Readable Dubov pairing algorithm: chesspairing's CLI (`pair`, legacy `-p`) drops the last recorded round of every TRF, because its reader sets `CurrentRound` to the rounds played. Its random generator (`generate`) therefore writes tournaments full of rematches, and the Witness must be run through a driver like `prototypes/dubov-algorithm/witness/main.go` (branch `prototype/dubov-algorithm`). It also renumbers TPNs by score every round, and it lets a forfeit win leave the PAB open ([C2] 2026), so expect differences in order and in byes. A Literal Enumerator (plain enumeration in the text's orders) checks the search where no Oracle exists.

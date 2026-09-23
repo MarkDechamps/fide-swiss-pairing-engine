@@ -18,6 +18,9 @@ _Avoid_: Individual Swiss, FIDE Swiss
 The FIDE Pairing System for teams (C.04.6, in force from 1 February 2026).
 _Avoid_: Team Dutch, team Swiss
 
+**Dubov System**:
+The FIDE Pairing System for individual players that aims to equalise, within a scoregroup, the average rating of the opponents (C.04.4.1).
+
 **Olympiad Pairing Rules**:
 The FIDE Pairing System for the Chess Olympiad (D.02), a team Swiss defined outside C.04.
 
@@ -39,12 +42,26 @@ The FIDE rules that apply to every Swiss Pairing System (C.04.1), refined by eac
 ### Pairing a bracket
 
 **Bracket**:
-The group of participants paired together at one step: the residents of a scoregroup plus any moved-down participants left over from the bracket above (Dutch 1.3.2), or plus the upfloaters chosen for it (Swiss Team 1.3.2).
+The group of participants paired together at one step: the residents of a scoregroup plus any moved-down participants left over from the bracket above (Dutch 1.3.2), or plus the upfloaters chosen for it (Swiss Team 1.3.2, Dubov 1.3.2).
 _Avoid_: Group, pool
 
 **Upfloater**:
-A team from a lower scoregroup taken into the bracket of the top-scoregroup (Swiss Team 3.5), chosen as one set of upfloaters.
+A participant from a lower scoregroup taken into a bracket (Swiss Team 3.5, Dubov 3.2.2), chosen as one set of upfloaters. A participant is **upfloated** in a round when it is paired with an opponent who had a higher score.
 _Avoid_: Floater (without direction)
+
+**Maximum Upfloater**:
+A Dubov player already upfloated MaxT = 2 + ⌊rounds/5⌋ times (Dubov 1.8); [C8]–[C9] avoid upfloating them again.
+
+**ARO**:
+Average Rating of Opponents: the mean rating of the opponents a player met over the board, rounded half up, and 0 before the first game (Dubov 1.7).
+_Avoid_: Average opponent rating, AvgOpp (the C.07 tie-break)
+
+**Shifter**:
+A Dubov player moved from the subgroup of its colour preference (G1 wants White, G2 the rest) into the other one, so that the subgroups can be paired against each other (Dubov 3.2.4, 4.3).
+
+**Transposition**:
+An ordering of a Dubov bracket's G2 players; the first one in lexicographic TPN order that pairs legally against S1 gives the bracket's pairs (Dubov 3.2.6, 4.4).
+_Avoid_: Permutation (in the model)
 
 **Following scoregroup**:
 The scoregroup right below the bracket's score in the round's standings (Swiss Team [C6]). Once all its teams are paired, it is empty and [C6] holds; it is never the next non-empty level further down.
@@ -163,6 +180,10 @@ _Avoid_: Secondary oracle
 **Known Divergence**:
 A recorded, justified difference between the library and an Oracle or Witness, citing the article and the reading the library follows.
 _Avoid_: Known bug, exception, waiver
+
+**Literal Enumerator**:
+A test-only pairing of a system that generates every candidate in the orders the text defines and assesses each by exhaustion, with no matching. On small fields it must agree exactly with the library's search. It is how a system without an Oracle checks that its search is exact.
+_Avoid_: Brute force, reference implementation, oracle
 
 **Random Tournament Generator**:
 A tool that produces complete, valid tournaments by having the library pair every round of a simulated field, with results drawn from a Result Model. It is FIDE's RTG.
