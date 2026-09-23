@@ -21,6 +21,12 @@ _Avoid_: Team Dutch, team Swiss
 **Dubov System**:
 The FIDE Pairing System for individual players that aims to equalise, within a scoregroup, the average rating of the opponents (C.04.4.1).
 
+**Burstein System**:
+The FIDE Pairing System for individual players that aims to give players with the same score equally strong opposition, measured by the Opposition Index (C.04.4.2). Its first rounds are Seeding Rounds.
+
+**Seeding Round**:
+One of the first min(⌊rounds/2⌋, 4) rounds of a Burstein tournament, which are paired by the Dutch System (Burstein 1.6).
+
 **Olympiad Pairing Rules**:
 The FIDE Pairing System for the Chess Olympiad (D.02), a team Swiss defined outside C.04.
 
@@ -42,7 +48,7 @@ The FIDE rules that apply to every Swiss Pairing System (C.04.1), refined by eac
 ### Pairing a bracket
 
 **Bracket**:
-The group of participants paired together at one step: the residents of a scoregroup plus any moved-down participants left over from the bracket above (Dutch 1.3.2), or plus the upfloaters chosen for it (Swiss Team 1.3.2, Dubov 1.3.2).
+The group of participants paired together at one step: the residents of a scoregroup plus any moved-down participants left over from the bracket above (Dutch 1.3.2), or plus the upfloaters chosen for it (Swiss Team 1.3.2, Dubov 1.3.2), or plus the incoming floaters left unpaired by the bracket above (Burstein 1.2.2).
 _Avoid_: Group, pool
 
 **Upfloater**:
@@ -67,11 +73,19 @@ _Avoid_: Permutation (in the model)
 The scoregroup right below the bracket's score in the round's standings (Swiss Team [C6]). Once all its teams are paired, it is empty and [C6] holds; it is never the next non-empty level further down.
 
 **Downfloater**:
-A participant left unpaired in a bracket and moved to the next one, where it is a **Moved-Down Participant** (MDP).
+A participant left unpaired in a bracket and moved to the next one, where it is a **Moved-Down Participant** (MDP). Burstein calls it an outgoing floater of its bracket and an incoming floater of the next (1.2.2).
 _Avoid_: Floater (without direction), leftover
 
 **Limbo**:
 The MDPs of a bracket who are not paired in it and are bound to float again (Dutch 3.2.4).
+
+**Bracket Sequence Number**:
+A participant's position, from 1, in its bracket's ranking (BSN). In Burstein a virtual player with BSN 0 is added for each outgoing floater: whoever it is paired with floats (4.1–4.2).
+_Avoid_: Bracket rank, index (the Opposition Index is something else)
+
+**Opposition Index**:
+A Burstein player's Buchholz, then Sonneborn-Berger, over the tournament so far. It uses standings points only and Burstein's own rules for unplayed rounds (1.7.2): a round not played counts as a game against oneself at one's own current score, and a run of zero-point byes up to the last round counts as draws for one's opponents. It ranks the players of a bracket, ahead of TPN and without their scores (1.8).
+_Avoid_: Tie-break (it is not one of the Standings' tie-breaks), Burstein score
 
 **Candidate**:
 One complete proposal for pairing a bracket: its pairs and its downfloaters, produced in the order the system's text defines and judged by the criteria in priority order.
