@@ -28,11 +28,12 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - [FIDE endorsement process and tooling](05-fide-endorsement.md): C.04.A was replaced by C.02.03 §7 technical acceptance, for full programs only (the library gets in by being embedded); needs a checker CLI + TRF26 generator; tested on 50k tournaments; only Dutch has accepted programs, and Gacrux (MIT) is TEC's reference tooling.
 - [Swiss Team System 2026](03-swiss-team-system.md): top-down scoregroups (bye first, choose upfloaters, then first-best pairing in identifier order), colour decided afterwards and never blocking, no endorsed program; Gacrux has the only C.04.6 module; several articles are ambiguous.
 - [TRF file format](06-trf-format.md): TRF26 is current (TRF16/06 must still be read); it standardises most JaVaFo XX? lines; the de-facto CLI is JaVaFo's `-p`; JaVaFo 2.2 and bbpPairings read different dialects; no team reply format exists.
+- [Dubov, Burstein, Lim, Double-Swiss and acceleration](04-other-swiss-systems.md): all reissued 2026-02-01; none endorsed, so they are verified by tracing rules to the text, the handbook's examples and witnesses (Vega, chesspairing); acceleration is a pluggable virtual-points layer; Lim riskiest, do it last.
 
 ## Not yet specified
 
 - Algorithm design for each remaining system (Swiss Team once its rulings are made, Dubov, Burstein, Lim, Double-Swiss), probably one prototype per system once the Dutch prototype sets the pattern.
-- How acceleration methods plug into the pairing systems.
+- How acceleration plugs in (leaning: a per-round virtual-points layer; open points: Double-Swiss virtual-point value, floats under acceleration).
 - Tie-break module design and how standings are modelled, including rulings on the 12 C.07 ambiguities (see Tie-break regulations) and how fixtures re-derived from the 2023 exercise set get validated (international arbiter review?).
 - Public library API (how a client hands over tournament state and receives pairings/standings).
 - TRF CLI surface (JaVaFo/bbp-compatible `-p`/`-check`/generator), our team-pairing reply format, and how to handle what TRF26 can't express (Lim `192` code, XXS→162 losses).
