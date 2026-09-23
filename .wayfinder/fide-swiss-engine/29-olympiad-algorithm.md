@@ -1,0 +1,15 @@
+---
+title: Readable Olympiad pairing algorithm
+labels: [wayfinder:prototype]
+status: open
+assignee:
+blocked_by: [28-lim-algorithm]
+---
+
+## Question
+
+Can the Olympiad Pairing Rules (D.02, 2022) be written literally and readably on the parts built for Swiss Team (team history, match points, the 1 MP + 2 GP bye) and Lim (the median-group order of 6.4: top down, then bottom up, the median group last)? Prototype it and record every reading.
+
+## Context
+
+In scope per Olympiad Pairing Rules scope; the `olympiad()` profile is fixed in Tournament profiles. Evidence: `docs/research/other-swiss-systems.md` §9 (a Lim-like median-group order, its own ranking by the average of the top four ratings). No Oracle, and no Witness is known yet.

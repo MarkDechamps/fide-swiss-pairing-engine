@@ -13,3 +13,5 @@ What exactly does the `cli` module accept and print? Covers the JaVaFo/bbpPairin
 ## Context
 
 Graduated from the "TRF CLI surface" fog once Public library API fixed the operations the CLI wraps: `pairNextRound()` → `RoundPairing` (with `PairingTrace`), `check(ProposedPairing)` → `PairingCheck`, and the error model. Evidence: `docs/research/trf-format.md` (TRF26, JaVaFo `-p`, dialect differences between JaVaFo 2.2 and bbp). The generator's `generate` subcommand and JaVaFo-style `-g` form are fixed in Random tournament generator; this ticket fixes the executable name and the shared exit-code table they use.
+
+From Readable Swiss Team pairing algorithm: C.04.6 does not fix the board order of a round. Gacrux orders matches by the pair's higher score, then the sum of scores, then the lower TPN, with the bye last (`pairingfideteam.update_board`), the way its Dutch engine does. The reply format must say which order it prints.

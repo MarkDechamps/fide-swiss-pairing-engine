@@ -35,8 +35,15 @@ The FIDE rules that apply to every Swiss Pairing System (C.04.1), refined by eac
 ### Pairing a bracket
 
 **Bracket**:
-The group of participants paired together at one step: the residents of a scoregroup plus any moved-down participants left over from the bracket above (Dutch 1.3.2).
+The group of participants paired together at one step: the residents of a scoregroup plus any moved-down participants left over from the bracket above (Dutch 1.3.2), or plus the upfloaters chosen for it (Swiss Team 1.3.2).
 _Avoid_: Group, pool
+
+**Upfloater**:
+A team from a lower scoregroup taken into the bracket of the top-scoregroup (Swiss Team 3.5), chosen as one set of upfloaters.
+_Avoid_: Floater (without direction)
+
+**Following scoregroup**:
+The scoregroup right below the bracket's score in the round's standings (Swiss Team [C6]). Once all its teams are paired, it is empty and [C6] holds; it is never the next non-empty level further down.
 
 **Downfloater**:
 A participant left unpaired in a bracket and moved to the next one, where it is a **Moved-Down Participant** (MDP).
