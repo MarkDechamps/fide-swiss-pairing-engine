@@ -41,13 +41,12 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - [Project foundation](08-project-foundation.md): Java 25 and Maven with a wrapper, Apache-2.0, `io.github.markdechamps:fide-swiss-pairing-engine-*`; modules core (zero dependencies) / trf / cli / oracle-it, each with a module-info; JUnit 6 + AssertJ without mocks; Spotless, PIT nightly; GitHub Actions; this repo goes public with the map and research.
 - [Contact FIDE Technical Commission](15-contact-fide-tec.md): deferred; no contact with TEC or the Gacrux/JaVaFo authors until the author asks. Open questions are settled by our own documented readings, configurable where the text allows both.
 - [Historic rule editions](12-historic-rule-editions.md): editions are first-class. The Swiss Rules Edition (2026 or pre-2026, one C.04 package) and the Tie-break Edition (2026-03 or 2024-08) are separate explicit settings; 2026 everywhere plus Dutch 2017 and C.07 2024-08 as verification anchors; each edition is a composition of per-article rule objects.
+- [Shared domain model across all systems](09-shared-domain-model.md): immutable `Tournament` snapshot (settings hold the system and editions) with `pairNextRound()` and `standings()`; one `Participant` with a stable id apart from its per-round Pairing Number; round-centric facts, derived shared history, per-system float rules; distinct `Score` and `PairingScore`; tie-breaks as composable objects with an unplayed-round policy.
 
 ## Not yet specified
 
 - Algorithm design for each remaining system (Swiss Team once its rulings are made, Dubov, Burstein, Lim, Double-Swiss), probably one prototype per system once the Dutch prototype sets the pattern.
-- How acceleration plugs in (leaning: a per-round virtual-points layer; open points: Double-Swiss virtual-point value, floats under acceleration).
-- Tie-break module design and how standings are modelled, including rulings on the 12 C.07 ambiguities (see Tie-break regulations) and how fixtures re-derived from the 2023 exercise set get validated (international arbiter review?).
-- Public library API (how a client hands over tournament state and receives pairings/standings).
+- Acceleration details: the shape is settled (a virtual-points layer feeding `PairingScore`); still open are the Double-Swiss virtual-point value and floats under acceleration (see Swiss Team interpretation rulings).
 - TRF CLI surface (JaVaFo/bbp-compatible `-p`/`-check`/generator), our team-pairing reply format, and how to handle what TRF26 can't express (Lim `192` code, XXS→162 losses).
 - Publishing: release process, versioning and signing for Maven Central (coordinates fixed in Project foundation).
 - Acceptance route: how the library reaches FIDE recognition given only full programs are accepted (partner program, own thin program, or offering to TEC as the reference for the systems that have none)). On hold: no contact with FIDE until the author asks.
