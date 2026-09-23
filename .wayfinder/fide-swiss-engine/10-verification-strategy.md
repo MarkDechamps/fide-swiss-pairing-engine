@@ -3,7 +3,7 @@ title: Verification strategy
 labels: [wayfinder:grilling]
 status: open
 assignee:
-blocked_by: [02-dutch-system, 05-fide-endorsement, 06-trf-format]
+blocked_by: [02-dutch-system, 05-fide-endorsement, 06-trf-format, 12-historic-rule-editions]
 ---
 
 ## Question
