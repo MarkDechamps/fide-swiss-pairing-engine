@@ -21,6 +21,10 @@ _Avoid_: Team Dutch, team Swiss
 **Olympiad Pairing Rules**:
 The FIDE Pairing System for the Chess Olympiad (D.02), a team Swiss defined outside C.04.
 
+**Participant**:
+The entity that gets paired: a player in an individual tournament, a team in a team tournament.
+_Avoid_: Player (when a team is meant), competitor, entrant
+
 **Basic Rules**:
 The FIDE rules that apply to every Swiss Pairing System (C.04.1), refined by each system.
 

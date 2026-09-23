@@ -13,6 +13,9 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - Domain: FIDE Handbook C.04 (Swiss systems), C.04.A (endorsement), C.07 (tie-breaks). Source that started it: https://handbook.fide.com/chapter/SwissTeamPairingSystem202602
 - Glossary: `/home/mark/swiss/CONTEXT.md`. Keep it current with the `domain-modeling` skill.
 - Language: **Java**, as clean, simple and object-oriented as possible.
+- **Domain-driven design** with a **clean public API**: the model speaks the Handbook's language (see the glossary), and clients see a small, intention-revealing surface.
+- Object-oriented, **composition over inheritance**. When in doubt about a design choice, ask the author rather than guessing.
+- Java style: `Optional` instead of `null`; `var` for locals; extracted methods with intention-revealing names instead of comments; domain value objects instead of primitives.
 - **Readability over performance**: the code mirrors the handbook articles, and performance issues are fixed when they surface.
 - TDD, clean architecture and clean code are paramount. Skills every session should consult: `tdd`, `clean-java`, `clean-code`, `codebase-design`, `domain-modeling`.
 - Open source, for the author's own use and for distribution; the aim is to become *the* reference library.
