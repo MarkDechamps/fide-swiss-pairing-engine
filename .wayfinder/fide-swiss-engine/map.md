@@ -29,6 +29,7 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - [Swiss Team System 2026](03-swiss-team-system.md): top-down scoregroups (bye first, choose upfloaters, then first-best pairing in identifier order), colour decided afterwards and never blocking, no endorsed program; Gacrux has the only C.04.6 module; several articles are ambiguous.
 - [TRF file format](06-trf-format.md): TRF26 is current (TRF16/06 must still be read); it standardises most JaVaFo XX? lines; the de-facto CLI is JaVaFo's `-p`; JaVaFo 2.2 and bbpPairings read different dialects; no team reply format exists.
 - [Dubov, Burstein, Lim, Double-Swiss and acceleration](04-other-swiss-systems.md): all reissued 2026-02-01; none endorsed, so they are verified by tracing rules to the text, the handbook's examples and witnesses (Vega, chesspairing); acceleration is a pluggable virtual-points layer; Lim riskiest, do it last.
+- [Dutch System and its reference programs](02-dutch-system.md): C.04.3 2026 (C1–C21, completion check in every bracket, new bye criteria); bbpPairings v6 (Apache-2.0, matching-based) is the only 2026 oracle; JaVaFo 2.2 is 2017-only and closed; the two agree fully on 2017 rules.
 
 ## Not yet specified
 

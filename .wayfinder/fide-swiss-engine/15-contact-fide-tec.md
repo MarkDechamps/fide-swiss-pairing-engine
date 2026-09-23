@@ -12,4 +12,4 @@ blocked_by: []
 
 ## Context
 
-Consolidates open questions from FIDE endorsement process and tooling, TRF file format, Swiss Team System 2026 and Dubov, Burstein, Lim, Double-Swiss and acceleration. Add Swiss Team ambiguities once Probe Gacrux on Swiss Team edge cases has narrowed them.
+Consolidates open questions from FIDE endorsement process and tooling, TRF file format, Swiss Team System 2026 and Dubov, Burstein, Lim, Double-Swiss and acceleration. Add Swiss Team ambiguities once Probe Gacrux on Swiss Team edge cases has narrowed them. From Dutch System research, also ask: whether a 2026 JaVaFo is coming (or ask its author, Roberto Ricca); which endorsements carry over to 2026; the 2026 Terms and Definitions page (HTTP 404); whether a TEC endorsement test corpus is available.
