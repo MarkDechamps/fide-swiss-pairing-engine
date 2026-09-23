@@ -1,0 +1,17 @@
+$ GACRUX=<clone> python alt.py typeb-none case5-typeb-lastround.trf 5
+== Round 5 (Gacrux pairingchecker ver. 1.10.62)
+ TPN  score  num  CD  csq       cop  flt  history
+   1  4.0      4   0  bbww      nc   -    6b 5b 4w 3w
+   2  3.0      3   1  wbw       b1   up   - 3w 6b 4w
+   3  4.0      4  -2  wbbb      w2   -    4w 2b 5b 1b
+   4  4.0      4  -4  bbbb      w2   down 3b 6b 1b 2b
+   5  3.0      3   1  wwb       b1   up   - 1w 3w 6b
+   6  4.0      4   4  wwww      b2   down 1w 4w 2w 5w
+
+-- bracket scorelevel 2: bsn order [1, 3, 4, 6, 2, 5], upfloaters [2, 5]
+   quality {'QC4': 2, 'QC5': [0, 2], 'QC6': 0, 'QC7': 0, 'QC8': 0, 'QC9': 0, 'QC10': 0, 'IW': None}
+     1 -   2   (colour rule 4.3.2)
+     3 -   6   (colour rule 4.3.3)
+     4 -   5   (colour rule 4.3.3)
+
+Pairing (board order, white - black): 3-6, 1-2, 4-5
