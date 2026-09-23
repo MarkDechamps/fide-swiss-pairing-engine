@@ -34,6 +34,7 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - [Dutch System and its reference programs](02-dutch-system.md): C.04.3 2026 (C1–C21, completion check in every bracket, new bye criteria); bbpPairings v6 (Apache-2.0, matching-based) is the only 2026 oracle; JaVaFo 2.2 is 2017-only and closed; the two agree fully on 2017 rules.
 - [Olympiad Pairing Rules scope](16-olympiad-rules-scope.md): in scope. The principle behind it is that everything FIDE defines is possible, with good defaults as profiles.
 - [Probe Gacrux on Swiss Team edge cases](13-probe-gacrux-team.md): Gacrux has a real bracket-order bug and two crashes; 6 of its 7 readings are defensible, 3 need a TEC ruling (C6, Type B last round, floaters under acceleration); it can serve as an oracle only with the bug worked around.
+- [Project foundation](08-project-foundation.md): Java 25 and Maven with a wrapper, Apache-2.0, `io.github.markdechamps:fide-swiss-pairing-engine-*`; modules core (zero dependencies) / trf / cli / oracle-it, each with a module-info; JUnit 6 + AssertJ without mocks; Spotless, PIT nightly; GitHub Actions; this repo goes public with the map and research.
 
 ## Not yet specified
 
@@ -42,7 +43,7 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - Tie-break module design and how standings are modelled, including rulings on the 12 C.07 ambiguities (see Tie-break regulations) and how fixtures re-derived from the 2023 exercise set get validated (international arbiter review?).
 - Public library API (how a client hands over tournament state and receives pairings/standings).
 - TRF CLI surface (JaVaFo/bbp-compatible `-p`/`-check`/generator), our team-pairing reply format, and how to handle what TRF26 can't express (Lim `192` code, XXS→162 losses).
-- Publishing: Maven Central coordinates, release/versioning.
+- Publishing: release process, versioning and signing for Maven Central (coordinates fixed in Project foundation).
 - Acceptance route: how the library reaches FIDE recognition given only full programs are accepted (partner program, own thin program, or offering to TEC as the reference for the systems that have none).
 - An eventual performance budget, once real workloads show problems.
 

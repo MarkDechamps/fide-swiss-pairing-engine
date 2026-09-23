@@ -16,7 +16,7 @@ Findings: branch `research/basic-handling-rules`, file `docs/research/basic-hand
 
 ## Resolution
 
-Resolved by research (branch `research/basic-handling-rules`, commit 45412f7, `docs/research/basic-handling-rules.md`).
+Resolved by research (branch `research/basic-handling-rules`, commit 8ae3b0f, `docs/research/basic-handling-rules.md`).
 
 - In force: C.04.1 and C.04.2 in the 2026 editions (approved 28/10/2025, applied from 1 Feb 2026). The whole C.04 family switched on that date, and nothing is pending on the Sep 2026 FIDE Technical Commission agenda.
 - The library must take win/draw/loss points and the pairing-allocated bye (PAB) value as configuration; the PAB value is the same for every PAB in an event.

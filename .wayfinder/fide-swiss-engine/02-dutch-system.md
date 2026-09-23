@@ -16,7 +16,7 @@ Findings: branch `research/dutch-system`, file `docs/research/dutch-system.md`.
 
 ## Resolution
 
-Resolved by research (branch `research/dutch-system`, commit 0b5bae0, `docs/research/dutch-system.md`).
+Resolved by research (branch `research/dutch-system`, commit d1facec, `docs/research/dutch-system.md`).
 
 - In force: C.04.3 effective 1 Feb 2026 (approved 28/10/2025), criteria C1–C21. The changes that alter pairings: the completion check C4 now applies in every bracket (the old collapsed-last-bracket / PSD mechanism is gone); new bye criteria (lowest possible score C5, fewest unplayed games C9); revised float definitions and rules for pairing moved-down players. The full criteria, procedure and colour rules are in the note with article numbers.
 - FIDE endorses programs, not engines. JaVaFo powers 7 programs, bbpPairings powers SwissSys, and Swiss-Chess has its own engine. Every endorsement predates the 2026 rules.

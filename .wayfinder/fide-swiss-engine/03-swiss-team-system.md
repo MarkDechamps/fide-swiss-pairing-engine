@@ -16,7 +16,7 @@ Findings: branch `research/swiss-team-system`, file `docs/research/swiss-team-sy
 
 ## Resolution
 
-Resolved by research (branch `research/swiss-team-system`, commits 5069782 and a28bd9f, `docs/research/swiss-team-system.md`).
+Resolved by research (branch `research/swiss-team-system`, commits a2e6922 and f8d873e, `docs/research/swiss-team-system.md`).
 
 - Procedure: the PAB (pairing-allocated bye) is chosen first, then scoregroups are processed top-down. For each bracket: choose the upfloater set (C4 fewest, C5 highest scores, C3 the rest can still pair, then C6 and C7), then take the first pairing in identifier order that best satisfies C1, C8, C9, C10. Colour (board 1) is decided afterwards by a 9-step cascade and never blocks a pairing. There are no downfloaters.
 - Options: colour preference Type A, Type B or none. Primary score is match points (default) or game points; the secondary score is used only to pick the "first-team" for colour. A bye gives draw-level MP/GP.

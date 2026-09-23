@@ -16,7 +16,7 @@ Findings: branch `research/tie-breaks`, file `docs/research/tie-breaks.md`.
 
 ## Resolution
 
-Resolved by research (branch `research/tie-breaks`, commit d59dc9c, `docs/research/tie-breaks.md`).
+Resolved by research (branch `research/tie-breaks`, commit d2d2dcd, `docs/research/tie-breaks.md`).
 
 - In force: C.07 Play-Off and Tie-Break Regulations, approved 2 Feb 2026, applied from 1 Mar 2026 (the previous edition was 1 Aug 2024 to 28 Feb 2026).
 - The regulation lists 26 tie-breaks (art. 5), for individual and team events. New since 2024: STD, TPN, RTNG, REP (renamed from GE), and the EDE* combinations. The Buchholz family is banned in round robins.

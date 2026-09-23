@@ -16,7 +16,7 @@ Findings: branch `research/trf-format`, file `docs/research/trf-format.md`.
 
 ## Resolution
 
-Resolved by research (branch `research/trf-format`, commit b262ebf, `docs/research/trf-format.md`). JaVaFo 2.2 and bbpPairings v6.0.0 were actually run on sample files.
+Resolved by research (branch `research/trf-format`, commit 69f9d00, `docs/research/trf-format.md`). JaVaFo 2.2 and bbpPairings v6.0.0 were actually run on sample files.
 
 - Current format: **TRF26** (Annexure A of C.02.03, approved 12/05/2025, applies from 01/09/2025). FIDE programs must still *read* TRF16 and TRF06. Follow the Handbook copies of the spec and its code tables (tie-break codes, tournament-type codes).
 - Record `001` and header records `012`–`132` are unchanged. New records: engine setup (`142` rounds, `152` initial colour, `162` scoring, `192` system), `250` acceleration, `260` forbidden pairings, `240` byes, team records (`310` replaces `013`, plus `320`/`330`/`300`/`299`/`352`/`362`/`801`/`802`), tie-breaks `202`/`212`, time control `222`.

@@ -18,7 +18,7 @@ Findings: branch `research/gacrux-team-probe`, file `docs/research/gacrux-team-p
 
 ## Resolution
 
-Done (AFK). Branch `research/gacrux-team-probe`, commit 2c3080d, `docs/research/gacrux-team-probe.md`; the case TRFs, their outputs and the probe scripts are in `docs/research/gacrux-team-probe/`. Gacrux is TieBreakServer @ 6419149 (v1.10.62) on Python 3.14 + networkx 3.7; its own 101 team tests pass. Four alternative readings were observed by patching Gacrux in memory, not worked out by hand.
+Done (AFK). Branch `research/gacrux-team-probe`, commit d67305a, `docs/research/gacrux-team-probe.md`; the case TRFs, their outputs and the probe scripts are in `docs/research/gacrux-team-probe/`. Gacrux is TieBreakServer @ 6419149 (v1.10.62) on Python 3.14 + networkx 3.7; its own 101 team tests pass. Four alternative readings were observed by patching Gacrux in memory, not worked out by hand.
 
 | # | Ambiguity | Gacrux reading | Verdict |
 |---|---|---|---|

@@ -16,7 +16,7 @@ Findings: branch `research/fide-endorsement`, file `docs/research/fide-endorseme
 
 ## Resolution
 
-Resolved by research (branch `research/fide-endorsement`, commit 672b488, `docs/research/fide-endorsement.md`).
+Resolved by research (branch `research/fide-endorsement`, commit 04ea23f, `docs/research/fide-endorsement.md`).
 
 - C.04.A is gone. The rules are now in Handbook C.02.03 §7 "Tournament Handler Programs" (from 1 Mar 2026), run by FIDE's Technical Commission (TEC); operational detail is in the TEC Manual v1.24.
 - Process: vendor registration → self-assessment → technical acceptance (≥3 TEC testers + FIDE Council) → commercial "FIDE Endorsed". Fees are about USD 1,200 (+300 preliminary), not refundable, with a 1-year bar after a rejection.
