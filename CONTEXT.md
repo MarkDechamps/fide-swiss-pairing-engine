@@ -53,6 +53,10 @@ _Avoid_: Solution, option
 How badly a candidate fails each criterion, in priority order; the lower vector wins and ties go to the candidate generated first.
 _Avoid_: Score (a Score is points), weight
 
+**Optimum**:
+The best criteria vector any candidate of a bracket can reach, computed exactly before the search; the first candidate generated that reaches it is the one chosen (Dutch 3.4 "perfect"). A candidate found to reach it is a **known optimal candidate**.
+_Avoid_: Perfect bound, target (in the model), witness (a Witness is a verification program)
+
 ### Scores
 
 **Score**:
