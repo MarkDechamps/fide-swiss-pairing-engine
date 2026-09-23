@@ -89,6 +89,10 @@ _Avoid_: Tie-break version
 A named, ready-made set of tournament settings (Pairing System, scoring, byes, acceleration, tie-breaks) for a common kind of event, such as a simple club Swiss.
 _Avoid_: Preset, template, mode
 
+**Interpretation**:
+A named, switchable choice between two readings of an ambiguous article, used only where the text literally allows both; it has a documented default and is set in the tournament's settings or a Profile.
+_Avoid_: Option, flag, variant, mode
+
 ### Verification
 
 **Oracle**:
