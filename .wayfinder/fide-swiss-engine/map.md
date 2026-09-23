@@ -33,6 +33,7 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - [Dubov, Burstein, Lim, Double-Swiss and acceleration](04-other-swiss-systems.md): all reissued 2026-02-01; none endorsed, so they are verified by tracing rules to the text, the handbook's examples and witnesses (Vega, chesspairing); acceleration is a pluggable virtual-points layer; Lim riskiest, do it last.
 - [Dutch System and its reference programs](02-dutch-system.md): C.04.3 2026 (C1–C21, completion check in every bracket, new bye criteria); bbpPairings v6 (Apache-2.0, matching-based) is the only 2026 oracle; JaVaFo 2.2 is 2017-only and closed; the two agree fully on 2017 rules.
 - [Olympiad Pairing Rules scope](16-olympiad-rules-scope.md): in scope. The principle behind it is that everything FIDE defines is possible, with good defaults as profiles.
+- [Probe Gacrux on Swiss Team edge cases](13-probe-gacrux-team.md): Gacrux has a real bracket-order bug and two crashes; 6 of its 7 readings are defensible, 3 need a TEC ruling (C6, Type B last round, floaters under acceleration); it can serve as an oracle only with the bug worked around.
 
 ## Not yet specified
 
