@@ -2,7 +2,7 @@
 title: TRF CLI surface
 labels: [wayfinder:grilling]
 status: open
-assignee:
+assignee: markdechamps
 blocked_by: []
 ---
 
