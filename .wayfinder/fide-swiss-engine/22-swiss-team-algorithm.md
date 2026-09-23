@@ -2,7 +2,7 @@
 title: Readable Swiss Team pairing algorithm
 labels: [wayfinder:prototype]
 status: open
-assignee:
+assignee: markdechamps
 blocked_by: [14-swiss-team-rulings]
 ---
 
