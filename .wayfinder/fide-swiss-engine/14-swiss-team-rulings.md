@@ -2,7 +2,7 @@
 title: Swiss Team interpretation rulings
 labels: [wayfinder:grilling]
 status: open
-assignee:
+assignee: mark
 blocked_by: [13-probe-gacrux-team]
 ---
 
