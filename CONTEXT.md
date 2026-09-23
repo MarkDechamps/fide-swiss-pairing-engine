@@ -86,7 +86,7 @@ A dated release of the FIDE Tie-break Regulations (C.07), chosen independently o
 _Avoid_: Tie-break version
 
 **Profile**:
-A named, ready-made set of tournament settings (Pairing System, scoring, byes, acceleration, tie-breaks) for a common kind of event, such as a simple club Swiss.
+A named, ready-made set of every tournament setting (Pairing System, editions, scoring, byes, acceleration, colour preferences, tie-breaks) except the number of rounds, for a common kind of event, such as an individual Swiss or a team Swiss. Any one setting can be overridden.
 _Avoid_: Preset, template, mode
 
 **Interpretation**:
