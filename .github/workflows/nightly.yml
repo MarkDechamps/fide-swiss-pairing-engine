@@ -1,0 +1,32 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  oracle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      # Pinned bbpPairings v6, Gacrux and JaVaFo are fetched here once Verification strategy defines the runs.
+      - name: Oracle comparison runs
+        run: ./mvnw -B verify -pl oracle-it -am
+
+  mutation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - name: Mutation testing on core
+        run: ./mvnw -B test-compile org.pitest:pitest-maven:mutationCoverage -pl core

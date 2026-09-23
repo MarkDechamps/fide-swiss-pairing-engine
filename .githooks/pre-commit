@@ -5,6 +5,17 @@
 top=$(git rev-parse --show-toplevel) || exit 1
 cd "$top" || exit 1
 
+# Use the JDK pinned in .sdkmanrc when SDKMAN has it installed.
+if [ -f .sdkmanrc ]; then
+    java_version=$(sed -n 's/^java=//p' .sdkmanrc | tr -d '\r')
+    java_home="${SDKMAN_DIR:-$HOME/.sdkman}/candidates/java/$java_version"
+    if [ -n "$java_version" ] && [ -d "$java_home" ]; then
+        JAVA_HOME="$java_home"
+        PATH="$JAVA_HOME/bin:$PATH"
+        export JAVA_HOME PATH
+    fi
+fi
+
 if [ -f mvnw ]; then
     cmd="./mvnw -q test"
 elif [ -f pom.xml ]; then
