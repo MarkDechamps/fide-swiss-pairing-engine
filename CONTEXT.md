@@ -167,3 +167,11 @@ _Avoid_: Fuzzer, simulator, test data generator
 **Result Model**:
 The probability rule that decides a simulated game's outcome from the two players' ratings and colours (by default Milvang's model).
 _Avoid_: Outcome distribution, score model
+
+**Pairing Reply**:
+The answer a pairing engine gives to a request to pair the next round: the number of pairs, then one `white black` line per pair using the file's own ids, with the Pairing-Allocated Bye as `id 0`. It is the de facto protocol that JaVaFo set and bbpPairings copies.
+_Avoid_: Output file, pairing list
+
+**Pairings Checker**:
+A tool that rebuilds a recorded tournament round by round, pairs each round itself, and reports every round and set of standings the file does not match (FIDE's PTC).
+_Avoid_: Validator, verifier
