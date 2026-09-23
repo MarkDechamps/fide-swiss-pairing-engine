@@ -26,10 +26,11 @@ An implementation-ready spec for an open-source Java **reference library** imple
 - [Basic and General Handling Rules](01-basic-handling-rules.md): 2026 editions of C.04.1/C.04.2 in force; points and PAB value are configuration; unplayed rounds leave the colour history; floats are defined per system; round-record model with per-system hooks.
 - [Tie-break regulations](07-tie-breaks.md): C.07 2026 (from 1 Mar 2026), 26 tie-breaks plus modifiers in the Technical Commission's code syntax; unplayed rounds use adjusted and capped-dummy scores; no official 2026 test data or open-source reference.
 - [FIDE endorsement process and tooling](05-fide-endorsement.md): C.04.A was replaced by C.02.03 §7 technical acceptance, for full programs only (the library gets in by being embedded); needs a checker CLI + TRF26 generator; tested on 50k tournaments; only Dutch has accepted programs, and Gacrux (MIT) is TEC's reference tooling.
+- [Swiss Team System 2026](03-swiss-team-system.md): top-down scoregroups (bye first, choose upfloaters, then first-best pairing in identifier order), colour decided afterwards and never blocking, no endorsed program; Gacrux has the only C.04.6 module; several articles are ambiguous.
 
 ## Not yet specified
 
-- Algorithm design for each remaining system (Swiss Team, Dubov, Burstein, Lim, Double-Swiss), probably one prototype per system once the Dutch prototype sets the pattern.
+- Algorithm design for each remaining system (Swiss Team once its rulings are made, Dubov, Burstein, Lim, Double-Swiss), probably one prototype per system once the Dutch prototype sets the pattern.
 - How acceleration methods plug into the pairing systems.
 - Tie-break module design and how standings are modelled, including rulings on the 12 C.07 ambiguities (see Tie-break regulations) and how fixtures re-derived from the 2023 exercise set get validated (international arbiter review?).
 - Public library API (how a client hands over tournament state and receives pairings/standings).
