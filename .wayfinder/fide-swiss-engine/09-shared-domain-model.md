@@ -2,7 +2,7 @@
 title: Shared domain model across all systems
 labels: [wayfinder:grilling]
 status: open
-assignee:
+assignee: mark
 blocked_by: [01-basic-handling-rules, 02-dutch-system, 03-swiss-team-system, 04-other-swiss-systems, 06-trf-format, 07-tie-breaks, 12-historic-rule-editions, 16-olympiad-rules-scope]
 ---
 
