@@ -24,6 +24,9 @@ The FIDE Pairing System for individual players that aims to equalise, within a s
 **Burstein System**:
 The FIDE Pairing System for individual players that aims to give players with the same score equally strong opposition, measured by the Opposition Index (C.04.4.2). Its first rounds are Seeding Rounds.
 
+**Lim System**:
+The FIDE Pairing System for individual players that pairs the scoregroups from the top down to the Median Scoregroup, then from the bottom up, and the Median Scoregroup last, by scrutiny and exchange rather than by criteria (C.04.4.3). Its colour limits are part of compatibility.
+
 **Double-Swiss System**:
 The FIDE Pairing System for individual players in which every pairing is a Match of two games with colours reversed, scored per game (C.04.5, new in 2026). Its pairing procedure is the Swiss Team System's Top-Scoregroup Procedure, with no colour criteria.
 
@@ -92,6 +95,26 @@ _Avoid_: Floater (without direction), leftover
 
 **Limbo**:
 The MDPs of a bracket who are not paired in it and are bound to float again (Dutch 3.2.4).
+
+**Median Scoregroup**:
+The Lim scoregroup whose score is half of what the rounds played can give (Lim 2.2). It is paired last and downward, and it receives the floaters from both sides. It exists even when no player has that score, and then holds only floaters.
+_Avoid_: Middle group, centre group
+
+**Pairing Direction**:
+Whether a Lim scoregroup is paired downward (above the median, and the median itself) or upwards (below it). Every upward rule is the downward rule mirrored: the "first" player is the highest numbered (#1) downward and the lowest numbered upwards.
+_Avoid_: Side, half
+
+**Floater Type**:
+One of the four Lim floater kinds, a to d, in descending order of disadvantage (3.9.1): whether the player already floated into this scoregroup, and whether it has a compatible opponent in the adjacent one. A Lim scoregroup keeps as many pairings as it can have, and its floaters are chosen avoiding type a, then b, then c.
+_Avoid_: Floater class, category
+
+**Exchange Order**:
+The opponents the first player of a Lim scoregroup tries, in turn: the bottom half in order, then the top half from the bottom up (Lim 4.2–4.3, generalised). Once it has an opponent, the rest is proposed top half against bottom half again.
+_Avoid_: Permutation, transposition (Dubov's term)
+
+**Cracking**:
+Taking back the last pairing made on one side of a blocked Lim Median Scoregroup, so that its two players join the median as floaters from that side (Lim 2.6).
+_Avoid_: Unpairing, breaking
 
 **Bracket Sequence Number**:
 A participant's position, from 1, in its bracket's ranking (BSN). In Burstein a virtual player with BSN 0 is added for each outgoing floater: whoever it is paired with floats (4.1–4.2).
@@ -190,6 +213,10 @@ _Avoid_: Tie-break version
 **Profile**:
 A named, ready-made set of every tournament setting (Pairing System, editions, scoring, byes, acceleration, colour preferences, tie-breaks) except the number of rounds, for a common kind of event, such as an individual Swiss or a team Swiss. Any one setting can be overridden.
 _Avoid_: Preset, template, mode
+
+**Maxi-tournament**:
+A Lim setting, declared by the organiser and off by default, under which floater choices and exchanges for colour are allowed only between players rated within 100 points (Lim 3.2.3, 3.8, 5.7). It is never inferred from the size of the field.
+_Avoid_: Large tournament, open
 
 **Interpretation**:
 A named, switchable choice between two readings of an ambiguous article, used only where the text literally allows both; it has a documented default and is set in the tournament's settings or a Profile.
