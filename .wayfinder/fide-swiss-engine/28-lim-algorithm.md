@@ -2,7 +2,7 @@
 title: Readable Lim pairing algorithm
 labels: [wayfinder:prototype]
 status: open
-assignee:
+assignee: markdechamps
 blocked_by: [25-dubov-algorithm, 26-burstein-algorithm, 27-double-swiss-algorithm]
 ---
 
