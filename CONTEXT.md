@@ -24,6 +24,13 @@ The FIDE Pairing System for individual players that aims to equalise, within a s
 **Burstein System**:
 The FIDE Pairing System for individual players that aims to give players with the same score equally strong opposition, measured by the Opposition Index (C.04.4.2). Its first rounds are Seeding Rounds.
 
+**Double-Swiss System**:
+The FIDE Pairing System for individual players in which every pairing is a Match of two games with colours reversed, scored per game (C.04.5, new in 2026). Its pairing procedure is the Swiss Team System's Top-Scoregroup Procedure, with no colour criteria.
+
+**Match**:
+One pairing that consists of several games: the boards of two teams (Swiss Team, Olympiad) or two games between the same two players (Double-Swiss). A Double-Swiss match is forfeited only when a player forfeits both games; otherwise it counts as played, and the player scheduled White in game 1 had White (1.6) if at least one game was played.
+_Avoid_: Mini-match, game (for the whole match)
+
 **Seeding Round**:
 One of the first min(⌊rounds/2⌋, 4) rounds of a Burstein tournament, which are paired by the Dutch System (Burstein 1.6).
 
@@ -48,11 +55,11 @@ The FIDE rules that apply to every Swiss Pairing System (C.04.1), refined by eac
 ### Pairing a bracket
 
 **Bracket**:
-The group of participants paired together at one step: the residents of a scoregroup plus any moved-down participants left over from the bracket above (Dutch 1.3.2), or plus the upfloaters chosen for it (Swiss Team 1.3.2, Dubov 1.3.2), or plus the incoming floaters left unpaired by the bracket above (Burstein 1.2.2).
+The group of participants paired together at one step: the residents of a scoregroup plus any moved-down participants left over from the bracket above (Dutch 1.3.2), or plus the upfloaters chosen for it (Swiss Team 1.3.2, Double-Swiss 1.3.2, Dubov 1.3.2), or plus the incoming floaters left unpaired by the bracket above (Burstein 1.2.2).
 _Avoid_: Group, pool
 
 **Upfloater**:
-A participant from a lower scoregroup taken into a bracket (Swiss Team 3.5, Dubov 3.2.2), chosen as one set of upfloaters. A participant is **upfloated** in a round when it is paired with an opponent who had a higher score.
+A participant from a lower scoregroup taken into a bracket (Swiss Team 3.5, Double-Swiss 3.5, Dubov 3.2.2), chosen as one set of upfloaters. A participant is **upfloated** in a round when it is paired with an opponent who had a higher score.
 _Avoid_: Floater (without direction)
 
 **Maximum Upfloater**:
@@ -70,7 +77,14 @@ An ordering of a Dubov bracket's G2 players; the first one in lexicographic TPN 
 _Avoid_: Permutation (in the model)
 
 **Following scoregroup**:
-The scoregroup right below the bracket's score in the round's standings (Swiss Team [C6]). Once all its teams are paired, it is empty and [C6] holds; it is never the next non-empty level further down.
+The scoregroup right below the bracket's score in the round's standings (Swiss Team and Double-Swiss [C6]). Once all its teams are paired, it is empty and [C6] holds; it is never the next non-empty level further down.
+
+**Top-Scoregroup Procedure**:
+The pairing procedure shared, word for word, by the Swiss Team and Double-Swiss Systems (3.3–3.6): the PAB first, then repeatedly the top-scoregroup of the participants still unpaired, plus the first set of upfloaters in 3.5.4 order, paired by the first Pairing Identifier. The two systems differ only in their criteria lists and colour rules.
+
+**Pairing Identifier**:
+The TPNs of a bracket's top members (the smaller TPN of each pair) in ascending order, followed by the bottom member of each; pairings are taken in the lexicographic order of their identifiers (Swiss Team and Double-Swiss 3.6.2).
+_Avoid_: Pairing key, signature
 
 **Downfloater**:
 A participant left unpaired in a bracket and moved to the next one, where it is a **Moved-Down Participant** (MDP). Burstein calls it an outgoing floater of its bracket and an incoming floater of the next (1.2.2).

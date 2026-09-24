@@ -13,3 +13,5 @@ Can the Olympiad Pairing Rules (D.02, 2022) be written literally and readably on
 ## Context
 
 In scope per Olympiad Pairing Rules scope; the `olympiad()` profile is fixed in Tournament profiles. Evidence: `docs/research/other-swiss-systems.md` §9 (a Lim-like median-group order, its own ranking by the average of the top four ratings). No Oracle, and no Witness is known yet.
+
+From Readable Double-Swiss pairing algorithm: the Swiss Team parts are now one Top-Scoregroup Procedure shared with Double-Swiss (3.4 PAB, 3.5 upfloater set, 3.6 Pairing Identifier), with per-system criteria lists, float-lapse rounds, PAB value and colours. Check which of it D.02 can reuse, and whether its median-group order fits that procedure or needs its own.
