@@ -1,5 +1,6 @@
 package io.github.markdechamps.fideswiss.trf;
 
+import io.github.markdechamps.fideswiss.standings.TieBreakList;
 import io.github.markdechamps.fideswiss.tournament.Board;
 import io.github.markdechamps.fideswiss.tournament.BoardNumber;
 import io.github.markdechamps.fideswiss.tournament.Bye;
@@ -59,9 +60,10 @@ public final class TrfTournament {
         var absences = lastColumnOnlyMarksAbsences ? absenceMarks(players, columns) : Map.<ParticipantId, Bye>of();
         var participants = players.stream().map(PlayerRecord::participant).toList();
         var numberOfRounds = declaredNumberOfRounds(records).orElse(Math.max(columns, 1));
-        var settings = Profiles.individualSwiss(NumberOfRounds.of(numberOfRounds))
+        var profile = Profiles.individualSwiss(NumberOfRounds.of(numberOfRounds))
                 .with(RankingKey.asListed())
                 .with(initialColour(records, players));
+        var settings = declaredTieBreaks(records).map(profile::with).orElse(profile);
         return new TrfTournament(settings, participants, rounds, absences);
     }
 
@@ -233,6 +235,11 @@ public final class TrfTournament {
             }
         }
         return InitialColour.white();
+    }
+
+    /** 212 (the full standings order, from {@code PTS}) or 202 (the tie-breaks among equal points). */
+    private static Optional<TieBreakList> declaredTieBreaks(Map<String, List<String>> records) {
+        return firstValue(records, "212").or(() -> firstValue(records, "202")).map(TieBreakList::parse);
     }
 
     private static Optional<String> firstValue(Map<String, List<String>> records, String code) {
