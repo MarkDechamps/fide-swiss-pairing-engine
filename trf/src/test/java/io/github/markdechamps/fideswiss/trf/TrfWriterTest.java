@@ -37,7 +37,7 @@ class TrfWriterTest {
         void writesTheTrf26HeaderRecordsWithCrlfLineEndings() {
             var text = TrfWriter.write(tournament, TrfWriter.Options.named("Club open"));
 
-            assertThat(text).startsWith("012 Club open\r\n142 3\r\n152 W\r\n192 FIDE_DUTCH_2026\r\n");
+            assertThat(text).startsWith("012 Club open\r\n142 3\r\n152 W\r\n192 FIDE_DUTCH\r\n");
             assertThat(text).endsWith("\r\n").doesNotContain("\n\n").doesNotContain("162");
         }
 

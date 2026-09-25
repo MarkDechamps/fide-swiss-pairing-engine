@@ -79,9 +79,13 @@ public final class TrfWriter {
         return String.join(LINE_END, lines) + LINE_END;
     }
 
-    /** Only the Dutch System is implemented, so the code follows the Swiss Rules Edition alone. */
+    /**
+     * Only the Dutch System is implemented, so the code follows the Swiss Rules Edition alone. The 2026 rules get
+     * the bare code, which a reader takes as the latest edition (TRF CLI surface); bbpPairings v6 rejects
+     * {@code FIDE_DUTCH_2026}.
+     */
     private static String systemCode(SwissRulesEdition edition) {
-        return edition == SwissRulesEdition.EDITION_2026 ? "FIDE_DUTCH_2026" : "FIDE_DUTCH_2017";
+        return edition == SwissRulesEdition.EDITION_2026 ? "FIDE_DUTCH" : "FIDE_DUTCH_2017";
     }
 
     /** {@code 162}: symbol at column 6 with points at 7–10, each next pair 9 columns on; defaults left out. */
