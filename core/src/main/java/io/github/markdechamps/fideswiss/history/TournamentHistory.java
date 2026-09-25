@@ -63,9 +63,11 @@ public final class TournamentHistory {
     private static RoundRecord boardRecord(Tournament tournament, Board board, ParticipantId participant) {
         var colour = board.colourOf(participant);
         var result = board.outcome().resultOf(colour);
-        var points = tournament.settings().scoring().pointsFor(result);
+        var points = tournament.settings().scoring().pointsFor(board.outcome(), colour);
         var opponent = board.opponentOf(participant);
-        return board.outcome().isPlayed()
+        // A match met counts as a game played; the match systems read colours from the rounds themselves, since
+        // a Double-Swiss match where each player forfeits one game is a meeting without a colour (C.04.5 1.6).
+        return board.outcome().isMeeting()
                 ? new RoundRecord.Game(opponent, colour, result, points)
                 : new RoundRecord.Forfeit(opponent, result, points);
     }

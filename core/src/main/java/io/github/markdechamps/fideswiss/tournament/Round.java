@@ -69,19 +69,13 @@ public record Round(RoundNumber number, List<Board> boards, Map<ParticipantId, B
     public Round withColoursSwapped(BoardNumber swapped) {
         var corrected = boards.stream()
                 .map(board -> board.number().equals(swapped)
-                        ? new Board(board.number(), board.black(), board.white(), mirrored(board.outcome()))
+                        ? new Board(
+                                board.number(),
+                                board.black(),
+                                board.white(),
+                                board.outcome().mirrored())
                         : board)
                 .toList();
         return new Round(number, corrected, byes);
-    }
-
-    private static Outcome mirrored(Outcome outcome) {
-        return switch ((GameOutcome) outcome) {
-            case WHITE_WINS -> GameOutcome.BLACK_WINS;
-            case BLACK_WINS -> GameOutcome.WHITE_WINS;
-            case WHITE_WINS_BY_FORFEIT -> GameOutcome.BLACK_WINS_BY_FORFEIT;
-            case BLACK_WINS_BY_FORFEIT -> GameOutcome.WHITE_WINS_BY_FORFEIT;
-            case DRAW, ADJOURNED, DOUBLE_FORFEIT -> outcome;
-        };
     }
 }
