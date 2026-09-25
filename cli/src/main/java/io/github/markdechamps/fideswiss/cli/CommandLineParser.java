@@ -47,8 +47,12 @@ final class CommandLineParser {
         Optional<String> reply = Optional.empty();
         Optional<String> trace = Optional.empty();
         var overrides = SettingsOverrides.NONE;
+        var extras = new PairExtras();
         while (!queue.isEmpty()) {
             var argument = queue.removeFirst();
+            if (extras.accepts(argument, queue)) {
+                continue;
+            }
             switch (argument) {
                 case "-o" -> reply = Optional.of(value(queue, "-o"));
                 case "-l" -> trace = Optional.of(optionalValue(queue).orElse(""));
@@ -64,7 +68,7 @@ final class CommandLineParser {
                 }
             }
         }
-        return pairCommand(input, reply, trace, overrides);
+        return pairCommand(input, reply, trace, extras, overrides);
     }
 
     private static Command canonicalCheck(Deque<String> queue) {
@@ -97,8 +101,12 @@ final class CommandLineParser {
         Optional<String> reply = Optional.empty();
         Optional<String> trace = Optional.empty();
         var overrides = SettingsOverrides.NONE;
+        var extras = new PairExtras();
         while (!queue.isEmpty()) {
             var argument = queue.removeFirst();
+            if (extras.accepts(argument, queue)) {
+                continue;
+            }
             switch (argument) {
                 case "-p" -> {
                     pair = true;
@@ -127,15 +135,36 @@ final class CommandLineParser {
         if (!pair) {
             throw new UsageException("nothing to do: give -p to pair the next round or -c to check");
         }
-        return pairCommand(input, reply, trace, overrides);
+        return pairCommand(input, reply, trace, extras, overrides);
     }
 
     /** A bare {@code -l} writes the trace beside the input as {@code <input>.trace.txt}. */
     private static Command pairCommand(
-            String input, Optional<String> reply, Optional<String> trace, SettingsOverrides overrides) {
+            String input,
+            Optional<String> reply,
+            Optional<String> trace,
+            PairExtras extras,
+            SettingsOverrides overrides) {
         var file = required(input);
         var traceFile = trace.map(given -> given.isEmpty() ? file + ".trace.txt" : given);
-        return new Command.Pair(file, reply, traceFile, overrides);
+        return new Command.Pair(file, reply, traceFile, List.copyOf(extras.explain), extras.quiet, overrides);
+    }
+
+    /** The pairing flags both grammars share: {@code --explain <id>} (repeatable) and {@code --quiet}. */
+    private static final class PairExtras {
+        private final List<String> explain = new java.util.ArrayList<>();
+        private boolean quiet;
+
+        boolean accepts(String argument, Deque<String> queue) {
+            switch (argument) {
+                case "--explain" -> explain.add(value(queue, argument));
+                case "--quiet" -> quiet = true;
+                default -> {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 
     private static Optional<SettingsOverrides> settingsFlag(
