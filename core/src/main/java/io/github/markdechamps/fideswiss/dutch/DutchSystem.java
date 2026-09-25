@@ -109,7 +109,7 @@ public final class DutchSystem implements PairingSystem {
                 tournament.nextRound(),
                 boards,
                 pairingAllocatedBye.map(Player::id),
-                Map.of(),
+                tournament.absencesInNextRound(),
                 numbers,
                 new PairingTrace(trace));
     }

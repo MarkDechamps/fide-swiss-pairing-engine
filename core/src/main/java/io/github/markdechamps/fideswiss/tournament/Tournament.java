@@ -2,8 +2,10 @@ package io.github.markdechamps.fideswiss.tournament;
 
 import io.github.markdechamps.fideswiss.pairing.RoundPairing;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -18,11 +20,14 @@ public final class Tournament {
     private final TournamentSettings settings;
     private final List<Participant> participants;
     private final List<Round> rounds;
+    private final Attendance attendance;
 
-    private Tournament(TournamentSettings settings, List<Participant> participants, List<Round> rounds) {
+    private Tournament(
+            TournamentSettings settings, List<Participant> participants, List<Round> rounds, Attendance attendance) {
         this.settings = Objects.requireNonNull(settings, "settings");
         this.participants = List.copyOf(participants);
         this.rounds = List.copyOf(rounds);
+        this.attendance = attendance;
     }
 
     public static Tournament of(TournamentSettings settings, List<Participant> participants) {
@@ -30,7 +35,7 @@ public final class Tournament {
         if (!problems.isEmpty()) {
             throw new InvalidTournamentException(problems);
         }
-        return new Tournament(settings, participants, List.of());
+        return new Tournament(settings, participants, List.of(), Attendance.everyonePresent());
     }
 
     /** The simplest tournament: the baseline profile ({@link Profiles#individualSwiss}). */
@@ -61,7 +66,41 @@ public final class Tournament {
 
     /** The participants to be paired in the next round, in registration order. */
     public List<Participant> participantsToBePaired() {
-        return participants;
+        return participants.stream()
+                .filter(participant -> absenceInNextRound(participant.id()).isEmpty())
+                .toList();
+    }
+
+    /** Everyone known in advance not to be paired in the next round, with why (GHR 3.2, 3.3). */
+    public Map<ParticipantId, Bye> absencesInNextRound() {
+        var absences = new HashMap<ParticipantId, Bye>();
+        participants.forEach(participant ->
+                absenceInNextRound(participant.id()).ifPresent(bye -> absences.put(participant.id(), bye)));
+        return Map.copyOf(absences);
+    }
+
+    /** A Requested Bye for a round not yet recorded (GHR 3.3). */
+    public Tournament requestBye(ParticipantId participant, RoundNumber round, RequestedBye bye) {
+        requireFutureRound(participant, round);
+        return new Tournament(
+                settings, participants, rounds, attendance.withRequestedBye(participant, round, bye.bye()));
+    }
+
+    /** A Withdrawal: the participant is no longer paired from that round on (GHR 3.2). */
+    public Tournament withdraw(ParticipantId participant, RoundNumber from) {
+        requireFutureRound(participant, from);
+        return new Tournament(settings, participants, rounds, attendance.withWithdrawal(participant, from));
+    }
+
+    private Optional<Bye> absenceInNextRound(ParticipantId participant) {
+        return attendance.absenceIn(participant, nextRound());
+    }
+
+    private void requireFutureRound(ParticipantId participant, RoundNumber round) {
+        participant(participant);
+        if (round.isBefore(nextRound())) {
+            throw new InvalidTournamentException(Problem.of("Round " + round + " is already recorded", participant));
+        }
     }
 
     /**
@@ -107,7 +146,7 @@ public final class Tournament {
         }
         var recorded = new ArrayList<>(rounds);
         recorded.add(round);
-        return new Tournament(settings, participants, recorded);
+        return new Tournament(settings, participants, recorded, attendance);
     }
 
     private boolean wasEverPaired(ParticipantId participant) {
