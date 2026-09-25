@@ -144,6 +144,18 @@ _Avoid_: Score (a Score is points), weight
 The best criteria vector any candidate of a bracket can reach, computed exactly before the search; the first candidate generated that reaches it is the one chosen (Dutch 3.4 "perfect"). A candidate found to reach it is a **known optimal candidate**.
 _Avoid_: Perfect bound, target (in the model), witness (a Witness is a verification program)
 
+**Penultimate Pairing Bracket**:
+Dutch 2017 only (A.9): the lowest bracket whose downfloaters, together with every player below, can no longer all be paired unless completion is required there; it is re-paired with completion (C.4) and without the look-ahead (C.7). Dutch 2026 has none: [C4] applies in every bracket.
+_Avoid_: PPB (in the model)
+
+**Collapsed Last Bracket**:
+Dutch 2017 only (A.9): the Penultimate Pairing Bracket's downfloaters plus every lower player, paired as one bracket that completes the round; each player keeps its own score.
+_Avoid_: CLB (in the model), collapsed scoregroup
+
+**Pairing Score Difference**:
+Dutch 2017 only (A.8): the sum of the score differences of a candidate's pairs, plus one term per downfloater; 2017's C.6 minimises it where 2026's [C7] minimises the downfloaters' scores.
+_Avoid_: PSD (in the model)
+
 ### Scores
 
 **Score**:
