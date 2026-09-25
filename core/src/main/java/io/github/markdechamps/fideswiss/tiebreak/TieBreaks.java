@@ -49,6 +49,11 @@ final class TieBreaks {
             case "TPN" -> OwnRecordTieBreak.pairingNumber(code);
             case "RTNG" -> new RatingTieBreak(OwnRecordTieBreak.rating(code));
             case "KS" -> OwnRecordTieBreak.koya(code);
+            case "AOB" -> FormulaTieBreak.averageOfOpponentsBuchholz(code);
+            case "TPR" -> new RatingTieBreak(FormulaTieBreak.tournamentPerformanceRating(code));
+            case "PTP" -> new RatingTieBreak(FormulaTieBreak.perfectTournamentPerformance(code));
+            case "APRO" -> new RatingTieBreak(FormulaTieBreak.averagePerformanceOfOpponents(code));
+            case "APPO" -> new RatingTieBreak(FormulaTieBreak.averagePerfectPerformanceOfOpponents(code));
             case "ARO" ->
                 new RatingTieBreak(new TermTieBreak(
                         code,
