@@ -14,7 +14,7 @@ A Java reference library for the FIDE Swiss pairing systems: it pairs the next r
 | C.04.2 | General Handling Rules for Swiss Tournaments | 2026 | experimental: pairing numbers (2.2–2.4), requested byes and withdrawals (3.2–3.3), colour history (3.4), forfeits (3.5), board order (3.6) |
 | C.04.3 | Dutch System | 2026 | experimental: identical to bbpPairings v6.0.0 in every round of 488 generated tournaments (10–200 players) |
 | C.04.1–C.04.3 | Basic Rules, General Handling Rules and Dutch System (historic, for replaying older tournaments) | 2017 / pre-2026 | planned |
-| C.04.4.1 | Dubov System | 2026 | planned |
+| C.04.4.1 | Dubov System | 2026 | experimental: agrees with a plain enumeration of the text in every simulated round; Handbook examples pass; no Oracle exists and the Witness review is pending |
 | C.04.4.2 | Burstein System | 2026 | planned |
 | C.04.4.3 | Lim System | 2026 | planned |
 | C.04.5 | Double-Swiss System | 2026 | planned |
@@ -40,6 +40,18 @@ Where the text leaves room, the library follows one documented reading, each ver
 - **[C18]/[C20]**: a Limbo MDP's score difference is greater than any resident's and grows with its own score.
 - Only Numbered Participants (taken into account for this round's pairing or an earlier one) hold a Pairing Number (ADR 0006).
 
+### Readings of the Dubov 2026 text
+
+No Oracle exists for Dubov, so the search is checked against a test-scope Literal Enumerator that tries every set of upfloaters, every set of shifters and every transposition in the text's order. Fixed readings:
+
+- **Upfloated** (1.8, [C8]–[C10]) means paired with an opponent who had a higher score when the round was paired, whether or not the game was then played; a bye is never an upfloat.
+- **[C9]** adds up the upfloats of the Maximum Upfloaters chosen; read as a count it would only repeat [C8].
+- **4.4.1**'s "Article 2.2.4" is 3.2.4, a typo.
+- **Shifters** (3.2.4): the first shift takes from the whole smaller subgroup, the equalising shift only from the larger subgroup's own players. In a bracket where nobody has played, the TPN halves take the 4.3.2 order of the colour their subgroup stands for.
+- **ARO** is an integer rounded half up (1.7.1), and S1 (3.2.5) and 4.3.2 use the rounded value.
+- **3.1.4** "played the highest number of games" counts games played over the board; **5.2.4** compares the colours of games played, from the latest back (GHR 3.4).
+- **MaxT** (1.8.2) uses the planned number of rounds.
+
 ## Library
 
 ```java
@@ -56,14 +68,15 @@ The pairing carries its boards in GHR 3.6 order, the PAB, everyone left out with
 
 ```sh
 fide-swiss pair <in.trf> [-o <reply>] [-l [<trace>]]      # canonical
-fide-swiss [--dutch] <in.trf> -p [<reply>] [-l [<trace>]] # JaVaFo / bbpPairings form
+fide-swiss [--dutch|--dubov] <in.trf> -p [<reply>] [-l [<trace>]] # JaVaFo / bbpPairings form
 fide-swiss check <in.trf> [--round <r>]                   # also <in.trf> -c [<r>] and -check <in.trf>
 fide-swiss version                                        # also -r
 ```
 
 - The Pairing Reply is JaVaFo's: the number of lines, then one `white black` line per board using the file's own ids, and the PAB as `id 0` last.
 - `check` re-pairs every recorded round from the rounds before it and prints each ILLEGAL round (with the articles broken) or DIFFERENT round (the file's and the system's pairing).
-- Flags override the file's records: `--system dutch`, `--rounds <n>` (over `142`/`XXR`), `--initial-colour white|black` (over `152`/`XXC`).
+- Record `192` selects the system: `FIDE_DUTCH`, `FIDE_DUTCH_2026` (alias `FIDE_DUTCH_2025`), `FIDE_DUBOV`, `FIDE_DUBOV_2026`. A bare code means the 2026 rules, never the tournament date; any other code is an error (exit 3).
+- Flags override the file's records: `--system dutch|dubov` (or `--dutch`, `--dubov`), `--rounds <n>` (over `142`/`XXR`), `--initial-colour white|black` (over `152`/`XXC`).
 - The reader takes TRF26 and TRF16 with CR, LF or CRLF line endings, UTF-8 or ISO-8859-1. A last round column holding only `0000 - H/F/Z` marks means those participants are absent from the round to be paired.
 
 | Exit code | Meaning |
