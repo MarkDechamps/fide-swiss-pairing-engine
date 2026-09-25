@@ -31,6 +31,11 @@ public final class DutchSystem implements PairingSystem {
     private final DutchEdition edition = DutchEdition.edition2026();
 
     @Override
+    public String name() {
+        return "C.04.3 Dutch System 2026";
+    }
+
+    @Override
     public RoundPairing pairNextRound(Tournament tournament) {
         var numbers = tournament.pairingNumbers();
         var round = new RoundToPair(

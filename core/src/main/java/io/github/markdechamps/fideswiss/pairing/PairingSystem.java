@@ -14,6 +14,11 @@ public interface PairingSystem {
 
     RoundPairing pairNextRound(Tournament tournament);
 
+    /** The system and edition, as the Chief Arbiter declares it (GHR 1.3). */
+    default String name() {
+        return getClass().getSimpleName();
+    }
+
     /** The rules a proposed pairing for the next round breaks: the Basic Rules, and the system's own. */
     default List<Violation> violationsOf(Tournament tournament, ProposedPairing proposed) {
         return BasicRules.violationsOf(tournament, proposed);

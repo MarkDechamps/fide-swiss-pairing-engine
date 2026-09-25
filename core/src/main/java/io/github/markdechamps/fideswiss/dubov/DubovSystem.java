@@ -37,6 +37,11 @@ public final class DubovSystem implements PairingSystem {
             game -> higherRanked(game).pairingNumber());
 
     @Override
+    public String name() {
+        return "C.04.4.1 Dubov System 2026";
+    }
+
+    @Override
     public RoundPairing pairNextRound(Tournament tournament) {
         var players = playersToPair(tournament);
         try {

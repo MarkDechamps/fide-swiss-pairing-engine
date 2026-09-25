@@ -59,7 +59,11 @@ public final class TrfTournament {
         var absences = lastColumnOnlyMarksAbsences ? absenceMarks(players, columns) : Map.<ParticipantId, Bye>of();
         var participants = players.stream().map(PlayerRecord::participant).toList();
         var numberOfRounds = declaredNumberOfRounds(records).orElse(Math.max(columns, 1));
-        var settings = Profiles.individualSwiss(NumberOfRounds.of(numberOfRounds))
+        var profile = Profiles.individualSwiss(NumberOfRounds.of(numberOfRounds));
+        var settings = firstValue(records, "192")
+                .flatMap(PairingSystemCode::parse)
+                .map(profile::with)
+                .orElse(profile)
                 .with(RankingKey.asListed())
                 .with(initialColour(records, players));
         return new TrfTournament(settings, participants, rounds, absences);
