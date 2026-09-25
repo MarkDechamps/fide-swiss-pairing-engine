@@ -9,3 +9,7 @@ bbpPairings.exe --dutch -g <config> -o <file> -s <seed>
 with 10–24 (`small-*`), 30–40 (`mid-*`) and 55–62 (`big-*`) players, forfeits, half-point byes and
 retirements. Every round in each file is bbp's own pairing, so `DutchRegressionCorpusTest` re-pairs each
 round from the rounds before it and requires the identical pairing.
+
+`baku-*` and `xxa-*` are accelerated tournaments: `../bbp-drive.py` pairs every round with `bbpPairings --dutch
+<file> -p`, plays random results and requested byes, and records the Virtual Points as `XXA` lines (the Baku
+schedule for `baku-*`, random values for `xxa-*`), so they check how the Pairing Score is read.
