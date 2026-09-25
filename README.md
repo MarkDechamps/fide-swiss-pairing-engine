@@ -13,7 +13,7 @@ A Java reference library for the FIDE Swiss pairing systems: it pairs the next r
 | C.04.1 | Basic Rules for Swiss Systems | 2026 | experimental: absolute criteria, PAB eligibility (Art. 4), checked in `check` |
 | C.04.2 | General Handling Rules for Swiss Tournaments | 2026 | experimental: pairing numbers (2.2–2.4), requested byes and withdrawals (3.2–3.3), colour history (3.4), forfeits (3.5), board order (3.6) |
 | C.04.3 | Dutch System | 2026 | experimental: identical to bbpPairings v6.0.0 in every round of 488 generated tournaments (10–200 players) |
-| C.04.1–C.04.3 | Basic Rules, General Handling Rules and Dutch System (historic, for replaying older tournaments) | 2017 / pre-2026 | planned |
+| C.04.1–C.04.3 | Basic Rules, General Handling Rules and Dutch System (historic, for replaying older tournaments) | 2017 / pre-2026 | experimental: identical to bbpPairings v5.0.1 in every round of 354 generated tournaments (3,492 rounds, 10–62 players, up to 30 rounds) |
 | C.04.4.1 | Dubov System | 2026 | planned |
 | C.04.4.2 | Burstein System | 2026 | planned |
 | C.04.4.3 | Lim System | 2026 | planned |
