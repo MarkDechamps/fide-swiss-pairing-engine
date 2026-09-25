@@ -126,7 +126,7 @@ public final class TrfWriter {
             column += ROUND_WIDTH;
         }
         var absence = tournament.absencesInNextRound().get(participant.id());
-        if (absence != null) {
+        if (absence != null && tournament.settings().numberOfRounds().includes(tournament.nextRound())) {
             put(line, column, "0000 - " + byeCode(absence));
         }
         return line.toString().stripTrailing();

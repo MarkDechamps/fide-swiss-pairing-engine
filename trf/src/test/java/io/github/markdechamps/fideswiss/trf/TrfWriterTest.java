@@ -94,6 +94,20 @@ class TrfWriterTest {
         }
     }
 
+    @Nested
+    class GivenAFinishedTournamentWithAWithdrawal {
+
+        @Test
+        void writesNoColumnBeyondTheLastRound() {
+            var tournament = played(Profiles.individualSwiss(NumberOfRounds.of(1)), GameOutcome.DRAW, GameOutcome.DRAW)
+                    .withdraw(id(2), RoundNumber.of(2));
+
+            var text = TrfWriter.write(tournament, TrfWriter.Options.named("Finished"));
+
+            assertThat(PlayerRecord.columns(playerLine(text, 2), 102, 109)).isEmpty();
+        }
+    }
+
     private static String playerLine(String text, int rank) {
         return List.of(text.split("\r\n")).stream()
                 .filter(line -> line.startsWith("001"))
