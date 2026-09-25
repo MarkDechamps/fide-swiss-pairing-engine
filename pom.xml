@@ -28,6 +28,7 @@
     <modules>
         <module>core</module>
         <module>trf</module>
+        <module>generator</module>
         <module>cli</module>
         <module>oracle-it</module>
     </modules>
@@ -68,6 +69,11 @@
             <dependency>
                 <groupId>io.github.markdechamps</groupId>
                 <artifactId>fide-swiss-pairing-engine-cli</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.markdechamps</groupId>
+                <artifactId>fide-swiss-pairing-engine-generator</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
