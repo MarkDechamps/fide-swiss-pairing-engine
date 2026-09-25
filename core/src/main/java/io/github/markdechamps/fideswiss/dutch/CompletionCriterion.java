@@ -30,9 +30,13 @@ final class CompletionCriterion {
         this.lowestReachablePabScore = lowestReachablePabScore;
     }
 
-    static CompletionCriterion forRound(PlayerSet players, AbsoluteCriteria absolute) {
+    /** {@code foldsPabScore}: the edition has [C5] (2026); 2017 has no PAB-score criterion, so nothing folds in. */
+    static CompletionCriterion forRound(PlayerSet players, AbsoluteCriteria absolute, boolean foldsPabScore) {
         var oracle = new CompletionOracle(players, absolute::mayMeet);
         var anyScore = new CompletionCriterion(players, absolute, oracle, Optional.empty());
+        if (!foldsPabScore) {
+            return anyScore;
+        }
         var everyone = players.maskOf(players.inPairingOrder());
         var lowest =
                 anyScore.lowestPossiblePairingAllocatedByeAssignee(everyone).map(Player::score);

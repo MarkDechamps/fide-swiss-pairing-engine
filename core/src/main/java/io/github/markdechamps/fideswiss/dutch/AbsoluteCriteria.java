@@ -1,12 +1,16 @@
 package io.github.markdechamps.fideswiss.dutch;
 
-/** Dutch 2.1: [C1]–[C3]. */
+import io.github.markdechamps.fideswiss.history.PairingAllocatedByeBar;
+
+/** Dutch 2.1: [C1]–[C3] (2017: C.1–C.3, the same three with the pre-2026 Basic Rules' PAB bar). */
 final class AbsoluteCriteria {
 
     private final RoundToPair round;
+    private final PairingAllocatedByeBar pairingAllocatedByeBar;
 
-    AbsoluteCriteria(RoundToPair round) {
+    AbsoluteCriteria(RoundToPair round, PairingAllocatedByeBar pairingAllocatedByeBar) {
         this.round = round;
+        this.pairingAllocatedByeBar = pairingAllocatedByeBar;
     }
 
     boolean mayMeet(Player a, Player b) {
@@ -15,7 +19,7 @@ final class AbsoluteCriteria {
 
     /** [C2]. */
     boolean mayReceivePairingAllocatedBye(Player player) {
-        return player.mayReceivePairingAllocatedBye();
+        return player.mayReceivePairingAllocatedBye(pairingAllocatedByeBar);
     }
 
     /** [C1]. */
