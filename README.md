@@ -19,7 +19,7 @@ A Java reference library for the FIDE Swiss pairing systems: it pairs the next r
 | C.04.4.3 | Lim System | 2026 | planned |
 | C.04.5 | Double-Swiss System | 2026 | planned |
 | C.04.6 | Swiss Team Pairing System | 2026 | planned |
-| C.04.7 | Acceleration methods: Baku, for every C.04 system (not the Olympiad Pairing Rules), or explicit virtual points from TRF `250` | 2026 / pre-2026 | planned |
+| C.04.7 | Acceleration methods: Baku, for every C.04 system (not the Olympiad Pairing Rules), or explicit virtual points from TRF `250` | 2026 / pre-2026 | experimental (2026): Baku and explicit Virtual Points (`250`, `XXA`, `_BAKU`) for the Dutch System, identical to bbpPairings v6 on 159 accelerated tournaments |
 | D.02 | Olympiad Pairing Rules | 2022 | planned |
 | C.07 | Tie-break Regulations | 2026-03 | planned |
 | C.07 | Tie-break Regulations (historic) | 2024-08 | planned |
@@ -47,8 +47,18 @@ var tournament = Tournament.of(participants, NumberOfRounds.of(9));   // Dutch 2
 var pairing = tournament.pairNextRound();
 tournament = tournament.withRound(pairing.completedWith(outcomes));    // outcomes by board
 tournament = tournament.requestBye(id, RoundNumber.of(4), RequestedBye.half());
+tournament = tournament.withdraw(id, RoundNumber.of(6));
+tournament = tournament.enterLate(participant, RoundNumber.of(2));      // or MissedRounds.halfPointByes()
+tournament = tournament.withCorrectedOutcome(round, id, outcome);      // also colours and ratings (GHR 4.3)
 var check = tournament.check(ProposedPairing.of(boards, bye));         // violations, differences
+var why = pairing.about(id);                                           // bracket, floats, opponent, colour rule
+tournament.pairNextRound(progress);                                    // PairingProgress; interrupt to cancel
 ```
+
+Profiles: `Profiles.individualSwiss(rounds)` (the baseline) and `Profiles.acceleratedOpen(rounds)` (with Baku). Any setting can be overridden with `with(...)`, for example `with(Acceleration.explicit(virtualPoints))` or `with(InitialColour.black())`.
+
+- Acceleration: the Pairing Score (Score plus the round's Virtual Points) is the score wherever the text says score, floats and board order included; standings never see it. Baku's Accelerated Group is the top 2·⌈N/4⌉ of the round-1 list, and a Late Entry ranked above its last participant joins it (C.04.7 1.3).
+- A rating correction renumbers until four rounds are recorded, and no longer after that (GHR 2.3).
 
 The pairing carries its boards in GHR 3.6 order, the PAB, everyone left out with the reason, the Pairing Numbers it used and a trace of the brackets and colour rules.
 
@@ -63,6 +73,7 @@ fide-swiss version                                        # also -r
 
 - The Pairing Reply is JaVaFo's: the number of lines, then one `white black` line per board using the file's own ids, and the PAB as `id 0` last.
 - `check` re-pairs every recorded round from the rounds before it and prints each ILLEGAL round (with the articles broken) or DIFFERENT round (the file's and the system's pairing).
+- `pair --explain <id>` writes that participant's explanation to stderr (or into the `-l` trace); `--quiet` suppresses the progress line, which otherwise appears on a terminal's stderr after 500 ms. Ctrl-C exits with 130 without writing a reply.
 - Flags override the file's records: `--system dutch`, `--rounds <n>` (over `142`/`XXR`), `--initial-colour white|black` (over `152`/`XXC`).
 - The reader takes TRF26 and TRF16 with CR, LF or CRLF line endings, UTF-8 or ISO-8859-1. A last round column holding only `0000 - H/F/Z` marks means those participants are absent from the round to be paired.
 
