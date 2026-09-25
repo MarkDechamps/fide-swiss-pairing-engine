@@ -23,7 +23,7 @@ A Java reference library for the FIDE Swiss pairing systems: it pairs the next r
 | D.02 | Olympiad Pairing Rules | 2022 | planned |
 | C.07 | Tie-break Regulations | 2026-03 | planned |
 | C.07 | Tie-break Regulations (historic) | 2024-08 | planned |
-| — | TRF26 (reads TRF16 and the JaVaFo dialect) | 2026 | planned |
+| — | TRF26 (reads TRF16 and the JaVaFo dialect; a Double-Swiss match is written as two rounds, one per game) | 2026 | planned |
 
 The Swiss rules edition and the tie-break edition are chosen explicitly per tournament; the latest is the default.
 
