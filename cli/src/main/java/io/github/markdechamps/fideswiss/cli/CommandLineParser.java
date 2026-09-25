@@ -1,12 +1,15 @@
 package io.github.markdechamps.fideswiss.cli;
 
+import io.github.markdechamps.fideswiss.pairing.PairingSystem;
+import io.github.markdechamps.fideswiss.pairing.PairingSystems;
 import io.github.markdechamps.fideswiss.tournament.InitialColour;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * The two grammars of TRF CLI surface: a subcommand name first gives the canonical one ({@code pair in.trf -o
@@ -14,7 +17,8 @@ import java.util.Set;
  */
 final class CommandLineParser {
 
-    private static final Set<String> SYSTEMS = Set.of("dutch");
+    private static final Map<String, Supplier<PairingSystem>> SYSTEMS =
+            Map.of("dutch", PairingSystems::dutch, "dubov", PairingSystems::dubov);
 
     private CommandLineParser() {}
 
@@ -140,21 +144,23 @@ final class CommandLineParser {
 
     private static Optional<SettingsOverrides> settingsFlag(
             String argument, Deque<String> queue, SettingsOverrides overrides) {
-        if (argument.startsWith("--") && SYSTEMS.contains(argument.substring(2))) {
-            return Optional.of(overrides);
+        if (argument.startsWith("--") && SYSTEMS.containsKey(argument.substring(2))) {
+            return Optional.of(overrides.withSystem(system(argument.substring(2))));
         }
         return switch (argument) {
-            case "--system" -> {
-                var system = value(queue, argument);
-                if (!SYSTEMS.contains(system)) {
-                    throw new UsageException("unsupported pairing system " + system);
-                }
-                yield Optional.of(overrides);
-            }
+            case "--system" -> Optional.of(overrides.withSystem(system(value(queue, argument))));
             case "--rounds" -> Optional.of(overrides.withRounds(NumberOfRounds.of(number(value(queue, argument)))));
             case "--initial-colour" -> Optional.of(overrides.withInitialColour(colour(value(queue, argument))));
             default -> Optional.empty();
         };
+    }
+
+    private static PairingSystem system(String name) {
+        var system = SYSTEMS.get(name);
+        if (system == null) {
+            throw new UsageException("unsupported pairing system " + name);
+        }
+        return system.get();
     }
 
     private static InitialColour colour(String value) {
