@@ -61,7 +61,8 @@ public final class TrfTournament {
         var numberOfRounds = declaredNumberOfRounds(records).orElse(Math.max(columns, 1));
         var settings = Profiles.individualSwiss(NumberOfRounds.of(numberOfRounds))
                 .with(RankingKey.asListed())
-                .with(initialColour(records, players));
+                .with(initialColour(records, players))
+                .with(AccelerationRecords.read(records, numberOfRounds));
         return new TrfTournament(settings, participants, rounds, absences);
     }
 
@@ -212,7 +213,7 @@ public final class TrfTournament {
                 .map(value ->
                         value.trim().toUpperCase().startsWith("B") ? InitialColour.black() : InitialColour.white())
                 .or(() -> records.getOrDefault("XXC", List.of()).stream()
-                        .flatMap(value -> TrfReader.words(value).stream())
+                        .flatMap(line -> TrfReader.words(TrfReader.valueOf(line)).stream())
                         .filter(word -> word.equals("white1") || word.equals("black1"))
                         .reduce((first, second) -> second)
                         .map(word -> word.equals("black1") ? InitialColour.black() : InitialColour.white()));
@@ -236,6 +237,6 @@ public final class TrfTournament {
     }
 
     private static Optional<String> firstValue(Map<String, List<String>> records, String code) {
-        return records.getOrDefault(code, List.of()).stream().findFirst();
+        return records.getOrDefault(code, List.of()).stream().findFirst().map(TrfReader::valueOf);
     }
 }

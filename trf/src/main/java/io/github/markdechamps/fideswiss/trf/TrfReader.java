@@ -15,6 +15,7 @@ public final class TrfReader {
     public static TrfTournament read(String text) {
         var players = new ArrayList<PlayerRecord>();
         var records = new LinkedHashMap<String, List<String>>();
+        // Records keep their whole line: some, like XXA and 250, are read by column.
         for (var line : text.split("\r\n|\r|\n")) {
             if (line.length() < 3 || line.startsWith("###")) {
                 continue;
@@ -23,14 +24,15 @@ public final class TrfReader {
             if (code.equals("001")) {
                 players.add(PlayerRecord.parse(line));
             } else {
-                records.computeIfAbsent(code, key -> new ArrayList<>()).add(valueOf(line));
+                records.computeIfAbsent(code, key -> new ArrayList<>()).add(line);
             }
         }
         players.sort(Comparator.comparingInt(PlayerRecord::startRank));
         return TrfTournament.of(players, records);
     }
 
-    private static String valueOf(String line) {
+    /** A header record's value: everything from column 5 on. */
+    static String valueOf(String line) {
         return line.length() > 4 ? line.substring(4).strip() : "";
     }
 
