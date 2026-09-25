@@ -20,17 +20,30 @@ import java.util.stream.Collectors;
  */
 public final class Tournament {
 
+    private static final int NUMBERING_FREEZES_AFTER_ROUND = 4;
+
     private final TournamentSettings settings;
     private final List<Participant> participants;
     private final List<Round> rounds;
     private final Attendance attendance;
+    private final Map<ParticipantId, Rating> numberingRatings;
 
     private Tournament(
-            TournamentSettings settings, List<Participant> participants, List<Round> rounds, Attendance attendance) {
+            TournamentSettings settings,
+            List<Participant> participants,
+            List<Round> rounds,
+            Attendance attendance,
+            Map<ParticipantId, Rating> numberingRatings) {
         this.settings = Objects.requireNonNull(settings, "settings");
         this.participants = List.copyOf(participants);
         this.rounds = List.copyOf(rounds);
         this.attendance = attendance;
+        this.numberingRatings = Map.copyOf(numberingRatings);
+    }
+
+    private Tournament(
+            TournamentSettings settings, List<Participant> participants, List<Round> rounds, Attendance attendance) {
+        this(settings, participants, rounds, attendance, Map.of());
     }
 
     public static Tournament of(TournamentSettings settings, List<Participant> participants) {
@@ -96,7 +109,8 @@ public final class Tournament {
     /** A Withdrawal: the participant is no longer paired from that round on (GHR 3.2). */
     public Tournament withdraw(ParticipantId participant, RoundNumber from) {
         requireFutureRound(participant, from);
-        return new Tournament(settings, participants, rounds, attendance.withWithdrawal(participant, from));
+        return new Tournament(
+                settings, participants, rounds, attendance.withWithdrawal(participant, from), numberingRatings);
     }
 
     /**
@@ -118,7 +132,50 @@ public final class Tournament {
         var registered = new ArrayList<>(participants);
         registered.add(participant);
         return new Tournament(
-                settings, registered, rounds, attendance.withLateEntry(participant.id(), firstRound, missed.bye()));
+                settings,
+                registered,
+                rounds,
+                attendance.withLateEntry(participant.id(), firstRound, missed.bye()),
+                numberingRatings);
+    }
+
+    /** A Correction of a recorded outcome (GHR 4.3); it affects future pairings only. */
+    public Tournament withCorrectedOutcome(RoundNumber round, ParticipantId participant, Outcome corrected) {
+        return withRoundReplaced(round, recordedRound(round).withOutcome(participant, corrected));
+    }
+
+    /** A Correction of a board's colours (GHR 4.3). */
+    public Tournament withCorrectedColours(RoundNumber round, BoardNumber board) {
+        return withRoundReplaced(round, recordedRound(round).withColoursSwapped(board));
+    }
+
+    /**
+     * A Correction of a rating (GHR 2.3, 4.3). Pairing Numbers follow it until the fourth round has been paired
+     * (read as: four rounds recorded); after that the numbering keeps the rating it had.
+     */
+    public Tournament withCorrectedRating(ParticipantId corrected, Rating rating) {
+        var previous = participant(corrected);
+        var frozen = new HashMap<>(numberingRatings);
+        if (rounds.size() >= NUMBERING_FREEZES_AFTER_ROUND) {
+            frozen.putIfAbsent(corrected, previous.rating());
+        }
+        var updated = participants.stream()
+                .map(participant -> participant.id().equals(corrected) ? participant.withRating(rating) : participant)
+                .toList();
+        return new Tournament(settings, updated, rounds, attendance, frozen);
+    }
+
+    private Round recordedRound(RoundNumber round) {
+        if (round.value() > rounds.size()) {
+            throw new InvalidTournamentException(Problem.of("Round " + round + " is not recorded"));
+        }
+        return rounds.get(round.value() - 1);
+    }
+
+    private Tournament withRoundReplaced(RoundNumber round, Round corrected) {
+        var recorded = new ArrayList<>(rounds);
+        recorded.set(round.value() - 1, corrected);
+        return new Tournament(settings, participants, recorded, attendance, numberingRatings);
     }
 
     /** Why the participant is known in advance not to be paired in the round, if it is not. */
@@ -143,9 +200,15 @@ public final class Tournament {
      */
     public PairingNumbers pairingNumbers() {
         var toBePaired = new HashSet<>(participantsToBePaired());
-        var numbered = participants.stream()
-                .filter(participant -> toBePaired.contains(participant) || wasEverPaired(participant.id()))
-                .sorted(settings.rankingKey().order(participants))
+        var asRanked = participants.stream()
+                .map(participant ->
+                        participant.withRating(numberingRatings.getOrDefault(participant.id(), participant.rating())))
+                .toList();
+        var numbered = asRanked.stream()
+                .filter(participant ->
+                        toBePaired.stream().anyMatch(paired -> paired.id().equals(participant.id()))
+                                || wasEverPaired(participant.id()))
+                .sorted(settings.rankingKey().order(asRanked))
                 .map(Participant::id)
                 .toList();
         return PairingNumbers.inRankingOrder(numbered);
@@ -240,7 +303,7 @@ public final class Tournament {
         }
         var recorded = new ArrayList<>(rounds);
         recorded.add(round);
-        return new Tournament(settings, participants, recorded, attendance);
+        return new Tournament(settings, participants, recorded, attendance, numberingRatings);
     }
 
     private boolean wasEverPaired(ParticipantId participant) {

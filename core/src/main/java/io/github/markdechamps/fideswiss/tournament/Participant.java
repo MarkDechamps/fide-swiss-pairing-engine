@@ -20,4 +20,8 @@ public record Participant(ParticipantId id, Name name, Rating rating, Optional<T
     public Participant withTitle(Title title) {
         return new Participant(id, name, rating, Optional.of(title));
     }
+
+    public Participant withRating(Rating corrected) {
+        return new Participant(id, name, corrected, title);
+    }
 }
