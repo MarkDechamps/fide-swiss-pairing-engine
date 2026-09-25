@@ -75,8 +75,8 @@ if (customer != null) {
 process(customer);
 }
 
-// Good (full type used for the example, but prefer var)
-Optional<Customer> customer = repository.findCustomer(id);
+// Good
+var customer = repository.findCustomer(id);
 
 // use primitives like boolean or int instead of Boolean or Integer when possible to avoid nulls
 
