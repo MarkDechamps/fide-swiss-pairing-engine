@@ -38,7 +38,7 @@ _Avoid_: Mini-match, game (for the whole match)
 One of the first min(⌊rounds/2⌋, 4) rounds of a Burstein tournament, which are paired by the Dutch System (Burstein 1.6).
 
 **Olympiad Pairing Rules**:
-The FIDE Pairing System for the Chess Olympiad (D.02), a team Swiss defined outside C.04.
+The FIDE Pairing System for the Chess Olympiad (D.02), a team Swiss defined outside C.04. It pairs the groups of equal matchpoints from the top down to the Median Group, from the bottom up to it, and the Median Group last, by the order of 9.3 rather than by criteria. Only board 1 gets a colour.
 
 **Participant**:
 The entity that gets paired: a player in an individual tournament, a team in a team tournament.
@@ -100,8 +100,16 @@ The MDPs of a bracket who are not paired in it and are bound to float again (Dut
 The Lim scoregroup whose score is half of what the rounds played can give (Lim 2.2). It is paired last and downward, and it receives the floaters from both sides. It exists even when no player has that score, and then holds only floaters.
 _Avoid_: Middle group, centre group
 
+**Median Group**:
+The Olympiad group (teams with the same matchpoints) that holds the median team: of the teams to be paired after the bye, in the ranking of 3.2, the lower ranked of the two middle ones (D.02 6.4). Unlike the Lim Median Scoregroup it is found by position, not by score, so it always has residents. It is paired last and downward and receives the floaters from both sides; no floater passes it.
+_Avoid_: Middle group (the text's word, kept apart from Lim's median)
+
+**Kept Pairings**:
+The most pairings an Olympiad group can make among its own teams while every team not yet paired can still be paired (D.02 9.5, 8.4). One heaviest perfect matching over the rest of the round answers it. The group floats exactly the teams it cannot keep, and every step of its pairing must still reach this number.
+_Avoid_: Local maximum (it is asked of the whole round; the prototype calls it `GroupOptimum`)
+
 **Pairing Direction**:
-Whether a Lim scoregroup is paired downward (above the median, and the median itself) or upwards (below it). Every upward rule is the downward rule mirrored: the "first" player is the highest numbered (#1) downward and the lowest numbered upwards.
+Whether a Lim scoregroup or an Olympiad group is paired downward (above the median, and the median itself) or upwards (below it). Every upward rule is the downward rule mirrored: the "first" player is the highest numbered (#1) downward and the lowest numbered upwards; for Olympiad teams, the highest and the lowest ranked (D.02 8.2/8.3, 9.2).
 _Avoid_: Side, half
 
 **Floater Type**:
@@ -109,7 +117,7 @@ One of the four Lim floater kinds, a to d, in descending order of disadvantage (
 _Avoid_: Floater class, category
 
 **Exchange Order**:
-The opponents the first player of a Lim scoregroup tries, in turn: the bottom half in order, then the top half from the bottom up (Lim 4.2–4.3, generalised). Once it has an opponent, the rest is proposed top half against bottom half again.
+The opponents the first player of a Lim scoregroup tries, in turn: the bottom half in order, then the top half from the bottom up (Lim 4.2–4.3, generalised). Once it has an opponent, the rest is proposed top half against bottom half again. The Olympiad's 9.3 is the same order, stated for any group size.
 _Avoid_: Permutation, transposition (Dubov's term)
 
 **Cracking**:
