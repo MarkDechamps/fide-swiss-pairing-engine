@@ -2,7 +2,7 @@
 title: Readable Dutch 2017 pairing procedure
 labels: [wayfinder:prototype]
 status: open
-assignee:
+assignee: mark
 blocked_by: []
 ---
 
