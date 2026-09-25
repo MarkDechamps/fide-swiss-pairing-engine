@@ -12,6 +12,14 @@ sealed interface Command {
     /** Check every recorded round (or only {@code round}) against the rules and the system (the PTC). */
     record Check(String input, Optional<Integer> round, SettingsOverrides overrides) implements Command {}
 
+    /**
+     * Print the Standings after the last recorded round (or after {@code after}); with {@code why}, explain why the
+     * first of the two ranks above the second.
+     */
+    record Standings(
+            String input, Optional<Integer> after, Optional<java.util.List<String>> why, SettingsOverrides overrides)
+            implements Command {}
+
     record Version() implements Command {}
 
     record Help() implements Command {}

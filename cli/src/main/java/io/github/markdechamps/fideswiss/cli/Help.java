@@ -6,12 +6,16 @@ final class Help {
             usage:
               fide-swiss pair <in.trf> [-o <reply>] [-l [<trace>]] [settings]
               fide-swiss [--dutch] <in.trf> -p [<reply>] [-l [<trace>]] [settings]
+              fide-swiss check <in.trf> [--round <r>]
+              fide-swiss standings <in.trf> [--after <r>] [--why <id> <id>]
               fide-swiss version | -r
 
             settings (override the file's records):
               --system dutch | --dutch     the pairing system
               --rounds <n>                 the number of rounds (over 142/XXR)
               --initial-colour white|black the initial colour (over 152/XXC)
+              --tiebreaks "<list>"         the Tie-break List (over 202/212)
+              --tiebreak-edition 2026-03|2024-08
 
             "-" as the input reads the TRF from standard input.
             """;

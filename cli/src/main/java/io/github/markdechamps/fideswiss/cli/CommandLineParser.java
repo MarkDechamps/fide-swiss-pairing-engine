@@ -1,5 +1,7 @@
 package io.github.markdechamps.fideswiss.cli;
 
+import io.github.markdechamps.fideswiss.standings.TieBreakEdition;
+import io.github.markdechamps.fideswiss.standings.TieBreakList;
 import io.github.markdechamps.fideswiss.tournament.InitialColour;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import java.util.ArrayDeque;
@@ -27,6 +29,10 @@ final class CommandLineParser {
             case "pair" -> {
                 queue.removeFirst();
                 yield canonicalPair(queue);
+            }
+            case "standings" -> {
+                queue.removeFirst();
+                yield canonicalStandings(queue);
             }
             case "check" -> {
                 queue.removeFirst();
@@ -65,6 +71,33 @@ final class CommandLineParser {
             }
         }
         return pairCommand(input, reply, trace, overrides);
+    }
+
+    private static Command canonicalStandings(Deque<String> queue) {
+        String input = null;
+        Optional<Integer> after = Optional.empty();
+        Optional<List<String>> why = Optional.empty();
+        var overrides = SettingsOverrides.NONE;
+        while (!queue.isEmpty()) {
+            var argument = queue.removeFirst();
+            if (argument.equals("--after")) {
+                after = Optional.of(number(value(queue, argument)));
+                continue;
+            }
+            if (argument.equals("--why")) {
+                why = Optional.of(List.of(value(queue, argument), value(queue, argument)));
+                continue;
+            }
+            var parsed = settingsFlag(argument, queue, overrides);
+            if (parsed.isPresent()) {
+                overrides = parsed.get();
+            } else if (input == null && !argument.startsWith("--")) {
+                input = argument;
+            } else {
+                throw new UsageException("unexpected argument " + argument);
+            }
+        }
+        return new Command.Standings(required(input), after, why, overrides);
     }
 
     private static Command canonicalCheck(Deque<String> queue) {
@@ -152,8 +185,19 @@ final class CommandLineParser {
                 yield Optional.of(overrides);
             }
             case "--rounds" -> Optional.of(overrides.withRounds(NumberOfRounds.of(number(value(queue, argument)))));
+            case "--tiebreaks" -> Optional.of(overrides.withTieBreaks(TieBreakList.parse(value(queue, argument))));
+            case "--tiebreak-edition" ->
+                Optional.of(overrides.withTieBreakEdition(tieBreakEdition(value(queue, argument))));
             case "--initial-colour" -> Optional.of(overrides.withInitialColour(colour(value(queue, argument))));
             default -> Optional.empty();
+        };
+    }
+
+    private static TieBreakEdition tieBreakEdition(String value) {
+        return switch (value) {
+            case "2026-03" -> TieBreakEdition.EDITION_2026_03;
+            case "2024-08" -> TieBreakEdition.EDITION_2024_08;
+            default -> throw new UsageException("--tiebreak-edition takes 2026-03 or 2024-08, not " + value);
         };
     }
 
