@@ -1,5 +1,8 @@
 package io.github.markdechamps.fideswiss.tournament;
 
+import io.github.markdechamps.fideswiss.pairing.NoLegalPairingException;
+import io.github.markdechamps.fideswiss.pairing.PairingCheck;
+import io.github.markdechamps.fideswiss.pairing.ProposedPairing;
 import io.github.markdechamps.fideswiss.pairing.RoundPairing;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -123,6 +126,43 @@ public final class Tournament {
                     "The tournament has only " + settings.numberOfRounds().value() + " rounds"));
         }
         return settings.pairingSystem().pairNextRound(this);
+    }
+
+    /**
+     * Checks a pairing for the next round that did not come from the library (GHR 4.4, a manual pairing, another
+     * program's): the rules it breaks and how it differs from the system's own pairing (ADR 0004).
+     */
+    public PairingCheck check(ProposedPairing proposed) {
+        var violations = settings.pairingSystem().violationsOf(this, proposed);
+        try {
+            var system = pairNextRound();
+            return new PairingCheck(violations, Optional.of(system), differencesBetween(proposed, system));
+        } catch (NoLegalPairingException e) {
+            return new PairingCheck(violations, Optional.empty(), List.of("the system finds no legal pairing"));
+        }
+    }
+
+    private static List<String> differencesBetween(ProposedPairing proposed, RoundPairing system) {
+        var proposedBoards = proposed.boards().stream()
+                .map(board -> board.white() + "-" + board.black())
+                .collect(Collectors.toSet());
+        var systemBoards = system.boards().stream()
+                .map(board -> board.white() + "-" + board.black())
+                .collect(Collectors.toSet());
+        var differences = new ArrayList<String>();
+        proposedBoards.stream()
+                .filter(board -> !systemBoards.contains(board))
+                .sorted()
+                .forEach(board -> differences.add("proposed " + board + " is not the system's"));
+        systemBoards.stream()
+                .filter(board -> !proposedBoards.contains(board))
+                .sorted()
+                .forEach(board -> differences.add("the system pairs " + board));
+        if (!proposed.pairingAllocatedBye().equals(system.pairingAllocatedBye())) {
+            differences.add("the system gives the PAB to "
+                    + system.pairingAllocatedBye().map(Object::toString).orElse("nobody"));
+        }
+        return differences;
     }
 
     public Tournament withRound(Round round) {

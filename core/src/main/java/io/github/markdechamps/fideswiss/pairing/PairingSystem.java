@@ -1,8 +1,10 @@
 package io.github.markdechamps.fideswiss.pairing;
 
+import io.github.markdechamps.fideswiss.rules.BasicRules;
 import io.github.markdechamps.fideswiss.tournament.Points;
 import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
+import java.util.List;
 
 /**
  * A named ruleset that decides who plays whom, and with which colour, in the next round. Obtain the FIDE systems
@@ -11,6 +13,11 @@ import io.github.markdechamps.fideswiss.tournament.Tournament;
 public interface PairingSystem {
 
     RoundPairing pairNextRound(Tournament tournament);
+
+    /** The rules a proposed pairing for the next round breaks: the Basic Rules, and the system's own. */
+    default List<Violation> violationsOf(Tournament tournament, ProposedPairing proposed) {
+        return BasicRules.violationsOf(tournament, proposed);
+    }
 
     /** What a Pairing-Allocated Bye is worth when the tournament does not say: a win (C.04.1 Art. 3). */
     default Points pairingAllocatedByeValue(ScoringScheme scoring) {
