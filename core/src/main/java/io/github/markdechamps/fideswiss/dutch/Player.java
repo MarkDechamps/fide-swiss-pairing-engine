@@ -3,8 +3,8 @@ package io.github.markdechamps.fideswiss.dutch;
 import io.github.markdechamps.fideswiss.history.ParticipantHistory;
 import io.github.markdechamps.fideswiss.tournament.Colour;
 import io.github.markdechamps.fideswiss.tournament.PairingNumber;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
-import io.github.markdechamps.fideswiss.tournament.Score;
 import java.util.List;
 
 /** A participant as the Dutch System sees it when pairing one round. Players are compared by identity. */
@@ -12,7 +12,7 @@ final class Player {
 
     private final ParticipantId id;
     private final PairingNumber pairingNumber;
-    private final Score score;
+    private final PairingScore score;
     private final ParticipantHistory history;
     private final List<FloatDirection> floats;
     private final List<Colour> playedColours;
@@ -21,7 +21,7 @@ final class Player {
     Player(
             ParticipantId id,
             PairingNumber pairingNumber,
-            Score score,
+            PairingScore score,
             ParticipantHistory history,
             List<FloatDirection> floats) {
         this.id = id;
@@ -42,7 +42,7 @@ final class Player {
     }
 
     /** The score the Dutch System pairs on. */
-    Score score() {
+    PairingScore score() {
         return score;
     }
 

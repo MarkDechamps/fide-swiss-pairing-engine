@@ -10,11 +10,12 @@ import io.github.markdechamps.fideswiss.pairing.RoundPairing;
 import io.github.markdechamps.fideswiss.pairing.TraceStep;
 import io.github.markdechamps.fideswiss.tournament.BoardNumber;
 import io.github.markdechamps.fideswiss.tournament.PairingNumbers;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import io.github.markdechamps.fideswiss.tournament.Participant;
+import io.github.markdechamps.fideswiss.tournament.ParticipantId;
 import io.github.markdechamps.fideswiss.tournament.Points;
 import io.github.markdechamps.fideswiss.tournament.Problem;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
-import io.github.markdechamps.fideswiss.tournament.Score;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -69,24 +70,33 @@ public final class DutchSystem implements PairingSystem {
                 .map(id -> new Player(
                         id,
                         numbers.numberOf(id),
-                        history.of(id).score(),
+                        pairingScoreBefore(tournament, history, id, tournament.nextRound()),
                         history.of(id),
-                        floatsOf(history.of(id), history, lossValue)))
+                        floatsOf(tournament, history.of(id), history, lossValue)))
                 .sorted(PairingOrder.RANKING)
                 .toList();
     }
 
-    private List<FloatDirection> floatsOf(ParticipantHistory player, TournamentHistory history, Points lossValue) {
+    /** Floats are judged on the Pairing Scores of the round in which the game was paired (C.04.7, fixed reading). */
+    private List<FloatDirection> floatsOf(
+            Tournament tournament, ParticipantHistory player, TournamentHistory history, Points lossValue) {
         var floats = new ArrayList<FloatDirection>();
         for (var index = 0; index < player.records().size(); index++) {
             var round = RoundNumber.of(index + 1);
             var record = player.recordOf(round);
             var opponentScore = record.pairedOpponent()
-                    .map(opponent -> history.of(opponent).scoreBefore(round))
-                    .orElse(Score.ZERO);
-            floats.add(edition.floatRule().floatOf(record, player.scoreBefore(round), opponentScore, lossValue));
+                    .map(opponent -> pairingScoreBefore(tournament, history, opponent, round))
+                    .orElse(new PairingScore(Points.ZERO));
+            var ownScore = pairingScoreBefore(tournament, history, player.participant(), round);
+            floats.add(edition.floatRule().floatOf(record, ownScore, opponentScore, lossValue));
         }
         return floats;
+    }
+
+    private static PairingScore pairingScoreBefore(
+            Tournament tournament, TournamentHistory history, ParticipantId participant, RoundNumber round) {
+        return PairingScore.of(
+                history.of(participant).scoreBefore(round), tournament.virtualPointsOf(participant, round));
     }
 
     private static RoundPairing roundPairing(
@@ -118,7 +128,7 @@ public final class DutchSystem implements PairingSystem {
      * GHR 3.6: the higher score of the pair's higher-ranked player first, then the higher sum of scores, then the
      * smaller Pairing Number of the higher-ranked player.
      */
-    private static final Comparator<Pair> BOARD_ORDER = Comparator.<Pair, Score>comparing(
+    private static final Comparator<Pair> BOARD_ORDER = Comparator.<Pair, PairingScore>comparing(
                     pair -> pair.higherRanked().score())
             .reversed()
             .thenComparing(Comparator.<Pair, BigDecimal>comparing(pair -> pair.s1Player()
@@ -147,7 +157,7 @@ public final class DutchSystem implements PairingSystem {
         return new NoLegalPairingException(List.of(Problem.citing("C.04.3 1.9.3", message)), new PairingTrace(trace));
     }
 
-    private static Map<Score, List<Player>> scoregroupsFromTheTop(List<Player> ordered) {
+    private static Map<PairingScore, List<Player>> scoregroupsFromTheTop(List<Player> ordered) {
         return ordered.stream()
                 .collect(Collectors.groupingBy(
                         Player::score, () -> new TreeMap<>(Comparator.reverseOrder()), Collectors.toList()));

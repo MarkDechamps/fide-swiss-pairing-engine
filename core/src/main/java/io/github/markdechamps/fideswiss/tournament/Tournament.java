@@ -34,6 +34,10 @@ public final class Tournament {
     }
 
     public static Tournament of(TournamentSettings settings, List<Participant> participants) {
+        var settingsProblems = settings.acceleration().problemsWith(settings);
+        if (!settingsProblems.isEmpty()) {
+            throw new InvalidSettingsException(settingsProblems);
+        }
         var problems = duplicateIds(participants);
         if (!problems.isEmpty()) {
             throw new InvalidTournamentException(problems);
@@ -118,6 +122,21 @@ public final class Tournament {
                 .map(Participant::id)
                 .toList();
         return PairingNumbers.inRankingOrder(numbered);
+    }
+
+    /** The Virtual Points the settings' acceleration adds to the participant's score for the round's pairing. */
+    public Points virtualPointsOf(ParticipantId participant, RoundNumber round) {
+        return settings.acceleration().virtualPointsOf(participant, round, this);
+    }
+
+    /** C.04.7 1.2: the top 2·⌈N/4⌉ of the round-1 list, in ranking-key order. */
+    boolean isInAcceleratedGroup(ParticipantId participant) {
+        var ranked = participants.stream()
+                .sorted(settings.rankingKey().order(participants))
+                .map(Participant::id)
+                .toList();
+        var groupSize = 2 * ((ranked.size() + 3) / 4);
+        return ranked.indexOf(participant) < groupSize;
     }
 
     public RoundPairing pairNextRound() {

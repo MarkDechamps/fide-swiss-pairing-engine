@@ -1,6 +1,6 @@
 package io.github.markdechamps.fideswiss.dutch;
 
-import io.github.markdechamps.fideswiss.tournament.Score;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import java.util.BitSet;
 import java.util.Optional;
 
@@ -17,13 +17,13 @@ final class CompletionCriterion {
     private final PlayerSet players;
     private final CompletionOracle oracle;
     private final AbsoluteCriteria absolute;
-    private final Optional<Score> lowestReachablePabScore;
+    private final Optional<PairingScore> lowestReachablePabScore;
 
     private CompletionCriterion(
             PlayerSet players,
             AbsoluteCriteria absolute,
             CompletionOracle oracle,
-            Optional<Score> lowestReachablePabScore) {
+            Optional<PairingScore> lowestReachablePabScore) {
         this.players = players;
         this.absolute = absolute;
         this.oracle = oracle;

@@ -15,6 +15,12 @@ public final class Profiles {
                 ScoringScheme.standard(),
                 RankingKey.strengthTitleName(),
                 InitialColour.white(),
+                Acceleration.none(),
                 rounds);
+    }
+
+    /** As {@link #individualSwiss}, with Baku acceleration (C.04.7). */
+    public static TournamentSettings acceleratedOpen(NumberOfRounds rounds) {
+        return individualSwiss(rounds).with(Acceleration.baku());
     }
 }

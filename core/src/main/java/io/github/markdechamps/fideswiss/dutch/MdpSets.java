@@ -1,6 +1,6 @@
 package io.github.markdechamps.fideswiss.dutch;
 
-import io.github.markdechamps.fideswiss.tournament.Score;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -26,7 +26,7 @@ final class MdpSets {
         return movedDown.stream().filter(mdp -> !s1.contains(mdp)).toList();
     }
 
-    private static List<Score> limboScores(List<Player> limbo) {
+    private static List<PairingScore> limboScores(List<Player> limbo) {
         return limbo.stream()
                 .map(Player::score)
                 .sorted(Comparator.reverseOrder())

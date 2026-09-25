@@ -13,6 +13,7 @@ public record TournamentSettings(
         ScoringScheme scoring,
         RankingKey rankingKey,
         InitialColour initialColour,
+        Acceleration acceleration,
         NumberOfRounds numberOfRounds) {
 
     public TournamentSettings {
@@ -21,28 +22,43 @@ public record TournamentSettings(
         Objects.requireNonNull(scoring, "scoring");
         Objects.requireNonNull(rankingKey, "rankingKey");
         Objects.requireNonNull(initialColour, "initialColour");
+        Objects.requireNonNull(acceleration, "acceleration");
         Objects.requireNonNull(numberOfRounds, "numberOfRounds");
     }
 
     public TournamentSettings with(PairingSystem system) {
-        return new TournamentSettings(system, swissRulesEdition, scoring, rankingKey, initialColour, numberOfRounds);
+        return new TournamentSettings(
+                system, swissRulesEdition, scoring, rankingKey, initialColour, acceleration, numberOfRounds);
+    }
+
+    public TournamentSettings with(SwissRulesEdition edition) {
+        return new TournamentSettings(
+                pairingSystem, edition, scoring, rankingKey, initialColour, acceleration, numberOfRounds);
     }
 
     public TournamentSettings with(ScoringScheme scheme) {
         return new TournamentSettings(
-                pairingSystem, swissRulesEdition, scheme, rankingKey, initialColour, numberOfRounds);
+                pairingSystem, swissRulesEdition, scheme, rankingKey, initialColour, acceleration, numberOfRounds);
     }
 
     public TournamentSettings with(RankingKey key) {
-        return new TournamentSettings(pairingSystem, swissRulesEdition, scoring, key, initialColour, numberOfRounds);
+        return new TournamentSettings(
+                pairingSystem, swissRulesEdition, scoring, key, initialColour, acceleration, numberOfRounds);
     }
 
     public TournamentSettings with(InitialColour colour) {
-        return new TournamentSettings(pairingSystem, swissRulesEdition, scoring, rankingKey, colour, numberOfRounds);
+        return new TournamentSettings(
+                pairingSystem, swissRulesEdition, scoring, rankingKey, colour, acceleration, numberOfRounds);
+    }
+
+    public TournamentSettings with(Acceleration method) {
+        return new TournamentSettings(
+                pairingSystem, swissRulesEdition, scoring, rankingKey, initialColour, method, numberOfRounds);
     }
 
     public TournamentSettings with(NumberOfRounds rounds) {
-        return new TournamentSettings(pairingSystem, swissRulesEdition, scoring, rankingKey, initialColour, rounds);
+        return new TournamentSettings(
+                pairingSystem, swissRulesEdition, scoring, rankingKey, initialColour, acceleration, rounds);
     }
 
     /** The value of every PAB of this event: the scheme's, or else the one the Pairing System defines. */
