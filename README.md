@@ -19,7 +19,7 @@ A Java reference library for the FIDE Swiss pairing systems: it pairs the next r
 | C.04.4.3 | Lim System | 2026 | planned |
 | C.04.5 | Double-Swiss System | 2026 | planned |
 | C.04.6 | Swiss Team Pairing System | 2026 | planned |
-| C.04.7 | Acceleration methods | 2026 | planned |
+| C.04.7 | Acceleration methods: Baku, for every C.04 system (not the Olympiad Pairing Rules), or explicit virtual points from TRF `250` | 2026 / pre-2026 | planned |
 | D.02 | Olympiad Pairing Rules | 2022 | planned |
 | C.07 | Tie-break Regulations | 2026-03 | planned |
 | C.07 | Tie-break Regulations (historic) | 2024-08 | planned |

@@ -163,8 +163,16 @@ The points a participant has earned from the outcomes of its rounds, as used for
 _Avoid_: Points total, result
 
 **Pairing Score**:
-The score a Pairing System pairs on: the Score plus any acceleration virtual points.
+The score a Pairing System pairs on: the Score plus the participant's Virtual Points for the round being paired. It is the "score" wherever a system's text says score (scoregroups, brackets, floats, the PAB, the order of the boards), unless that text names another; standings and tie-breaks never use it.
 _Avoid_: Accelerated score, virtual score
+
+**Virtual Points**:
+The points an acceleration method adds to a participant's Score for one round's pairing only (C.04.7). They never accumulate and are never earned.
+_Avoid_: Fictitious points, bonus points, acceleration points
+
+**Accelerated Group**:
+Under Baku acceleration, the participants from the top of the round-1 list down to the Last Accelerated Participant (GA, C.04.7 1.2–1.3); only they receive Virtual Points. A late entry inserted above that participant joins it.
+_Avoid_: Top group, GA (in the model)
 
 **Pairing-Allocated Bye**:
 The bye given to the one participant left unpaired when the number to be paired is odd (PAB).
