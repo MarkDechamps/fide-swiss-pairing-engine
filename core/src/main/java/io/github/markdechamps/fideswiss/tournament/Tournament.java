@@ -4,6 +4,8 @@ import io.github.markdechamps.fideswiss.pairing.NoLegalPairingException;
 import io.github.markdechamps.fideswiss.pairing.PairingCheck;
 import io.github.markdechamps.fideswiss.pairing.ProposedPairing;
 import io.github.markdechamps.fideswiss.pairing.RoundPairing;
+import io.github.markdechamps.fideswiss.standings.Standings;
+import io.github.markdechamps.fideswiss.tiebreak.StandingsCalculator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -118,6 +120,19 @@ public final class Tournament {
                 .map(Participant::id)
                 .toList();
         return PairingNumbers.inRankingOrder(numbered);
+    }
+
+    /** The Standings after the last recorded round, by the settings' Tie-break List and Tie-break Edition. */
+    public Standings standings() {
+        return StandingsCalculator.standingsOf(this, rounds.size());
+    }
+
+    /** The Standings as they were after the given recorded round. */
+    public Standings standingsAfter(RoundNumber round) {
+        if (round.value() > rounds.size()) {
+            throw new InvalidTournamentException(Problem.of("Round " + round + " is not recorded yet"));
+        }
+        return StandingsCalculator.standingsOf(this, round.value());
     }
 
     public RoundPairing pairNextRound() {
