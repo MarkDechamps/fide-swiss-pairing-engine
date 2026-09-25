@@ -2,7 +2,7 @@
 title: Readable Olympiad pairing algorithm
 labels: [wayfinder:prototype]
 status: open
-assignee:
+assignee: markdechamps
 blocked_by: [28-lim-algorithm]
 ---
 
