@@ -2,7 +2,7 @@
 title: Double-Swiss matches in TRF
 labels: [wayfinder:grilling]
 status: open
-assignee:
+assignee: markdechamps
 blocked_by: []
 ---
 
