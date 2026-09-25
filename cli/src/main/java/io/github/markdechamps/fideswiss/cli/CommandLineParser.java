@@ -1,12 +1,18 @@
 package io.github.markdechamps.fideswiss.cli;
 
+import io.github.markdechamps.fideswiss.generator.FlatDrawModel;
+import io.github.markdechamps.fideswiss.generator.GeneratorSettings;
+import io.github.markdechamps.fideswiss.generator.Range;
 import io.github.markdechamps.fideswiss.tournament.InitialColour;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.UnaryOperator;
 
 /**
  * The two grammars of TRF CLI surface: a subcommand name first gives the canonical one ({@code pair in.trf -o
@@ -35,6 +41,14 @@ final class CommandLineParser {
             case "-check" -> {
                 queue.removeFirst();
                 yield new Command.Check(required(queue.pollFirst()), Optional.empty(), SettingsOverrides.NONE);
+            }
+            case "generate" -> {
+                queue.removeFirst();
+                yield canonicalGenerate(queue);
+            }
+            case "-g" -> {
+                queue.removeFirst();
+                yield compatibleGenerate(queue);
             }
             case "version", "-r" -> new Command.Version();
             case "help", "--help", "-h" -> new Command.Help();
@@ -87,6 +101,108 @@ final class CommandLineParser {
             }
         }
         return new Command.Check(required(input), round, overrides);
+    }
+
+    private static Command canonicalGenerate(Deque<String> queue) {
+        Optional<Long> seed = Optional.empty();
+        var count = 1;
+        String output = null;
+        Optional<String> configuration = Optional.empty();
+        var overrides = new ArrayList<UnaryOperator<GeneratorSettings>>();
+        while (!queue.isEmpty()) {
+            var argument = queue.removeFirst();
+            switch (argument) {
+                case "--seed" -> seed = Optional.of(longNumber(value(queue, argument)));
+                case "--count" -> count = number(value(queue, argument));
+                case "-o" -> output = value(queue, argument);
+                case "--config" -> configuration = Optional.of(value(queue, argument));
+                case "--system" -> requireSupportedSystem(value(queue, argument));
+                default -> overrides.add(generatorFlag(argument, queue));
+            }
+        }
+        if (output == null) {
+            throw new UsageException("generate needs -o <file or pattern with %d>");
+        }
+        return new Command.Generate(seed, count, output, configuration, overrides);
+    }
+
+    /** JaVaFo/bbp: {@code -g [<cfg>|<seed>] -o <out> [-s <seed>]}; one tournament. */
+    private static Command compatibleGenerate(Deque<String> queue) {
+        Optional<Long> seed = Optional.empty();
+        Optional<String> configuration = Optional.empty();
+        String output = null;
+        var given = optionalValue(queue);
+        if (given.isPresent()) {
+            if (given.get().matches("\\d+")) {
+                seed = Optional.of(longNumber(given.get()));
+            } else {
+                configuration = given;
+            }
+        }
+        while (!queue.isEmpty()) {
+            var argument = queue.removeFirst();
+            switch (argument) {
+                case "-o" -> output = value(queue, argument);
+                case "-s" -> seed = Optional.of(longNumber(value(queue, argument)));
+                default -> {
+                    if (!(argument.startsWith("--") && SYSTEMS.contains(argument.substring(2)))) {
+                        throw new UsageException("unexpected argument " + argument);
+                    }
+                }
+            }
+        }
+        if (output == null) {
+            throw new UsageException("-g needs -o <file>");
+        }
+        return new Command.Generate(seed, 1, output, configuration, List.of());
+    }
+
+    private static UnaryOperator<GeneratorSettings> generatorFlag(String flag, Deque<String> queue) {
+        if (flag.startsWith("--") && SYSTEMS.contains(flag.substring(2))) {
+            return settings -> settings;
+        }
+        return switch (flag) {
+            case "--players" -> withRange(flag, queue, GeneratorSettings::withPlayers);
+            case "--rounds" -> withRange(flag, queue, GeneratorSettings::withRounds);
+            case "--highest-rating" -> withRange(flag, queue, GeneratorSettings::withHighestRating);
+            case "--lowest-rating" -> withRange(flag, queue, GeneratorSettings::withLowestRating);
+            case "--unrated" -> withRange(flag, queue, GeneratorSettings::withUnratedPercentage);
+            case "--forfeit-rate" -> withRange(flag, queue, GeneratorSettings::withForfeitRate);
+            case "--hpb-rate" -> withRange(flag, queue, GeneratorSettings::withHalfPointByeRate);
+            case "--zpb-rate" -> withRange(flag, queue, GeneratorSettings::withZeroPointByeRate);
+            case "--fpb-rate" -> withRange(flag, queue, GeneratorSettings::withFullPointByeRate);
+            case "--withdrawals" -> withRange(flag, queue, GeneratorSettings::withWithdrawalPercentage);
+            case "--draw-percentage" -> {
+                var model = new FlatDrawModel(number(value(queue, flag)));
+                yield settings -> settings.with(model);
+            }
+            default -> throw new UsageException("unexpected argument " + flag);
+        };
+    }
+
+    private static UnaryOperator<GeneratorSettings> withRange(
+            String flag, Deque<String> queue, BiFunction<GeneratorSettings, Range, GeneratorSettings> setter) {
+        var text = value(queue, flag);
+        try {
+            var range = Range.parse(text);
+            return settings -> setter.apply(settings, range);
+        } catch (IllegalArgumentException e) {
+            throw new UsageException(flag + " takes a number or a range A..B, not " + text);
+        }
+    }
+
+    private static void requireSupportedSystem(String system) {
+        if (!SYSTEMS.contains(system)) {
+            throw new UsageException("unsupported pairing system " + system);
+        }
+    }
+
+    private static long longNumber(String value) {
+        try {
+            return Long.parseUnsignedLong(value);
+        } catch (NumberFormatException e) {
+            throw new UsageException("not a seed: " + value);
+        }
     }
 
     private static Command compatible(Deque<String> queue) {

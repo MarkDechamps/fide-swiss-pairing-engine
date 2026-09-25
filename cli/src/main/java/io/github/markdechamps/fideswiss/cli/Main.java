@@ -26,6 +26,7 @@ public final class Main {
     static final int INVALID_REQUEST = 3;
     static final int FILE_ACCESS_ERROR = 5;
     static final int INCONSISTENT = 6;
+    static final int TOO_MANY_SKIPS = 7;
 
     private final InputStream in;
     private final PrintStream out;
@@ -64,6 +65,7 @@ public final class Main {
             case Command.Pair pair -> pair(pair);
             case Command.Check check ->
                 new PairingsChecker(out).check(read(check.input(), check.overrides()), check.round());
+            case Command.Generate generate -> new TournamentFiles(err).generate(generate);
             case Command.Version version -> print(Version.describe());
             case Command.Help help -> print(Help.TEXT);
         };

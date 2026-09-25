@@ -23,5 +23,9 @@
             <groupId>io.github.markdechamps</groupId>
             <artifactId>fide-swiss-pairing-engine-trf</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.github.markdechamps</groupId>
+            <artifactId>fide-swiss-pairing-engine-generator</artifactId>
+        </dependency>
     </dependencies>
 </project>
