@@ -95,7 +95,9 @@ fide-swiss version                                        # also -r
 | `fide-swiss-pairing-engine-trf` | TRF reader and writer. |
 | `fide-swiss-pairing-engine-cli` | Command-line pairing, checking and tournament generation. |
 
-Group id: `io.github.markdechamps`. Not yet published to Maven Central.
+Group id: `io.github.markdechamps`, one version for every module. Not yet published to Maven Central; releases will go there through the Central Portal (`release.yml`, see `CHANGELOG.md`).
+
+The command line ships as a portable `fide-swiss-X.Y.Z.zip` (`bin/fide-swiss`, `lib/` with the modular jars; needs Java 25 on the path) and, per release, as jlink images for linux-x64, linux-aarch64, macos-aarch64 and windows-x64 that need no Java. On macOS, remove the quarantine attribute and run the image from a terminal.
 
 ## Building
 

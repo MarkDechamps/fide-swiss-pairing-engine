@@ -20,6 +20,14 @@
         </license>
     </licenses>
 
+    <developers>
+        <developer>
+            <id>markdechamps</id>
+            <name>Mark Dechamps</name>
+            <url>https://github.com/MarkDechamps</url>
+        </developer>
+    </developers>
+
     <scm>
         <url>https://github.com/MarkDechamps/fide-swiss-pairing-engine</url>
         <connection>scm:git:https://github.com/MarkDechamps/fide-swiss-pairing-engine.git</connection>
@@ -35,6 +43,8 @@
     <properties>
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Reproducible builds; versions:set updates it at each release. -->
+        <project.build.outputTimestamp>2026-09-25T00:00:00Z</project.build.outputTimestamp>
 
         <junit.version>6.1.3</junit.version>
         <assertj.version>3.27.7</assertj.version>
@@ -200,4 +210,72 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Everything Maven Central needs; the everyday build stays fast without it. -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.3.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.11.2</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.7</version>
+                        <configuration>
+                            <signer>bc</signer>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.9.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>true</autoPublish>
+                            <waitUntil>published</waitUntil>
+                            <excludeArtifacts>
+                                <excludeArtifact>fide-swiss-pairing-engine-oracle-it</excludeArtifact>
+                            </excludeArtifacts>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
