@@ -34,6 +34,10 @@ public final class Tournament {
     }
 
     public static Tournament of(TournamentSettings settings, List<Participant> participants) {
+        var settingsProblems = settings.pairingSystem().problemsWith(settings);
+        if (!settingsProblems.isEmpty()) {
+            throw new InvalidSettingsException(settingsProblems);
+        }
         var problems = duplicateIds(participants);
         if (!problems.isEmpty()) {
             throw new InvalidTournamentException(problems);

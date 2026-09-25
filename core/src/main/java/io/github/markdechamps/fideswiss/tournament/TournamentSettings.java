@@ -28,6 +28,10 @@ public record TournamentSettings(
         return new TournamentSettings(system, swissRulesEdition, scoring, rankingKey, initialColour, numberOfRounds);
     }
 
+    public TournamentSettings with(SwissRulesEdition edition) {
+        return new TournamentSettings(pairingSystem, edition, scoring, rankingKey, initialColour, numberOfRounds);
+    }
+
     public TournamentSettings with(ScoringScheme scheme) {
         return new TournamentSettings(
                 pairingSystem, swissRulesEdition, scheme, rankingKey, initialColour, numberOfRounds);
