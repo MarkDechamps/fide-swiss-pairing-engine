@@ -1,7 +1,7 @@
 ---
 title: FIDE Swiss reference library
 labels: [wayfinder:map]
-status: open
+status: closed
 ---
 
 ## Destination
@@ -66,8 +66,7 @@ An implementation-ready spec for an open-source Java **reference library** imple
 
 ## Not yet specified
 
-- Acceptance route: how the library reaches FIDE recognition given only full programs are accepted (partner program, own thin program, or offering to TEC as the reference for the systems that have none)). On hold: no contact with FIDE until the author asks.
-
 ## Out of scope
 
 - Rating calculation, tournament persistence and UI, result entry, running rounds, team lineup / board-order validation, non-Swiss formats (round-robin, knockout). Ruled out while charting.
+- FIDE recognition (the acceptance route for a full program under C.02.03 §7): the author ruled on 2026-09-25 that the library does not need it. Endorsement-grade pairings (identical to the Oracles) remain the quality bar.
