@@ -1,5 +1,6 @@
 package io.github.markdechamps.fideswiss.tournament;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -25,6 +26,16 @@ public final class TournamentMother {
                 ParticipantId.of(String.valueOf(startRank)),
                 Name.of("Player " + startRank),
                 Rating.of(TOP_RATING - 10 * startRank));
+    }
+
+    /** Pairs the next round and records it with these outcomes, board by board. */
+    public static Tournament playNextRound(Tournament tournament, Outcome... outcomes) {
+        var pairing = tournament.pairNextRound();
+        var byBoard = new HashMap<BoardNumber, Outcome>();
+        for (var board = 0; board < outcomes.length; board++) {
+            byBoard.put(BoardNumber.of(board + 1), outcomes[board]);
+        }
+        return tournament.withRound(pairing.completedWith(byBoard));
     }
 
     public static ParticipantId id(int startRank) {
