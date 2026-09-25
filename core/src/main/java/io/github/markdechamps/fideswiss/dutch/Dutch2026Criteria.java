@@ -1,11 +1,10 @@
 package io.github.markdechamps.fideswiss.dutch;
 
-import io.github.markdechamps.fideswiss.dutch.CandidateAssessment.PlayerInGame;
+import static io.github.markdechamps.fideswiss.dutch.CandidateCriterion.of;
+
 import io.github.markdechamps.fideswiss.dutch.CandidateCriterion.Scope;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /** C.04.3 (2026) Articles 2.3–2.4: [C5]–[C21] in descending priority. */
@@ -22,24 +21,23 @@ final class Dutch2026Criteria {
 
     static List<CandidateCriterion> inPriorityOrder() {
         return List.of(
-                criterion("C5", Scope.PAB_SCORE, Dutch2026Criteria::minimiseScoreOfPabAssignee),
-                criterion("C6", Scope.COUNT, Dutch2026Criteria::minimiseNumberOfDownfloaters),
-                criterion("C7", Scope.SCORES, Dutch2026Criteria::minimiseScoresOfDownfloaters),
-                criterion("C8", Scope.FOLLOWING_BRACKET, Dutch2026Criteria::complyWithC1ToC7InFollowingBracket),
-                criterion("C9", Scope.SINGLE_DOWNFLOATER, Dutch2026Criteria::minimiseUnplayedGamesOfPabAssignee),
-                criterion("C10", Scope.COUNT, Dutch2026Criteria::minimiseTopscorersBeyondColourDifferenceTwo),
-                criterion("C11", Scope.COUNT, Dutch2026Criteria::minimiseTopscorersWithSameColourThreeTimes),
-                criterion("C12", Scope.COUNT, Dutch2026Criteria::minimisePlayersNotGettingColourPreference),
-                criterion("C13", Scope.COUNT, Dutch2026Criteria::minimisePlayersNotGettingStrongColourPreference),
-                criterion("C14", Scope.COUNT, assessment -> residentDownfloatersWhoDownfloated(assessment, 1)),
-                criterion("C15", Scope.COUNT, assessment -> mdpOpponentsWhoUpfloated(assessment, 1)),
-                criterion("C16", Scope.COUNT, assessment -> residentDownfloatersWhoDownfloated(assessment, 2)),
-                criterion("C17", Scope.COUNT, assessment -> mdpOpponentsWhoUpfloated(assessment, 2)),
-                criterion("C18", Scope.SCORES, assessment -> scoreDifferencesOfMdpsWhoDownfloated(assessment, 1)),
-                criterion("C19", Scope.SCORES, assessment -> scoreDifferencesOfMdpOpponentsWhoUpfloated(assessment, 1)),
-                criterion("C20", Scope.SCORES, assessment -> scoreDifferencesOfMdpsWhoDownfloated(assessment, 2)),
-                criterion(
-                        "C21", Scope.SCORES, assessment -> scoreDifferencesOfMdpOpponentsWhoUpfloated(assessment, 2)));
+                of("C5", Scope.PAB_SCORE, Dutch2026Criteria::minimiseScoreOfPabAssignee),
+                of("C6", Scope.COUNT, Dutch2026Criteria::minimiseNumberOfDownfloaters),
+                of("C7", Scope.SCORES, Dutch2026Criteria::minimiseScoresOfDownfloaters),
+                of("C8", Scope.FOLLOWING_BRACKET, Dutch2026Criteria::complyWithC1ToC7InFollowingBracket),
+                of("C9", Scope.SINGLE_DOWNFLOATER, Dutch2026Criteria::minimiseUnplayedGamesOfPabAssignee),
+                of("C10", Scope.COUNT, ColourCriteria::topscorersBeyondColourDifferenceTwo),
+                of("C11", Scope.COUNT, ColourCriteria::topscorersWithSameColourThreeTimes),
+                of("C12", Scope.COUNT, ColourCriteria::playersNotGettingColourPreference),
+                of("C13", Scope.COUNT, ColourCriteria::playersNotGettingStrongColourPreference),
+                of("C14", Scope.COUNT, assessment -> residentDownfloatersWhoDownfloated(assessment, 1)),
+                of("C15", Scope.COUNT, assessment -> mdpOpponentsWhoUpfloated(assessment, 1)),
+                of("C16", Scope.COUNT, assessment -> residentDownfloatersWhoDownfloated(assessment, 2)),
+                of("C17", Scope.COUNT, assessment -> mdpOpponentsWhoUpfloated(assessment, 2)),
+                of("C18", Scope.SCORES, assessment -> scoreDifferencesOfMdpsWhoDownfloated(assessment, 1)),
+                of("C19", Scope.SCORES, assessment -> scoreDifferencesOfMdpOpponentsWhoUpfloated(assessment, 1)),
+                of("C20", Scope.SCORES, assessment -> scoreDifferencesOfMdpsWhoDownfloated(assessment, 2)),
+                of("C21", Scope.SCORES, assessment -> scoreDifferencesOfMdpOpponentsWhoUpfloated(assessment, 2)));
     }
 
     private static Failure minimiseScoreOfPabAssignee(CandidateAssessment assessment) {
@@ -83,29 +81,6 @@ final class Dutch2026Criteria {
         return boundToGetPab ? Failure.count(downfloater.unplayedRounds()) : Failure.NONE;
     }
 
-    private static Failure minimiseTopscorersBeyondColourDifferenceTwo(CandidateAssessment assessment) {
-        return countPlayersInTopscorerGames(assessment, player -> Math.abs(player.colourDifferenceAfter()) > 2);
-    }
-
-    private static Failure minimiseTopscorersWithSameColourThreeTimes(CandidateAssessment assessment) {
-        return countPlayersInTopscorerGames(assessment, PlayerInGame::getsSameColourThirdTimeInARow);
-    }
-
-    private static Failure minimisePlayersNotGettingColourPreference(CandidateAssessment assessment) {
-        return Failure.count(assessment
-                .playersInGames()
-                .filter(player -> !player.getsPreference())
-                .count());
-    }
-
-    private static Failure minimisePlayersNotGettingStrongColourPreference(CandidateAssessment assessment) {
-        return Failure.count(assessment
-                .playersInGames()
-                .filter(player -> player.player().colourPreference().isStrong())
-                .filter(player -> !player.getsPreference())
-                .count());
-    }
-
     private static Failure residentDownfloatersWhoDownfloated(CandidateAssessment assessment, int roundsAgo) {
         return Failure.count(assessment.residentDownfloaters().stream()
                 .filter(player -> player.floatRoundsAgo(roundsAgo) == FloatDirection.DOWN)
@@ -135,41 +110,11 @@ final class Dutch2026Criteria {
                 .toList());
     }
 
-    private static Failure countPlayersInTopscorerGames(
-            CandidateAssessment assessment, Predicate<PlayerInGame> failing) {
-        var round = assessment.round();
-        return Failure.count(assessment
-                .playersInGames()
-                .filter(player -> round.isTopscorer(player.player()) || round.isTopscorer(player.opponent()))
-                .filter(failing)
-                .count());
-    }
-
     private static BigDecimal scoreDifference(Pair mdpPair) {
         return scoreOf(mdpPair.s1Player()).subtract(scoreOf(mdpPair.s2Player()));
     }
 
     private static BigDecimal scoreOf(Player player) {
         return player.score().points().toBigDecimal();
-    }
-
-    private static CandidateCriterion criterion(
-            String article, Scope scope, Function<CandidateAssessment, Failure> failure) {
-        return new CandidateCriterion() {
-            @Override
-            public String article() {
-                return article;
-            }
-
-            @Override
-            public Scope scope() {
-                return scope;
-            }
-
-            @Override
-            public Failure failureOf(CandidateAssessment candidate) {
-                return failure.apply(candidate);
-            }
-        };
     }
 }

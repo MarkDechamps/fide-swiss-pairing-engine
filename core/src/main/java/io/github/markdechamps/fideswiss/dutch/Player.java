@@ -1,5 +1,6 @@
 package io.github.markdechamps.fideswiss.dutch;
 
+import io.github.markdechamps.fideswiss.history.PairingAllocatedByeBar;
 import io.github.markdechamps.fideswiss.history.ParticipantHistory;
 import io.github.markdechamps.fideswiss.tournament.Colour;
 import io.github.markdechamps.fideswiss.tournament.PairingNumber;
@@ -50,8 +51,8 @@ final class Player {
         return history.hasPlayedAgainst(other.id);
     }
 
-    boolean mayReceivePairingAllocatedBye() {
-        return history.mayReceivePairingAllocatedBye();
+    boolean mayReceivePairingAllocatedBye(PairingAllocatedByeBar bar) {
+        return history.mayReceivePairingAllocatedBye(bar);
     }
 
     int unplayedRounds() {

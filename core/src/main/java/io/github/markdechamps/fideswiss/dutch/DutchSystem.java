@@ -2,14 +2,11 @@ package io.github.markdechamps.fideswiss.dutch;
 
 import io.github.markdechamps.fideswiss.history.ParticipantHistory;
 import io.github.markdechamps.fideswiss.history.TournamentHistory;
-import io.github.markdechamps.fideswiss.pairing.NoLegalPairingException;
 import io.github.markdechamps.fideswiss.pairing.PairedBoard;
 import io.github.markdechamps.fideswiss.pairing.PairingCancelledException;
 import io.github.markdechamps.fideswiss.pairing.PairingProgress;
 import io.github.markdechamps.fideswiss.pairing.PairingSystem;
 import io.github.markdechamps.fideswiss.pairing.PairingTrace;
-import io.github.markdechamps.fideswiss.pairing.Progress;
-import io.github.markdechamps.fideswiss.pairing.ProgressStep;
 import io.github.markdechamps.fideswiss.pairing.RoundPairing;
 import io.github.markdechamps.fideswiss.pairing.TraceStep;
 import io.github.markdechamps.fideswiss.search.SearchHeartbeat;
@@ -22,20 +19,45 @@ import io.github.markdechamps.fideswiss.tournament.ParticipantId;
 import io.github.markdechamps.fideswiss.tournament.Points;
 import io.github.markdechamps.fideswiss.tournament.Problem;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
+import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
+import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
 
-/** The Dutch System (C.04.3): pair bracket by bracket from the top scoregroup down (1.9), then allocate colours. */
+/**
+ * The Dutch System (C.04.3): the edition's own procedure pairs the brackets (2026 1.9, 2017 A.9), then colours are
+ * allocated. The edition is the tournament's Swiss Rules Edition, unless the system was made for one edition.
+ */
 public final class DutchSystem implements PairingSystem {
 
-    private final DutchEdition edition = DutchEdition.edition2026();
+    private final Optional<SwissRulesEdition> edition;
+
+    private DutchSystem(Optional<SwissRulesEdition> edition) {
+        this.edition = edition;
+    }
+
+    /** The Dutch System of whichever Swiss Rules Edition the tournament declares. */
+    public static DutchSystem ofTheTournamentsEdition() {
+        return new DutchSystem(Optional.empty());
+    }
+
+    public static DutchSystem of(SwissRulesEdition edition) {
+        return new DutchSystem(Optional.of(edition));
+    }
+
+    @Override
+    public List<Problem> problemsWith(TournamentSettings settings) {
+        return edition.filter(pinned -> pinned != settings.swissRulesEdition())
+                .map(pinned -> List.of(Problem.citing(
+                        "GHR 1.3",
+                        "The Dutch System of edition " + pinned + " cannot pair a tournament of edition "
+                                + settings.swissRulesEdition())))
+                .orElse(List.of());
+    }
 
     @Override
     public RoundPairing pairNextRound(Tournament tournament) {
@@ -52,47 +74,36 @@ public final class DutchSystem implements PairingSystem {
         }
     }
 
-    private RoundPairing pair(Tournament tournament, PairingProgress progress, List<TraceStep> trace) {
+    private RoundPairing pair(Tournament tournament, PairingProgress progress, List<TraceStep> cancelledTrace) {
         SearchHeartbeat.checkInterrupted();
+        var rules = DutchEdition.of(edition.orElse(tournament.settings().swissRulesEdition()));
         var numbers = tournament.pairingNumbers();
         var round = new RoundToPair(
                 tournament.nextRound(),
                 tournament.settings().numberOfRounds(),
                 tournament.settings().initialColour(),
                 tournament.settings().scoring().win());
-        var players = playersToPair(tournament, numbers);
-        var pairer = new BracketPairer(new PlayerSet(players), round, edition);
+        var players = playersToPair(tournament, numbers, rules);
+        var pairer = new BracketPairer(new PlayerSet(players), round, rules);
+        var walk = new BracketWalk(pairer, progress, players.size());
         if (!pairer.isRoundCompletable()) {
-            throw noLegalPairing("No pairing complies with [C1]-[C3] for every participant", trace);
+            throw walk.noLegalPairing("No pairing complies with [C1]-[C3] for every participant");
         }
-        var pairs = new ArrayList<Pair>();
-        var scoregroups = List.copyOf(scoregroupsFromTheTop(players).values());
-        List<Player> movedDown = List.of();
-        var settled = 0;
-        for (var index = 0; index < scoregroups.size(); index++) {
-            var bracket = new Bracket(movedDown, scoregroups.get(index));
-            var step =
-                    new ProgressStep("bracket " + bracket.residents().getFirst().score());
-            progress.stepStarted(step);
-            var heartbeat = new SearchHeartbeat(progress, step);
-            var outcome = pairer.pair(
-                            bracket, playersBelow(scoregroups, index), residentsOfNext(scoregroups, index), heartbeat)
-                    .orElseThrow(() -> noLegalPairing("No candidate keeps the round completable", trace));
-            trace.add(bracketStep(bracket, outcome));
-            pairs.addAll(outcome.candidate().pairs());
-            movedDown = outcome.candidate().downfloaters();
-            settled += 2 * outcome.candidate().pairs().size();
-            progress.advanced(
-                    new Progress(settled + (index == scoregroups.size() - 1 ? movedDown.size() : 0), players.size()));
-            SearchHeartbeat.checkInterrupted();
+        List<Player> leftOver;
+        try {
+            leftOver = rules.procedure().pairBrackets(players, walk);
+        } catch (SearchInterrupted interrupted) {
+            cancelledTrace.addAll(walk.trace());
+            throw interrupted;
         }
-        var pairingAllocatedBye = movedDown.stream().findFirst();
-        pairingAllocatedBye.ifPresent(
-                player -> trace.add(new TraceStep.ByeDecision(player.id(), "C.04.3 1.9.1, [C5]")));
-        return roundPairing(tournament, numbers, pairer.colours(), pairs, pairingAllocatedBye, trace);
+        walk.finish();
+        var trace = new ArrayList<>(walk.trace());
+        var pairingAllocatedBye = leftOver.stream().findFirst();
+        pairingAllocatedBye.ifPresent(player -> trace.add(new TraceStep.ByeDecision(player.id(), rules.name())));
+        return roundPairing(tournament, numbers, pairer.colours(), walk.pairs(), pairingAllocatedBye, trace);
     }
 
-    private List<Player> playersToPair(Tournament tournament, PairingNumbers numbers) {
+    private static List<Player> playersToPair(Tournament tournament, PairingNumbers numbers, DutchEdition rules) {
         var history = TournamentHistory.of(tournament);
         var lossValue = tournament.settings().scoring().loss();
         return tournament.participantsToBePaired().stream()
@@ -102,14 +113,18 @@ public final class DutchSystem implements PairingSystem {
                         numbers.numberOf(id),
                         pairingScoreBefore(tournament, history, id, tournament.nextRound()),
                         history.of(id),
-                        floatsOf(tournament, history.of(id), history, lossValue)))
+                        floatsOf(tournament, history.of(id), history, lossValue, rules.floatRule())))
                 .sorted(PairingOrder.RANKING)
                 .toList();
     }
 
     /** Floats are judged on the Pairing Scores of the round in which the game was paired (C.04.7, fixed reading). */
-    private List<FloatDirection> floatsOf(
-            Tournament tournament, ParticipantHistory player, TournamentHistory history, Points lossValue) {
+    private static List<FloatDirection> floatsOf(
+            Tournament tournament,
+            ParticipantHistory player,
+            TournamentHistory history,
+            Points lossValue,
+            FloatRule floatRule) {
         var floats = new ArrayList<FloatDirection>();
         for (var index = 0; index < player.records().size(); index++) {
             var round = RoundNumber.of(index + 1);
@@ -118,7 +133,7 @@ public final class DutchSystem implements PairingSystem {
                     .map(opponent -> pairingScoreBefore(tournament, history, opponent, round))
                     .orElse(new PairingScore(Points.ZERO));
             var ownScore = pairingScoreBefore(tournament, history, player.participant(), round);
-            floats.add(edition.floatRule().floatOf(record, ownScore, opponentScore, lossValue));
+            floats.add(floatRule.floatOf(record, ownScore, opponentScore, lossValue));
         }
         return floats;
     }
@@ -168,38 +183,4 @@ public final class DutchSystem implements PairingSystem {
                             .add(pair.s2Player().score().points().toBigDecimal()))
                     .reversed())
             .thenComparing(pair -> pair.higherRanked().pairingNumber());
-
-    private static TraceStep bracketStep(Bracket bracket, BracketOutcome outcome) {
-        var candidate = outcome.candidate();
-        return new TraceStep.BracketStep(
-                bracket.residents().getFirst().score().toString(),
-                bracket.residents().stream().map(Player::id).toList(),
-                bracket.movedDown().stream().map(Player::id).toList(),
-                candidate.pairs().stream()
-                        .map(pair ->
-                                List.of(pair.s1Player().id(), pair.s2Player().id()))
-                        .toList(),
-                candidate.downfloaters().stream().map(Player::id).toList(),
-                outcome.failedCriteria());
-    }
-
-    private static NoLegalPairingException noLegalPairing(String message, List<TraceStep> trace) {
-        return new NoLegalPairingException(List.of(Problem.citing("C.04.3 1.9.3", message)), new PairingTrace(trace));
-    }
-
-    private static Map<PairingScore, List<Player>> scoregroupsFromTheTop(List<Player> ordered) {
-        return ordered.stream()
-                .collect(Collectors.groupingBy(
-                        Player::score, () -> new TreeMap<>(Comparator.reverseOrder()), Collectors.toList()));
-    }
-
-    private static List<Player> playersBelow(List<List<Player>> scoregroups, int index) {
-        return scoregroups.subList(index + 1, scoregroups.size()).stream()
-                .flatMap(List::stream)
-                .toList();
-    }
-
-    private static List<Player> residentsOfNext(List<List<Player>> scoregroups, int index) {
-        return index + 1 < scoregroups.size() ? scoregroups.get(index + 1) : List.of();
-    }
 }
