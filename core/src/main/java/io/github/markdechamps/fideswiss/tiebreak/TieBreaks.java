@@ -39,6 +39,16 @@ final class TieBreaks {
             case "FB" -> sum(code, new ForeBuchholz(code.forfeitsAsPlayed()), "C.07 8.3");
             case "SB" -> sum(code, new SonnebornBerger(code.forfeitsAsPlayed()), "C.07 9.1");
             case "PS" -> sum(code, new ProgressiveScores(), "C.07 7.5");
+            case "DE" -> new DirectEncounter(code);
+            case "WIN" -> OwnRecordTieBreak.wins(code);
+            case "WON" -> OwnRecordTieBreak.gamesWon(code);
+            case "BPG" -> OwnRecordTieBreak.gamesWithBlack(code);
+            case "BWG" -> OwnRecordTieBreak.winsWithBlack(code);
+            case "REP" -> OwnRecordTieBreak.roundsElectedToPlay(code);
+            case "STD" -> OwnRecordTieBreak.standardPoints(code);
+            case "TPN" -> OwnRecordTieBreak.pairingNumber(code);
+            case "RTNG" -> new RatingTieBreak(OwnRecordTieBreak.rating(code));
+            case "KS" -> OwnRecordTieBreak.koya(code);
             case "ARO" ->
                 new RatingTieBreak(new TermTieBreak(
                         code,
