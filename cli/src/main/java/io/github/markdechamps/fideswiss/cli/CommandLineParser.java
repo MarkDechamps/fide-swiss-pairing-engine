@@ -2,6 +2,7 @@ package io.github.markdechamps.fideswiss.cli;
 
 import io.github.markdechamps.fideswiss.tournament.InitialColour;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
+import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -153,7 +154,16 @@ final class CommandLineParser {
             }
             case "--rounds" -> Optional.of(overrides.withRounds(NumberOfRounds.of(number(value(queue, argument)))));
             case "--initial-colour" -> Optional.of(overrides.withInitialColour(colour(value(queue, argument))));
+            case "--edition" -> Optional.of(overrides.withEdition(edition(value(queue, argument))));
             default -> Optional.empty();
+        };
+    }
+
+    private static SwissRulesEdition edition(String value) {
+        return switch (value) {
+            case "2026" -> SwissRulesEdition.EDITION_2026;
+            case "pre-2026" -> SwissRulesEdition.PRE_2026;
+            default -> throw new UsageException("--edition takes 2026 or pre-2026, not " + value);
         };
     }
 

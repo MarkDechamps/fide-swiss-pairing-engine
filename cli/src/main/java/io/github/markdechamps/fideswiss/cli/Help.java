@@ -10,6 +10,7 @@ final class Help {
 
             settings (override the file's records):
               --system dutch | --dutch     the pairing system
+              --edition 2026|pre-2026      the Swiss Rules Edition (over 192); pre-2026 is Dutch 2017
               --rounds <n>                 the number of rounds (over 142/XXR)
               --initial-colour white|black the initial colour (over 152/XXC)
 
