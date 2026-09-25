@@ -65,6 +65,11 @@ public final class TrfTournament {
         return new TrfTournament(settings, participants, rounds, absences);
     }
 
+    /** The same file under other settings, such as the command line's overrides. */
+    public TrfTournament with(TournamentSettings overridden) {
+        return new TrfTournament(overridden, participants, recordedRounds, nextRoundAbsences);
+    }
+
     public TournamentSettings settings() {
         return settings;
     }
