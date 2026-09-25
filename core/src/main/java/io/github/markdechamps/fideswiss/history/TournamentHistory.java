@@ -52,7 +52,9 @@ public final class TournamentHistory {
         return round.boardOf(participant)
                 .map(board -> boardRecord(tournament, board, participant))
                 .orElseGet(() -> {
-                    var bye = round.byeOf(participant).orElseGet(() -> absence(earlier));
+                    var bye = round.byeOf(participant)
+                            .or(() -> tournament.absenceIn(participant, round.number()))
+                            .orElseGet(() -> absence(earlier));
                     return new RoundRecord.NoBoard(
                             bye, scoring.pointsFor(bye, tournament.settings().pairingAllocatedByeValue()));
                 });

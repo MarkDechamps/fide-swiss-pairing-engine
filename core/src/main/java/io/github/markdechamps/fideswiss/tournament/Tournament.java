@@ -99,6 +99,33 @@ public final class Tournament {
         return new Tournament(settings, participants, rounds, attendance.withWithdrawal(participant, from));
     }
 
+    /**
+     * A Late Entry (GHR 2.4): a participant only taken into account for the pairing of {@code firstRound} and
+     * later, scoring nothing for the rounds it missed.
+     */
+    public Tournament enterLate(Participant participant, RoundNumber firstRound) {
+        return enterLate(participant, firstRound, MissedRounds.zeroPoints());
+    }
+
+    public Tournament enterLate(Participant participant, RoundNumber firstRound, MissedRounds missed) {
+        if (findParticipant(participant.id()).isPresent()) {
+            throw new InvalidTournamentException(Problem.of("Two participants share an id", participant.id()));
+        }
+        if (firstRound.isBefore(nextRound())) {
+            throw new InvalidTournamentException(
+                    Problem.of("Round " + firstRound + " is already recorded", participant.id()));
+        }
+        var registered = new ArrayList<>(participants);
+        registered.add(participant);
+        return new Tournament(
+                settings, registered, rounds, attendance.withLateEntry(participant.id(), firstRound, missed.bye()));
+    }
+
+    /** Why the participant is known in advance not to be paired in the round, if it is not. */
+    public Optional<Bye> absenceIn(ParticipantId participant, RoundNumber round) {
+        return attendance.absenceIn(participant, round);
+    }
+
     private Optional<Bye> absenceInNextRound(ParticipantId participant) {
         return attendance.absenceIn(participant, nextRound());
     }
@@ -129,14 +156,22 @@ public final class Tournament {
         return settings.acceleration().virtualPointsOf(participant, round, this);
     }
 
-    /** C.04.7 1.2: the top 2·⌈N/4⌉ of the round-1 list, in ranking-key order. */
+    /**
+     * C.04.7 1.2–1.3: the top 2·⌈N/4⌉ of the round-1 list, down to the Last Accelerated Participant; a Late Entry
+     * ranked above that participant joins the group.
+     */
     boolean isInAcceleratedGroup(ParticipantId participant) {
         var ranked = participants.stream()
                 .sorted(settings.rankingKey().order(participants))
                 .map(Participant::id)
                 .toList();
-        var groupSize = 2 * ((ranked.size() + 3) / 4);
-        return ranked.indexOf(participant) < groupSize;
+        var starters = ranked.stream().filter(attendance::startsInRoundOne).toList();
+        if (starters.isEmpty()) {
+            return false;
+        }
+        var groupSize = 2 * ((starters.size() + 3) / 4);
+        var lastAccelerated = starters.get(Math.min(groupSize, starters.size()) - 1);
+        return ranked.indexOf(participant) <= ranked.indexOf(lastAccelerated);
     }
 
     public RoundPairing pairNextRound() {
