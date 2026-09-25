@@ -9,11 +9,13 @@ import io.github.markdechamps.fideswiss.tournament.InitialColour;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import io.github.markdechamps.fideswiss.tournament.Participant;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
+import io.github.markdechamps.fideswiss.tournament.Points;
 import io.github.markdechamps.fideswiss.tournament.Profiles;
 import io.github.markdechamps.fideswiss.tournament.RankingKey;
 import io.github.markdechamps.fideswiss.tournament.RequestedBye;
 import io.github.markdechamps.fideswiss.tournament.Round;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
+import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * A TRF read into the library's model: the settings its records declare over the baseline profile, the
@@ -28,6 +31,8 @@ import java.util.Optional;
  * marked absent for the round to be paired.
  */
 public final class TrfTournament {
+
+    private static final Pattern SCORING_PAIR = Pattern.compile("([WDLAPX])\\s*(\\d+(?:\\.\\d+)?)");
 
     private final TournamentSettings settings;
     private final List<Participant> participants;
@@ -61,7 +66,8 @@ public final class TrfTournament {
         var numberOfRounds = declaredNumberOfRounds(records).orElse(Math.max(columns, 1));
         var settings = Profiles.individualSwiss(NumberOfRounds.of(numberOfRounds))
                 .with(RankingKey.asListed())
-                .with(initialColour(records, players));
+                .with(initialColour(records, players))
+                .with(scoring(records));
         return new TrfTournament(settings, participants, rounds, absences);
     }
 
@@ -195,6 +201,29 @@ public final class TrfTournament {
             case 'H' -> Bye.HALF_POINT;
             default -> Bye.ZERO_POINT;
         };
+    }
+
+    /**
+     * {@code 162}: pairs of a symbol and its points; {@code W} win, {@code D} draw, {@code L} loss, {@code P} the
+     * PAB. Values not given keep their defaults.
+     */
+    private static ScoringScheme scoring(Map<String, List<String>> records) {
+        var scoring = ScoringScheme.standard();
+        for (var value : records.getOrDefault("162", List.of())) {
+            var matcher = SCORING_PAIR.matcher(value);
+            while (matcher.find()) {
+                var points = Points.of(matcher.group(2));
+                scoring = switch (matcher.group(1).charAt(0)) {
+                    case 'W' ->
+                        new ScoringScheme(points, scoring.draw(), scoring.loss(), scoring.pairingAllocatedBye());
+                    case 'D' -> new ScoringScheme(scoring.win(), points, scoring.loss(), scoring.pairingAllocatedBye());
+                    case 'L' -> new ScoringScheme(scoring.win(), scoring.draw(), points, scoring.pairingAllocatedBye());
+                    case 'P' -> scoring.withPairingAllocatedBye(points);
+                    default -> scoring;
+                };
+            }
+        }
+        return scoring;
     }
 
     private static Optional<Integer> declaredNumberOfRounds(Map<String, List<String>> records) {
