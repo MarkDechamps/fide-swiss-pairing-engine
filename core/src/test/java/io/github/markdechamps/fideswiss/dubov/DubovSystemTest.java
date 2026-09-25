@@ -1,0 +1,42 @@
+package io.github.markdechamps.fideswiss.dubov;
+
+import static io.github.markdechamps.fideswiss.pairing.RoundPairingAssert.assertThatPairing;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import io.github.markdechamps.fideswiss.pairing.PairingSystems;
+import io.github.markdechamps.fideswiss.tournament.GameOutcome;
+import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
+import io.github.markdechamps.fideswiss.tournament.Profiles;
+import io.github.markdechamps.fideswiss.tournament.Tournament;
+import io.github.markdechamps.fideswiss.tournament.TournamentMother;
+import org.junit.jupiter.api.Test;
+
+class DubovSystemTest {
+
+    @Test
+    void pairsRoundOneByPairingNumberHalvesWithColoursByParity() {
+        var tournament = dubov(4);
+
+        var pairing = tournament.pairNextRound();
+
+        // 3.2.3: nobody has played, so G1 is the first half by TPN; 5.2.1: the odd TPN gets the initial colour.
+        assertThatPairing(pairing).hasBoards("1-3", "4-2").givesNoPairingAllocatedBye();
+    }
+
+    @Test
+    void givesTheByeBeforePairingToTheLowestScoreWithTheLargestPairingNumber() {
+        var tournament = TournamentMother.playNextRound(dubov(5), GameOutcome.WHITE_WINS, GameOutcome.BLACK_WINS);
+
+        var pairing = tournament.pairNextRound();
+
+        // Round 1: 1-3, 4-2 and the PAB to 5. Round 2: 3 and 4 have no points; 5 had the PAB ([C2], 3.1.1), so
+        // the bye goes to the one with the largest TPN (3.1.5).
+        assertThatPairing(pairing).givesPairingAllocatedByeTo("4");
+        assertThat(pairing.boards()).hasSize(2);
+    }
+
+    private static Tournament dubov(int players) {
+        var settings = Profiles.individualSwiss(NumberOfRounds.of(5)).with(PairingSystems.dubov());
+        return Tournament.of(settings, TournamentMother.participants(players));
+    }
+}
