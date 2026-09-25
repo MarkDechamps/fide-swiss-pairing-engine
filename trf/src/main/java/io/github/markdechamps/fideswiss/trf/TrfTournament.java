@@ -10,6 +10,7 @@ import io.github.markdechamps.fideswiss.tournament.InitialColour;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import io.github.markdechamps.fideswiss.tournament.Participant;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
+import io.github.markdechamps.fideswiss.tournament.Points;
 import io.github.markdechamps.fideswiss.tournament.Profiles;
 import io.github.markdechamps.fideswiss.tournament.RankingKey;
 import io.github.markdechamps.fideswiss.tournament.RequestedBye;
@@ -34,13 +35,19 @@ public final class TrfTournament {
     private final List<Participant> participants;
     private final List<Round> recordedRounds;
     private final Map<ParticipantId, Bye> nextRoundAbsences;
+    private final List<PlayerRecord> players;
+    private final boolean declaresTieBreaks;
 
     private TrfTournament(
             TournamentSettings settings,
             List<Participant> participants,
             List<Round> recordedRounds,
-            Map<ParticipantId, Bye> nextRoundAbsences) {
+            Map<ParticipantId, Bye> nextRoundAbsences,
+            List<PlayerRecord> players,
+            boolean declaresTieBreaks) {
         this.settings = settings;
+        this.players = List.copyOf(players);
+        this.declaresTieBreaks = declaresTieBreaks;
         this.participants = List.copyOf(participants);
         this.recordedRounds = List.copyOf(recordedRounds);
         this.nextRoundAbsences = Map.copyOf(nextRoundAbsences);
@@ -64,12 +71,40 @@ public final class TrfTournament {
                 .with(RankingKey.asListed())
                 .with(initialColour(records, players));
         var settings = declaredTieBreaks(records).map(profile::with).orElse(profile);
-        return new TrfTournament(settings, participants, rounds, absences);
+        return new TrfTournament(
+                settings,
+                participants,
+                rounds,
+                absences,
+                players,
+                declaredTieBreaks(records).isPresent());
     }
 
     /** The same file under other settings, such as the command line's overrides. */
     public TrfTournament with(TournamentSettings overridden) {
-        return new TrfTournament(overridden, participants, recordedRounds, nextRoundAbsences);
+        return new TrfTournament(
+                overridden, participants, recordedRounds, nextRoundAbsences, players, declaresTieBreaks);
+    }
+
+    /** The Points each {@code 001} record states (columns 81–84), where it states them. */
+    public Map<ParticipantId, Points> declaredPoints() {
+        var points = new java.util.LinkedHashMap<ParticipantId, Points>();
+        players.forEach(player -> player.declaredPoints()
+                .ifPresent(value -> points.put(player.participant().id(), value)));
+        return points;
+    }
+
+    /** The rank each {@code 001} record states (columns 86–89), where it states one. */
+    public Map<ParticipantId, Integer> declaredRanks() {
+        var ranks = new java.util.LinkedHashMap<ParticipantId, Integer>();
+        players.forEach(player -> player.declaredRank()
+                .ifPresent(rank -> ranks.put(player.participant().id(), rank)));
+        return ranks;
+    }
+
+    /** Whether the file names its own Tie-break List (202 or 212), so that its ranks can be held to it. */
+    public boolean declaresTieBreaks() {
+        return declaresTieBreaks;
     }
 
     public TournamentSettings settings() {
