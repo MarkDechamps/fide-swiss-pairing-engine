@@ -6,6 +6,7 @@ import io.github.markdechamps.fideswiss.tournament.InvalidTournamentException;
 import io.github.markdechamps.fideswiss.tournament.Problem;
 import io.github.markdechamps.fideswiss.trf.InvalidTrfException;
 import io.github.markdechamps.fideswiss.trf.TrfReader;
+import io.github.markdechamps.fideswiss.trf.TrfTournament;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -24,6 +25,7 @@ public final class Main {
     static final int INTERNAL_ERROR = 2;
     static final int INVALID_REQUEST = 3;
     static final int FILE_ACCESS_ERROR = 5;
+    static final int INCONSISTENT = 6;
 
     private final InputStream in;
     private final PrintStream out;
@@ -60,19 +62,25 @@ public final class Main {
     private int execute(Command command) {
         return switch (command) {
             case Command.Pair pair -> pair(pair);
+            case Command.Check check ->
+                new PairingsChecker(out).check(read(check.input(), check.overrides()), check.round());
             case Command.Version version -> print(Version.describe());
             case Command.Help help -> print(Help.TEXT);
         };
     }
 
     private int pair(Command.Pair command) {
-        var file = TrfReader.read(readInput(command.input()));
-        var tournament = file.with(command.overrides().applyTo(file.settings())).tournament();
+        var tournament = read(command.input(), command.overrides()).tournament();
         var pairing = tournament.pairNextRound();
         command.trace().ifPresent(trace -> write(trace, pairing.trace().describe() + "\n"));
         var reply = PairingReply.of(pairing);
         command.reply().ifPresentOrElse(replyFile -> write(replyFile, reply), () -> out.print(reply));
         return SUCCESS;
+    }
+
+    private TrfTournament read(String input, SettingsOverrides overrides) {
+        var file = TrfReader.read(readInput(input));
+        return file.with(overrides.applyTo(file.settings()));
     }
 
     private int print(String text) {

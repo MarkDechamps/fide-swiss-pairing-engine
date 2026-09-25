@@ -28,6 +28,14 @@ final class CommandLineParser {
                 queue.removeFirst();
                 yield canonicalPair(queue);
             }
+            case "check" -> {
+                queue.removeFirst();
+                yield canonicalCheck(queue);
+            }
+            case "-check" -> {
+                queue.removeFirst();
+                yield new Command.Check(required(queue.pollFirst()), Optional.empty(), SettingsOverrides.NONE);
+            }
             case "version", "-r" -> new Command.Version();
             case "help", "--help", "-h" -> new Command.Help();
             default -> compatible(queue);
@@ -59,9 +67,33 @@ final class CommandLineParser {
         return pairCommand(input, reply, trace, overrides);
     }
 
+    private static Command canonicalCheck(Deque<String> queue) {
+        String input = null;
+        Optional<Integer> round = Optional.empty();
+        var overrides = SettingsOverrides.NONE;
+        while (!queue.isEmpty()) {
+            var argument = queue.removeFirst();
+            if (argument.equals("--round")) {
+                round = Optional.of(number(value(queue, argument)));
+                continue;
+            }
+            var parsed = settingsFlag(argument, queue, overrides);
+            if (parsed.isPresent()) {
+                overrides = parsed.get();
+            } else if (input == null && !argument.startsWith("--")) {
+                input = argument;
+            } else {
+                throw new UsageException("unexpected argument " + argument);
+            }
+        }
+        return new Command.Check(required(input), round, overrides);
+    }
+
     private static Command compatible(Deque<String> queue) {
         String input = null;
         var pair = false;
+        var check = false;
+        Optional<Integer> round = Optional.empty();
         Optional<String> reply = Optional.empty();
         Optional<String> trace = Optional.empty();
         var overrides = SettingsOverrides.NONE;
@@ -71,6 +103,10 @@ final class CommandLineParser {
                 case "-p" -> {
                     pair = true;
                     reply = optionalValue(queue);
+                }
+                case "-c" -> {
+                    check = true;
+                    round = optionalValue(queue).map(CommandLineParser::number);
                 }
                 case "-l" -> trace = Optional.of(optionalValue(queue).orElse(""));
                 default -> {
@@ -85,8 +121,11 @@ final class CommandLineParser {
                 }
             }
         }
+        if (check) {
+            return new Command.Check(required(input), round, overrides);
+        }
         if (!pair) {
-            throw new UsageException("nothing to do: give -p to pair the next round");
+            throw new UsageException("nothing to do: give -p to pair the next round or -c to check");
         }
         return pairCommand(input, reply, trace, overrides);
     }

@@ -9,6 +9,9 @@ sealed interface Command {
     record Pair(String input, Optional<String> reply, Optional<String> trace, SettingsOverrides overrides)
             implements Command {}
 
+    /** Check every recorded round (or only {@code round}) against the rules and the system (the PTC). */
+    record Check(String input, Optional<Integer> round, SettingsOverrides overrides) implements Command {}
+
     record Version() implements Command {}
 
     record Help() implements Command {}
