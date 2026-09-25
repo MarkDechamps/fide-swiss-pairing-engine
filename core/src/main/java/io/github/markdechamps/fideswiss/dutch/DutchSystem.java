@@ -6,6 +6,7 @@ import io.github.markdechamps.fideswiss.pairing.PairingTrace;
 import io.github.markdechamps.fideswiss.pairing.RoundPairing;
 import io.github.markdechamps.fideswiss.tournament.BoardNumber;
 import io.github.markdechamps.fideswiss.tournament.Colour;
+import io.github.markdechamps.fideswiss.tournament.ParticipantId;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,10 +32,12 @@ public final class DutchSystem implements PairingSystem {
                             ? new PairedBoard(board, higher, lower)
                             : new PairedBoard(board, lower, higher));
         }
+        var pairingAllocatedBye =
+                ranked.size() % 2 == 1 ? Optional.of(ranked.getLast()) : Optional.<ParticipantId>empty();
         return new RoundPairing(
                 tournament.nextRound(),
                 List.copyOf(boards),
-                Optional.empty(),
+                pairingAllocatedBye,
                 Map.of(),
                 numbers,
                 new PairingTrace(List.of()));
