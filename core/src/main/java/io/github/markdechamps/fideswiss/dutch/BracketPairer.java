@@ -1,6 +1,7 @@
 package io.github.markdechamps.fideswiss.dutch;
 
 import io.github.markdechamps.fideswiss.dutch.CandidateCriterion.Scope;
+import io.github.markdechamps.fideswiss.search.SearchHeartbeat;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -39,8 +40,9 @@ final class BracketPairer {
     }
 
     /** The bracket's candidate; empty only when no candidate keeps the round completable. */
-    Optional<BracketOutcome> pair(Bracket bracket, List<Player> lowerPlayers, List<Player> nextResidents) {
-        return new BracketPairing(bracket, lowerPlayers, nextResidents, edition.criteria()).bestCandidate();
+    Optional<BracketOutcome> pair(
+            Bracket bracket, List<Player> lowerPlayers, List<Player> nextResidents, SearchHeartbeat heartbeat) {
+        return new BracketPairing(bracket, lowerPlayers, nextResidents, edition.criteria()).bestCandidate(heartbeat);
     }
 
     /** The pairing of one bracket: its optimum and its candidate sequence. */
@@ -77,11 +79,11 @@ final class BracketPairer {
          * Article 3.4 accepts the first perfect candidate. The optimum finder makes "perfect" exact, so the first
          * candidate that reaches it is also the best one of 3.8, ties going to the earliest.
          */
-        Optional<BracketOutcome> bestCandidate() {
-            return finder.optimum(wholeBracket()).map(this::firstReaching);
+        Optional<BracketOutcome> bestCandidate(SearchHeartbeat heartbeat) {
+            return finder.optimum(wholeBracket()).map(optimum -> firstReaching(optimum, heartbeat));
         }
 
-        private BracketOutcome firstReaching(OptimumFinder.Optimum optimum) {
+        private BracketOutcome firstReaching(OptimumFinder.Optimum optimum, SearchHeartbeat heartbeat) {
             var maxPairs = (bracket.playersInBsnOrder().size()
                             - optimum.candidate().downfloaters().size())
                     / 2;
@@ -89,6 +91,7 @@ final class BracketPairer {
                     ? homogeneousCandidates(bracket.residents(), maxPairs, List.of(), List.of(), optimum)
                     : heterogeneousCandidates(optimum);
             var first = candidates
+                    .peek(candidate -> heartbeat.tick())
                     .filter(this::keepsRoundCompletable)
                     .filter(candidate -> vectorOf(candidate).equals(optimum.vector()))
                     .findFirst()

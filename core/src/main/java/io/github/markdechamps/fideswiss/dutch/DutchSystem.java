@@ -4,10 +4,16 @@ import io.github.markdechamps.fideswiss.history.ParticipantHistory;
 import io.github.markdechamps.fideswiss.history.TournamentHistory;
 import io.github.markdechamps.fideswiss.pairing.NoLegalPairingException;
 import io.github.markdechamps.fideswiss.pairing.PairedBoard;
+import io.github.markdechamps.fideswiss.pairing.PairingCancelledException;
+import io.github.markdechamps.fideswiss.pairing.PairingProgress;
 import io.github.markdechamps.fideswiss.pairing.PairingSystem;
 import io.github.markdechamps.fideswiss.pairing.PairingTrace;
+import io.github.markdechamps.fideswiss.pairing.Progress;
+import io.github.markdechamps.fideswiss.pairing.ProgressStep;
 import io.github.markdechamps.fideswiss.pairing.RoundPairing;
 import io.github.markdechamps.fideswiss.pairing.TraceStep;
+import io.github.markdechamps.fideswiss.search.SearchHeartbeat;
+import io.github.markdechamps.fideswiss.search.SearchInterrupted;
 import io.github.markdechamps.fideswiss.tournament.BoardNumber;
 import io.github.markdechamps.fideswiss.tournament.PairingNumbers;
 import io.github.markdechamps.fideswiss.tournament.PairingScore;
@@ -33,6 +39,21 @@ public final class DutchSystem implements PairingSystem {
 
     @Override
     public RoundPairing pairNextRound(Tournament tournament) {
+        return pairNextRound(tournament, PairingProgress.NONE);
+    }
+
+    @Override
+    public RoundPairing pairNextRound(Tournament tournament, PairingProgress progress) {
+        var trace = new ArrayList<TraceStep>();
+        try {
+            return pair(tournament, progress, trace);
+        } catch (SearchInterrupted interrupted) {
+            throw new PairingCancelledException(new PairingTrace(trace));
+        }
+    }
+
+    private RoundPairing pair(Tournament tournament, PairingProgress progress, List<TraceStep> trace) {
+        SearchHeartbeat.checkInterrupted();
         var numbers = tournament.pairingNumbers();
         var round = new RoundToPair(
                 tournament.nextRound(),
@@ -41,20 +62,29 @@ public final class DutchSystem implements PairingSystem {
                 tournament.settings().scoring().win());
         var players = playersToPair(tournament, numbers);
         var pairer = new BracketPairer(new PlayerSet(players), round, edition);
-        var trace = new ArrayList<TraceStep>();
         if (!pairer.isRoundCompletable()) {
             throw noLegalPairing("No pairing complies with [C1]-[C3] for every participant", trace);
         }
         var pairs = new ArrayList<Pair>();
         var scoregroups = List.copyOf(scoregroupsFromTheTop(players).values());
         List<Player> movedDown = List.of();
+        var settled = 0;
         for (var index = 0; index < scoregroups.size(); index++) {
             var bracket = new Bracket(movedDown, scoregroups.get(index));
-            var outcome = pairer.pair(bracket, playersBelow(scoregroups, index), residentsOfNext(scoregroups, index))
+            var step =
+                    new ProgressStep("bracket " + bracket.residents().getFirst().score());
+            progress.stepStarted(step);
+            var heartbeat = new SearchHeartbeat(progress, step);
+            var outcome = pairer.pair(
+                            bracket, playersBelow(scoregroups, index), residentsOfNext(scoregroups, index), heartbeat)
                     .orElseThrow(() -> noLegalPairing("No candidate keeps the round completable", trace));
             trace.add(bracketStep(bracket, outcome));
             pairs.addAll(outcome.candidate().pairs());
             movedDown = outcome.candidate().downfloaters();
+            settled += 2 * outcome.candidate().pairs().size();
+            progress.advanced(
+                    new Progress(settled + (index == scoregroups.size() - 1 ? movedDown.size() : 0), players.size()));
+            SearchHeartbeat.checkInterrupted();
         }
         var pairingAllocatedBye = movedDown.stream().findFirst();
         pairingAllocatedBye.ifPresent(

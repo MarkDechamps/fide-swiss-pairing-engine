@@ -2,6 +2,7 @@ package io.github.markdechamps.fideswiss.tournament;
 
 import io.github.markdechamps.fideswiss.pairing.NoLegalPairingException;
 import io.github.markdechamps.fideswiss.pairing.PairingCheck;
+import io.github.markdechamps.fideswiss.pairing.PairingProgress;
 import io.github.markdechamps.fideswiss.pairing.ProposedPairing;
 import io.github.markdechamps.fideswiss.pairing.RoundPairing;
 import java.util.ArrayList;
@@ -238,11 +239,16 @@ public final class Tournament {
     }
 
     public RoundPairing pairNextRound() {
+        return pairNextRound(PairingProgress.NONE);
+    }
+
+    /** Pairs the next round, telling the listener how it advances; interrupt the thread to cancel. */
+    public RoundPairing pairNextRound(PairingProgress progress) {
         if (!settings.numberOfRounds().includes(nextRound())) {
             throw new InvalidTournamentException(Problem.of(
                     "The tournament has only " + settings.numberOfRounds().value() + " rounds"));
         }
-        return settings.pairingSystem().pairNextRound(this);
+        return settings.pairingSystem().pairNextRound(this, progress);
     }
 
     /**

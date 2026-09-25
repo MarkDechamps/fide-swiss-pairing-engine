@@ -14,6 +14,11 @@ public interface PairingSystem {
 
     RoundPairing pairNextRound(Tournament tournament);
 
+    /** As {@link #pairNextRound(Tournament)}, telling the listener how it advances. */
+    default RoundPairing pairNextRound(Tournament tournament, PairingProgress progress) {
+        return pairNextRound(tournament);
+    }
+
     /** The rules a proposed pairing for the next round breaks: the Basic Rules, and the system's own. */
     default List<Violation> violationsOf(Tournament tournament, ProposedPairing proposed) {
         return BasicRules.violationsOf(tournament, proposed);
