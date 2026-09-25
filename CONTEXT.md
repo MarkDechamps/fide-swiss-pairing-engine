@@ -186,6 +186,18 @@ _Avoid_: Ranking list, leaderboard
 The ordered tie-breaks a tournament declares for its Standings, written in the Technical Commission's code syntax (for example `BH/C1, SB, DE`).
 _Avoid_: Tie-break order, tiebreakers
 
+**Deciding Tie-break**:
+What separates two participants in the Standings: Score when their scores differ, otherwise the first tie-break in the Tie-break List whose values differ.
+_Avoid_: Winning tie-break, decisive criterion
+
+**Shared Rank**:
+The rank held jointly by participants whose Score and every tie-break in the Tie-break List are equal; the library never draws lots between them.
+_Avoid_: Tie, dead heat
+
+**Tie-break Contribution**:
+One round's share in a participant's tie-break value: the counterpart (an opponent, or the Dummy Opponent), the value used and the modifiers that cut, capped or adjusted it.
+_Avoid_: Tie-break detail, component
+
 **Unplayed Round**:
 A round in which a participant, paired or not, played no game (or, in a team event, no match): a bye, a forfeit, or a round after a Withdrawal (C.07 15.1).
 _Avoid_: Missing game, non-game
