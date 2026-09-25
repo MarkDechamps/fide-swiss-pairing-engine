@@ -40,10 +40,28 @@ Where the text leaves room, the library follows one documented reading, each ver
 - **[C18]/[C20]**: a Limbo MDP's score difference is greater than any resident's and grows with its own score.
 - Only Numbered Participants (taken into account for this round's pairing or an earlier one) hold a Pairing Number (ADR 0006).
 
+### Readings of the Dutch 2017 text (pre-2026 edition)
+
+Dutch 2017 is its own procedure (A.9: the Penultimate Pairing Bracket and the Collapsed Last Bracket) over the parts Dutch 2026 uses. Where the text leaves room it follows these readings, each what bbpPairings v5.0.1 does:
+
+- **R1 (A.9)** The completion check after a bracket is C.1–C.3 on its downfloaters and every lower player, one PAB-eligible leftover allowed; downfloaters may meet each other there.
+- **R2 (A.9, C.4)** The Penultimate Pairing Bracket is paired again with C.4 above C.5 and without C.7; the Collapsed Last Bracket is one heterogeneous bracket (its downfloaters as MDPs, every lower player as a resident).
+- **R3 (B.1.c)** M1 is the number of MDPs the optimum pairs, not the most that could be paired.
+- **R4 (A.8)** In the Collapsed Last Bracket each player's own score counts for the Pairing Score Difference.
+- **R5 (C.7)** The following bracket is paired on C.1–C.3 only and compared on fewest unpaired, then their scores highest first.
+- **R6 (C.7, a gap in the text)** When the following bracket is the last, a player it leaves unpaired who may not take the PAB weighs 3 instead of 1.
+- **R7 (C.12–C.19)** "The same float" means any float given in this round, with the matching score difference.
+- **R8 (A.4.b)** Every round without a played game is a downfloat, absences and forfeit losses included.
+- **R9 (C.2)** The PAB and forfeit wins bar the PAB; a requested full-point bye does not.
+- **R10 (E.5)** Colour parity uses the Pairing Numbers of Numbered Participants (ADR 0006 holds for 2017 too).
+- **R11 (D.3)** Every set of M1 MDPs is tried, by highest different score and then lowest pairing positions; the optimum finder prunes.
+
 ## Library
 
 ```java
 var tournament = Tournament.of(participants, NumberOfRounds.of(9));   // Dutch 2026, 1 / ½ / 0
+var historic = Tournament.of(
+        Profiles.individualSwiss(NumberOfRounds.of(9)).with(SwissRulesEdition.PRE_2026), participants); // Dutch 2017
 var pairing = tournament.pairNextRound();
 tournament = tournament.withRound(pairing.completedWith(outcomes));    // outcomes by board
 tournament = tournament.requestBye(id, RoundNumber.of(4), RequestedBye.half());
@@ -63,7 +81,8 @@ fide-swiss version                                        # also -r
 
 - The Pairing Reply is JaVaFo's: the number of lines, then one `white black` line per board using the file's own ids, and the PAB as `id 0` last.
 - `check` re-pairs every recorded round from the rounds before it and prints each ILLEGAL round (with the articles broken) or DIFFERENT round (the file's and the system's pairing).
-- Flags override the file's records: `--system dutch`, `--rounds <n>` (over `142`/`XXR`), `--initial-colour white|black` (over `152`/`XXC`).
+- Flags override the file's records: `--system dutch`, `--edition 2026|pre-2026` (the Swiss Rules Edition, over `192`), `--rounds <n>` (over `142`/`XXR`), `--initial-colour white|black` (over `152`/`XXC`).
+- `192 FIDE_DUTCH_2017` selects the pre-2026 edition; `FIDE_DUTCH`, `FIDE_DUTCH_2026` and `FIDE_DUTCH_2025` select 2026. Any other code is rejected (exit 3) until its system is built. bbpPairings writes the code in `092`, which is read the same way when there is no `192`.
 - The reader takes TRF26 and TRF16 with CR, LF or CRLF line endings, UTF-8 or ISO-8859-1. A last round column holding only `0000 - H/F/Z` marks means those participants are absent from the round to be paired.
 
 | Exit code | Meaning |
