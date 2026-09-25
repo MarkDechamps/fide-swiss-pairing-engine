@@ -14,6 +14,7 @@ import io.github.markdechamps.fideswiss.tournament.RankingKey;
 import io.github.markdechamps.fideswiss.tournament.RequestedBye;
 import io.github.markdechamps.fideswiss.tournament.Round;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
+import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
 import java.util.ArrayList;
@@ -61,8 +62,28 @@ public final class TrfTournament {
         var numberOfRounds = declaredNumberOfRounds(records).orElse(Math.max(columns, 1));
         var settings = Profiles.individualSwiss(NumberOfRounds.of(numberOfRounds))
                 .with(RankingKey.asListed())
-                .with(initialColour(records, players));
+                .with(initialColour(records, players))
+                .with(swissRulesEdition(records));
         return new TrfTournament(settings, participants, rounds, absences);
+    }
+
+    /**
+     * The edition the {@code 192} code declares (TRF CLI surface): {@code FIDE_DUTCH_2017} is pre-2026, a bare or
+     * 2025/2026 Dutch code is 2026. bbpPairings writes the code into {@code 092}, read the same way without a 192.
+     */
+    private static SwissRulesEdition swissRulesEdition(Map<String, List<String>> records) {
+        var declared = firstValue(records, "192")
+                .or(() ->
+                        firstValue(records, "092").filter(value -> value.trim().startsWith("FIDE_DUTCH")));
+        return declared.map(value -> editionOf(value.trim())).orElse(SwissRulesEdition.EDITION_2026);
+    }
+
+    private static SwissRulesEdition editionOf(String code) {
+        return switch (code) {
+            case "FIDE_DUTCH_2017" -> SwissRulesEdition.PRE_2026;
+            case "FIDE_DUTCH", "FIDE_DUTCH_2025", "FIDE_DUTCH_2026" -> SwissRulesEdition.EDITION_2026;
+            default -> throw new InvalidTrfException("Unsupported 192 code " + code);
+        };
     }
 
     /** The same file under other settings, such as the command line's overrides. */

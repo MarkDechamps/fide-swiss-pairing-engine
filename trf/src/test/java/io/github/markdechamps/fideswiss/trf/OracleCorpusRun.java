@@ -1,5 +1,6 @@
 package io.github.markdechamps.fideswiss.trf;
 
+import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -9,7 +10,10 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
-/** Diffs every TRF under {@code -Doracle.corpus=<dir>} against its recorded pairings; a local research aid. */
+/**
+ * Diffs every TRF under {@code -Doracle.corpus=<dir>} against its recorded pairings, under the file's edition or
+ * {@code -Doracle.edition=PRE_2026}; a local research aid.
+ */
 @EnabledIfSystemProperty(named = "oracle.corpus", matches = ".+")
 class OracleCorpusRun {
 
@@ -22,8 +26,13 @@ class OracleCorpusRun {
             for (var path :
                     paths.filter(p -> p.toString().endsWith(".trf")).sorted().toList()) {
                 files++;
-                differences.addAll(RecordedRoundReplay.differences(
-                        path.getFileName().toString(), Files.readString(path, StandardCharsets.UTF_8)));
+                var name = path.getFileName().toString();
+                var trf = Files.readString(path, StandardCharsets.UTF_8);
+                var edition = System.getProperty("oracle.edition", "");
+                differences.addAll(
+                        edition.isEmpty()
+                                ? RecordedRoundReplay.differences(name, trf)
+                                : RecordedRoundReplay.differences(name, trf, SwissRulesEdition.valueOf(edition)));
             }
         }
         differences.forEach(System.out::println);
