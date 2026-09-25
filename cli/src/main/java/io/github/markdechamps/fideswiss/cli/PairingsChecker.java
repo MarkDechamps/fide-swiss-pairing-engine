@@ -3,11 +3,15 @@ package io.github.markdechamps.fideswiss.cli;
 import io.github.markdechamps.fideswiss.pairing.PairingCheck;
 import io.github.markdechamps.fideswiss.pairing.ProposedPairing;
 import io.github.markdechamps.fideswiss.pairing.RoundPairing;
+import io.github.markdechamps.fideswiss.standings.Standings;
 import io.github.markdechamps.fideswiss.tournament.InvalidTournamentException;
+import io.github.markdechamps.fideswiss.tournament.ParticipantId;
+import io.github.markdechamps.fideswiss.tournament.Points;
 import io.github.markdechamps.fideswiss.tournament.Problem;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
 import io.github.markdechamps.fideswiss.trf.TrfTournament;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -38,9 +42,14 @@ final class PairingsChecker {
                 inconsistent++;
             }
         }
+        var standingsChecked = onlyRound.isEmpty() && recorded > 0;
+        if (standingsChecked && !standingsAreConsistent(file)) {
+            inconsistent++;
+        }
+        var items = rounds.size() + (standingsChecked ? 1 : 0);
         out.printf(
-                "checked %d rounds: %d consistent, %d not%n",
-                rounds.size(), rounds.size() - inconsistent, inconsistent);
+                "checked %d rounds%s: %d consistent, %d not%n",
+                rounds.size(), standingsChecked ? " and 1 set of standings" : "", items - inconsistent, inconsistent);
         return inconsistent == 0 ? Main.SUCCESS : Main.INCONSISTENT;
     }
 
@@ -59,6 +68,57 @@ final class PairingsChecker {
             return false;
         }
         return true;
+    }
+
+    /**
+     * The file's Points must equal the computed scores, and a rank it gives must fall inside the computed shared
+     * rank range: of the file's own Tie-break List when it names one, otherwise of the participant's score group.
+     */
+    private boolean standingsAreConsistent(TrfTournament file) {
+        var standings = file.tournament()
+                .standingsAfter(RoundNumber.of(file.recordedRounds().size()));
+        var problems = new ArrayList<String>();
+        file.declaredPoints().forEach((participant, points) -> {
+            var computed = standings.standing(participant).score().points();
+            if (!computed.equals(points)) {
+                problems.add(participant + ": points " + format(points) + " in file, " + computed + " computed");
+            }
+        });
+        file.declaredRanks().forEach((participant, rank) -> {
+            var range = rankRange(standings, participant, file.declaresTieBreaks());
+            if (rank < range.first() || rank > range.last()) {
+                problems.add(participant + ": rank " + rank + " in file, " + range + " computed");
+            }
+        });
+        if (problems.isEmpty()) {
+            return true;
+        }
+        out.println("standings after round " + standings.afterRounds() + ": DIFFERENT");
+        problems.forEach(problem -> out.println("  " + problem));
+        return false;
+    }
+
+    private record RankRange(int first, int last) {
+        @Override
+        public String toString() {
+            return first == last ? String.valueOf(first) : first + "-" + last;
+        }
+    }
+
+    private static RankRange rankRange(Standings standings, ParticipantId participant, boolean byTieBreaks) {
+        var standing = standings.standing(participant);
+        var sharing = standings.ranked().stream()
+                .filter(other -> byTieBreaks
+                        ? other.rank().equals(standing.rank())
+                        : other.score().compareTo(standing.score()) == 0)
+                .toList();
+        var first =
+                sharing.stream().mapToInt(other -> other.rank().value()).min().orElseThrow();
+        return new RankRange(first, first + sharing.size() - 1);
+    }
+
+    private static String format(Points points) {
+        return points.toBigDecimal().scale() == 0 ? points + ".0" : points.toString();
     }
 
     private static String describe(PairingCheck check) {

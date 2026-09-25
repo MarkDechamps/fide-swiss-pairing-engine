@@ -7,6 +7,7 @@ import io.github.markdechamps.fideswiss.tournament.InvalidSettingsException;
 import io.github.markdechamps.fideswiss.tournament.InvalidTournamentException;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
 import io.github.markdechamps.fideswiss.tournament.Problem;
+import io.github.markdechamps.fideswiss.tournament.RoundNumber;
 import io.github.markdechamps.fideswiss.trf.InvalidTrfException;
 import io.github.markdechamps.fideswiss.trf.TrfReader;
 import io.github.markdechamps.fideswiss.trf.TrfTournament;
@@ -67,6 +68,7 @@ public final class Main {
             case Command.Pair pair -> pair(pair);
             case Command.Check check ->
                 new PairingsChecker(out).check(read(check.input(), check.overrides()), check.round());
+            case Command.Standings standings -> standings(standings);
             case Command.Version version -> print(Version.describe());
             case Command.Help help -> print(Help.TEXT);
         };
@@ -95,6 +97,17 @@ public final class Main {
         explanations.forEach(
                 explanation -> text.append('\n').append(explanation).append('\n'));
         return text.toString();
+    }
+
+    private int standings(Command.Standings command) {
+        var tournament = read(command.input(), command.overrides()).tournament();
+        var standings = command.after()
+                .map(round -> tournament.standingsAfter(RoundNumber.of(round)))
+                .orElseGet(tournament::standings);
+        return print(command.why()
+                .map(pair ->
+                        StandingsTable.why(standings, ParticipantId.of(pair.get(0)), ParticipantId.of(pair.get(1))))
+                .orElseGet(() -> StandingsTable.of(standings)));
     }
 
     private TrfTournament read(String input, SettingsOverrides overrides) {
