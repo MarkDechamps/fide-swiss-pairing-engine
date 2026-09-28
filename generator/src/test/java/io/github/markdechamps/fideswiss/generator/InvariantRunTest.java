@@ -10,13 +10,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 /**
- * The PR-gate invariant run: a few hundred seeded Dutch tournaments per Swiss Rules Edition must break no absolute
- * criterion.
+ * The invariant run: seeded Dutch tournaments per Swiss Rules Edition must break no absolute criterion. The PR gate
+ * plays 200 per edition from a fixed corpus seed; the nightly job raises {@code fideswiss.invariant.tournaments} to
+ * 5,000 with a rotating {@code fideswiss.invariant.seed}, and a release gate to 50,000 (Verification strategy).
  */
 class InvariantRunTest {
 
-    private static final CorpusSeed CORPUS = CorpusSeed.of(20260925L);
-    private static final int TOURNAMENTS = 200;
+    private static final CorpusSeed CORPUS = CorpusSeed.of(Long.getLong("fideswiss.invariant.seed", 20260925L));
+    private static final int TOURNAMENTS = Integer.getInteger("fideswiss.invariant.tournaments", 200);
 
     @ParameterizedTest
     @EnumSource(SwissRulesEdition.class)
