@@ -42,6 +42,7 @@ final class GenerateArguments {
                 case "-o" -> output = CommandLineParser.value(queue, argument);
                 case "--profile" -> baseline = GeneratorSettings.of(profile(CommandLineParser.value(queue, argument)));
                 case "--config" -> configuration = Optional.of(CommandLineParser.value(queue, argument));
+                case "--model" -> model = Optional.of(CommandLineParser.value(queue, argument));
                 case "--system" -> requireSupportedSystem(CommandLineParser.value(queue, argument));
                 default -> overrides.add(flag(argument, queue));
             }

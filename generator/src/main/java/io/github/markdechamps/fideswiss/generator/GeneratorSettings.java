@@ -1,6 +1,8 @@
 package io.github.markdechamps.fideswiss.generator;
 
+import io.github.markdechamps.fideswiss.tournament.Participant;
 import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -26,6 +28,7 @@ public record GeneratorSettings(
         Chance bakuAcceleration,
         Chance nonStandardScoring,
         Chance drawnTieBreaks,
+        Optional<List<Participant>> field,
         ResultModel resultModel) {
 
     public GeneratorSettings {
@@ -45,6 +48,7 @@ public record GeneratorSettings(
         Objects.requireNonNull(bakuAcceleration, "bakuAcceleration");
         Objects.requireNonNull(nonStandardScoring, "nonStandardScoring");
         Objects.requireNonNull(drawnTieBreaks, "drawnTieBreaks");
+        Objects.requireNonNull(field, "field");
         Objects.requireNonNull(resultModel, "resultModel");
     }
 
@@ -66,6 +70,7 @@ public record GeneratorSettings(
                 Chance.never(),
                 Chance.never(),
                 Chance.never(),
+                Optional.empty(),
                 new MilvangModel());
     }
 
@@ -102,6 +107,7 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                field,
                 resultModel);
     }
 
@@ -123,6 +129,7 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                field,
                 resultModel);
     }
 
@@ -144,6 +151,7 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                field,
                 resultModel);
     }
 
@@ -165,6 +173,7 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                field,
                 resultModel);
     }
 
@@ -186,6 +195,7 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                field,
                 resultModel);
     }
 
@@ -207,6 +217,7 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                field,
                 resultModel);
     }
 
@@ -228,6 +239,7 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                field,
                 resultModel);
     }
 
@@ -249,6 +261,7 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                field,
                 resultModel);
     }
 
@@ -270,6 +283,7 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                field,
                 resultModel);
     }
 
@@ -291,6 +305,7 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                field,
                 resultModel);
     }
 
@@ -312,6 +327,7 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                field,
                 resultModel);
     }
 
@@ -334,6 +350,7 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                field,
                 resultModel);
     }
 
@@ -356,6 +373,7 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                field,
                 resultModel);
     }
 
@@ -378,6 +396,7 @@ public record GeneratorSettings(
                 chance,
                 nonStandardScoring,
                 drawnTieBreaks,
+                field,
                 resultModel);
     }
 
@@ -400,6 +419,7 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 chance,
                 drawnTieBreaks,
+                field,
                 resultModel);
     }
 
@@ -422,6 +442,30 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 chance,
+                field,
+                resultModel);
+    }
+
+    /** A fixed field, in starting-rank order, in place of a drawn one (a model TRF); nobody enters late. */
+    public GeneratorSettings withField(List<Participant> participants) {
+        return new GeneratorSettings(
+                tournament,
+                players,
+                rounds,
+                highestRating,
+                lowestRating,
+                unratedPercentage,
+                forfeitRate,
+                halfPointByeRate,
+                zeroPointByeRate,
+                fullPointByeRate,
+                withdrawalPercentage,
+                retirementRate,
+                lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
+                Optional.of(List.copyOf(participants)),
                 resultModel);
     }
 
@@ -443,6 +487,7 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                field,
                 model);
     }
 }

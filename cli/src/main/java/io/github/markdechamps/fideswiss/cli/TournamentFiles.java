@@ -6,6 +6,8 @@ import io.github.markdechamps.fideswiss.generator.GeneratedTournament;
 import io.github.markdechamps.fideswiss.generator.GeneratorSettings;
 import io.github.markdechamps.fideswiss.generator.RtgConfiguration;
 import io.github.markdechamps.fideswiss.generator.TournamentGenerator;
+import io.github.markdechamps.fideswiss.generator.TournamentModel;
+import io.github.markdechamps.fideswiss.trf.TrfReader;
 import io.github.markdechamps.fideswiss.trf.TrfWriter;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -20,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * {@code generate} and {@code -g}: plays a corpus of tournaments and writes each as a TRF26 file named from the
  * output pattern, with a manifest of every seed when there is more than one. Precedence: the profile's generator
- * defaults, then the configuration file, then the flags.
+ * defaults, then the configuration file and the model TRF, then the flags.
  */
 final class TournamentFiles {
 
@@ -59,6 +61,10 @@ final class TournamentFiles {
         if (command.configuration().isPresent()) {
             settings = RtgConfiguration.applyTo(
                     settings, read(command.configuration().get()));
+        }
+        if (command.model().isPresent()) {
+            settings = TournamentModel.applyTo(
+                    settings, TrfReader.read(read(command.model().get())).tournament());
         }
         for (var override : command.overrides()) {
             settings = override.apply(settings);

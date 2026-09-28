@@ -90,16 +90,22 @@ public final class TournamentGenerator {
         }
 
         private GeneratedTournament.Parameters drawParameters(RandomGenerator random) {
-            var players = settings.players().draw(random);
+            var players = settings.field()
+                    .map(List::size)
+                    .orElseGet(() -> settings.players().draw(random));
             var rounds = Math.max(1, Math.min(settings.rounds().draw(random), players - 1));
             var highest = settings.highestRating().draw(random);
             var lowest = Math.min(settings.lowestRating().draw(random), highest);
-            var unrated =
-                    (int) Math.round(players * settings.unratedPercentage().draw(random) / 100.0);
+            var unrated = settings.field()
+                    .map(field -> (int) field.stream()
+                            .filter(participant -> !participant.rating().isRated())
+                            .count())
+                    .orElseGet(() -> (int)
+                            Math.round(players * settings.unratedPercentage().draw(random) / 100.0));
             var withdrawals =
                     (int) Math.round(players * settings.withdrawalPercentage().draw(random) / 100.0);
             var variations = variations(draws.stream("variations"));
-            var lateEntries = rounds < 3
+            var lateEntries = rounds < 3 || settings.field().isPresent()
                     ? 0
                     : (int) Math.round(players * settings.lateEntryPercentage().draw(random) / 100.0);
             return new GeneratedTournament.Parameters(
@@ -157,6 +163,9 @@ public final class TournamentGenerator {
          */
         private List<Participant> field() {
             var random = draws.stream("field");
+            if (settings.field().isPresent()) {
+                return fixedField(random, settings.field().get());
+            }
             var strengthsDrawn = new ArrayList<Integer>();
             for (var index = 0; index < parameters.players() - parameters.lateEntries(); index++) {
                 strengthsDrawn.add(random.nextInt(parameters.lowestRating(), parameters.highestRating() + 1));
@@ -176,6 +185,17 @@ public final class TournamentGenerator {
                 participants.add(participant(participants.size() + 1, Rating.unrated(), strength));
             }
             return participants;
+        }
+
+        /** A model's field as it is; an unrated participant gets a hidden strength drawn within the span. */
+        private List<Participant> fixedField(RandomGenerator random, List<Participant> field) {
+            for (var participant : field) {
+                var strength = participant.rating().isRated()
+                        ? participant.rating().valueOrZero()
+                        : random.nextInt(parameters.lowestRating(), parameters.highestRating() + 1);
+                strengths.put(participant.id(), strength);
+            }
+            return field;
         }
 
         private Participant participant(int startRank, Rating rating, int strength) {

@@ -8,7 +8,7 @@ final class Help {
               fide-swiss [--dutch] <in.trf> -p [<reply>] [-l [<trace>]] [settings]
               fide-swiss check <in.trf> [--round <r>]  |  <in.trf> -c [<r>]  |  -check <in.trf>
               fide-swiss standings <in.trf> [--after <r>] [--why <id> <id>]
-              fide-swiss generate -o <out%d.trf> [--seed <n>] [--count <k>] [--profile <name>] [--config <cfg>]
+              fide-swiss generate -o <out%d.trf> [--seed <n>] [--count <k>] [--profile <name>] [--config <cfg>] [--model <in.trf>]
                                   [ranges] [tournament flags]
               fide-swiss -g [<cfg>|<seed>] -o <out.trf> [-s <seed>]
               fide-swiss version | -r

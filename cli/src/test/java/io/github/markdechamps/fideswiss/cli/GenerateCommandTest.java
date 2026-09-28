@@ -123,6 +123,21 @@ class GenerateCommandTest {
         }
 
         @Test
+        void replaysTheFieldOfAModelTrf() throws IOException {
+            var model = directory.resolve("model.trf");
+            run("generate", "--seed", "8", "--players", "18", "--rounds", "6", "-o", model.toString());
+            var out = directory.resolve("replayed.trf");
+
+            var exit = run("generate", "--seed", "9", "--model", model.toString(), "-o", out.toString());
+
+            assertThat(exit).isZero();
+            var original = TrfReader.read(Files.readString(model));
+            var replayed = TrfReader.read(Files.readString(out));
+            assertThat(replayed.participants()).isEqualTo(original.participants());
+            assertThat(replayed.recordedRounds()).hasSize(6);
+        }
+
+        @Test
         void refusesAProfileWhoseSystemIsNotImplemented() {
             var exit = run(
                     "generate",
