@@ -1,5 +1,6 @@
 package io.github.markdechamps.fideswiss.trf;
 
+import io.github.markdechamps.fideswiss.standings.TieBreakList;
 import io.github.markdechamps.fideswiss.tournament.Board;
 import io.github.markdechamps.fideswiss.tournament.BoardNumber;
 import io.github.markdechamps.fideswiss.tournament.Bye;
@@ -16,6 +17,7 @@ import io.github.markdechamps.fideswiss.tournament.RequestedBye;
 import io.github.markdechamps.fideswiss.tournament.Round;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
 import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
+import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
 import java.util.ArrayList;
@@ -38,13 +40,19 @@ public final class TrfTournament {
     private final List<Participant> participants;
     private final List<Round> recordedRounds;
     private final Map<ParticipantId, Bye> nextRoundAbsences;
+    private final List<PlayerRecord> players;
+    private final boolean declaresTieBreaks;
 
     private TrfTournament(
             TournamentSettings settings,
             List<Participant> participants,
             List<Round> recordedRounds,
-            Map<ParticipantId, Bye> nextRoundAbsences) {
+            Map<ParticipantId, Bye> nextRoundAbsences,
+            List<PlayerRecord> players,
+            boolean declaresTieBreaks) {
         this.settings = settings;
+        this.players = List.copyOf(players);
+        this.declaresTieBreaks = declaresTieBreaks;
         this.participants = List.copyOf(participants);
         this.recordedRounds = List.copyOf(recordedRounds);
         this.nextRoundAbsences = Map.copyOf(nextRoundAbsences);
@@ -64,16 +72,67 @@ public final class TrfTournament {
         var absences = lastColumnOnlyMarksAbsences ? absenceMarks(players, columns) : Map.<ParticipantId, Bye>of();
         var participants = players.stream().map(PlayerRecord::participant).toList();
         var numberOfRounds = declaredNumberOfRounds(records).orElse(Math.max(columns, 1));
-        var settings = Profiles.individualSwiss(NumberOfRounds.of(numberOfRounds))
+        var profile = Profiles.individualSwiss(NumberOfRounds.of(numberOfRounds))
                 .with(RankingKey.asListed())
                 .with(initialColour(records, players))
-                .with(scoring(records));
-        return new TrfTournament(settings, participants, rounds, absences);
+                .with(scoring(records))
+                .with(swissRulesEdition(records))
+                .with(AccelerationRecords.read(records, numberOfRounds));
+        var settings = declaredTieBreaks(records).map(profile::with).orElse(profile);
+        return new TrfTournament(
+                settings,
+                participants,
+                rounds,
+                absences,
+                players,
+                declaredTieBreaks(records).isPresent());
+    }
+
+    /**
+     * The edition the {@code 192} code declares (TRF CLI surface): {@code FIDE_DUTCH_2017} is pre-2026, a bare or
+     * 2025/2026 Dutch code is 2026. bbpPairings writes the code into {@code 092}, read the same way without a 192.
+     */
+    private static SwissRulesEdition swissRulesEdition(Map<String, List<String>> records) {
+        var declared = firstValue(records, "192")
+                .or(() ->
+                        firstValue(records, "092").filter(value -> value.trim().startsWith("FIDE_DUTCH")));
+        return declared.map(value -> editionOf(value.trim())).orElse(SwissRulesEdition.EDITION_2026);
+    }
+
+    /** A {@code _BAKU} suffix adds acceleration (read by AccelerationRecords) and leaves the edition alone. */
+    private static SwissRulesEdition editionOf(String code) {
+        return switch (code.toUpperCase().replaceFirst("_BAKU$", "")) {
+            case "FIDE_DUTCH_2017" -> SwissRulesEdition.PRE_2026;
+            case "FIDE_DUTCH", "FIDE_DUTCH_2025", "FIDE_DUTCH_2026" -> SwissRulesEdition.EDITION_2026;
+            default -> throw new InvalidTrfException("Unsupported 192 code " + code);
+        };
     }
 
     /** The same file under other settings, such as the command line's overrides. */
     public TrfTournament with(TournamentSettings overridden) {
-        return new TrfTournament(overridden, participants, recordedRounds, nextRoundAbsences);
+        return new TrfTournament(
+                overridden, participants, recordedRounds, nextRoundAbsences, players, declaresTieBreaks);
+    }
+
+    /** The Points each {@code 001} record states (columns 81–84), where it states them. */
+    public Map<ParticipantId, Points> declaredPoints() {
+        var points = new java.util.LinkedHashMap<ParticipantId, Points>();
+        players.forEach(player -> player.declaredPoints()
+                .ifPresent(value -> points.put(player.participant().id(), value)));
+        return points;
+    }
+
+    /** The rank each {@code 001} record states (columns 86–89), where it states one. */
+    public Map<ParticipantId, Integer> declaredRanks() {
+        var ranks = new java.util.LinkedHashMap<ParticipantId, Integer>();
+        players.forEach(player -> player.declaredRank()
+                .ifPresent(rank -> ranks.put(player.participant().id(), rank)));
+        return ranks;
+    }
+
+    /** Whether the file names its own Tie-break List (202 or 212), so that its ranks can be held to it. */
+    public boolean declaresTieBreaks() {
+        return declaresTieBreaks;
     }
 
     public TournamentSettings settings() {
@@ -241,7 +300,7 @@ public final class TrfTournament {
                 .map(value ->
                         value.trim().toUpperCase().startsWith("B") ? InitialColour.black() : InitialColour.white())
                 .or(() -> records.getOrDefault("XXC", List.of()).stream()
-                        .flatMap(value -> TrfReader.words(value).stream())
+                        .flatMap(line -> TrfReader.words(TrfReader.valueOf(line)).stream())
                         .filter(word -> word.equals("white1") || word.equals("black1"))
                         .reduce((first, second) -> second)
                         .map(word -> word.equals("black1") ? InitialColour.black() : InitialColour.white()));
@@ -264,7 +323,12 @@ public final class TrfTournament {
         return InitialColour.white();
     }
 
+    /** 212 (the full standings order, from {@code PTS}) or 202 (the tie-breaks among equal points). */
+    private static Optional<TieBreakList> declaredTieBreaks(Map<String, List<String>> records) {
+        return firstValue(records, "212").or(() -> firstValue(records, "202")).map(TieBreakList::parse);
+    }
+
     private static Optional<String> firstValue(Map<String, List<String>> records, String code) {
-        return records.getOrDefault(code, List.of()).stream().findFirst();
+        return records.getOrDefault(code, List.of()).stream().findFirst().map(TrfReader::valueOf);
     }
 }

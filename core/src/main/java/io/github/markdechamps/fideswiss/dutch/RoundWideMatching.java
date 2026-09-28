@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.TreeSet;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 
 /**
  * One bracket seen against the rest of the round: its players, the players below it and, for an odd number, a
@@ -20,7 +21,10 @@ import java.util.function.Predicate;
  * [C5] folded in). Each edge carries one number that orders matchings as the criteria vector orders candidates,
  * so the cheapest matching is the best candidate.
  *
- * <p>Only [C9] is not a sum over edges; the optimum finder handles it by fixing the one downfloater.
+ * <p>Only [C9] is not a sum over edges; the optimum finder handles it by fixing the one downfloater. Every 2017
+ * criterion (C.5–C.19, the Pairing Score Difference included) is a sum over edges. For a 2017 bracket without the
+ * completion requirement ({@link CompletionScope#FOLLOWING_BRACKET_ONLY}) the matching sees only the bracket and
+ * the following scoregroup, and each player may take a private sink instead of an opponent.
  */
 final class RoundWideMatching {
 
@@ -53,13 +57,18 @@ final class RoundWideMatching {
 
     record Solution(List<Pair> pairsInBracket, List<Player> downfloaters) {}
 
-    /** The players and rules the matching is built from. */
+    /**
+     * The rules the matching is built from. {@code unpairedWeight} is what each player the following bracket leaves
+     * unpaired adds to the [C8] / C.7 count (2017 reading R6 weighs some of them 3).
+     */
     record Setting(
             List<CandidateCriterion> criteria,
             Contributions contributions,
             BiPredicate<Player, Player> mayMeet,
             Predicate<Player> mayTakePairingAllocatedBye,
-            PairOrientation orientation) {}
+            PairOrientation orientation,
+            CompletionScope scope,
+            ToIntFunction<Player> unpairedWeight) {}
 
     private final Setting setting;
     private final List<Player> bracketPlayers;
@@ -87,6 +96,9 @@ final class RoundWideMatching {
         var players = new ArrayList<Player>(layout.open());
         players.addAll(layout.floating());
         players.addAll(below);
+        if (setting.scope() == CompletionScope.FOLLOWING_BRACKET_ONLY) {
+            return cheapestWithSinks(layout, players);
+        }
         var withPabSeat = players.size() % 2 == 1;
         var seat = indexes.size();
         var edges = new ArrayList<MaximumWeightMatching.Edge>();
@@ -103,6 +115,38 @@ final class RoundWideMatching {
         }
         var matching = MaximumWeightMatching.of(players.size() + (withPabSeat ? 1 : 0), edges);
         return matching.isPerfect() ? Optional.of(solutionOf(players, matching.mates())) : Optional.empty();
+    }
+
+    /**
+     * No completion requirement: player i may stay unpaired by taking its own sink (vertex n + i), at the cost a PAB
+     * seat would have (a downfloater, or a following-bracket player left unpaired). Sinks not taken pair among
+     * themselves at no cost, so only the players must all be matched.
+     */
+    private Optional<Solution> cheapestWithSinks(Layout layout, List<Player> players) {
+        var n = players.size();
+        var seat = indexes.size();
+        var edges = new ArrayList<MaximumWeightMatching.Edge>();
+        for (var a = 0; a < n; a++) {
+            var first = indexes.get(players.get(a));
+            for (var b = a + 1; b < n; b++) {
+                if (mayBeMatched(layout, players.get(a), players.get(b))) {
+                    edges.add(new MaximumWeightMatching.Edge(a, b, weightOf(first, indexes.get(players.get(b)))));
+                }
+            }
+            if (!isBracketPlayer(players.get(a)) || layout.mayDownfloat(players.get(a))) {
+                edges.add(new MaximumWeightMatching.Edge(a, n + a, weightOf(first, seat)));
+            }
+            for (var b = a + 1; b < n; b++) {
+                edges.add(new MaximumWeightMatching.Edge(n + a, n + b, ceiling));
+            }
+        }
+        var mates = MaximumWeightMatching.of(2 * n, edges).mates();
+        for (var vertex = 0; vertex < n; vertex++) {
+            if (mates[vertex] == -1) {
+                return Optional.empty();
+            }
+        }
+        return Optional.of(solutionOf(players, mates));
     }
 
     /** The matching maximises weight, so the cheapest edge weighs the most. */
@@ -224,7 +268,9 @@ final class RoundWideMatching {
                             failures.isEmpty() ? List.of() : failures.get(index).values());
                 case FOLLOWING_BRACKET ->
                     new Part(
-                            leftUnpairedByFollowing.size(),
+                            leftUnpairedByFollowing.stream()
+                                    .mapToInt(setting.unpairedWeight())
+                                    .sum(),
                             leftUnpairedByFollowing.stream()
                                     .map(player -> player.score().points().toBigDecimal())
                                     .toList());
@@ -251,7 +297,8 @@ final class RoundWideMatching {
 
         Encoding(Part[][][] parts) {
             this.parts = parts;
-            this.base = BigInteger.valueOf(2L * parts.length + 1);
+            // A count digit adds at most 3 per player (R6's weight), so this base never carries.
+            this.base = BigInteger.valueOf(4L * parts.length + 1);
             for (var criterion = 0; criterion < setting.criteria().size(); criterion++) {
                 var scores = new TreeSet<BigDecimal>(Comparator.reverseOrder());
                 for (var row : parts) {

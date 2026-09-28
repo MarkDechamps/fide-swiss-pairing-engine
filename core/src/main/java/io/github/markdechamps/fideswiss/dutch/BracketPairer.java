@@ -1,6 +1,7 @@
 package io.github.markdechamps.fideswiss.dutch;
 
 import io.github.markdechamps.fideswiss.dutch.CandidateCriterion.Scope;
+import io.github.markdechamps.fideswiss.search.SearchHeartbeat;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -9,10 +10,36 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 
 /** Dutch Article 3: pairs one bracket by generating candidates in the order of Articles 3.6, 3.7 and 4. */
 final class BracketPairer {
+
+    /**
+     * What the following bracket is paired on for [C8] / C.7: fewest unpaired, then their scores highest first.
+     * For 2026 these are [C6] and [C7]; for 2017 C.7 ("maximise the number of pairs, then minimise the PSD") it is
+     * both Oracles' reading: with the pairs fixed, the PSD is decided by which MDPs float on (reading R5).
+     */
+    private static List<CandidateCriterion> followingBracketCriteria(ToIntFunction<Player> unpairedWeight) {
+        return List.of(
+                CandidateCriterion.of(
+                        "unpaired",
+                        Scope.COUNT,
+                        assessment -> Failure.count(assessment.downfloaters().stream()
+                                .mapToInt(unpairedWeight)
+                                .sum())),
+                CandidateCriterion.of(
+                        "their scores",
+                        Scope.SCORES,
+                        assessment -> Failure.descending(assessment.downfloaters().stream()
+                                .map(BracketPairer::scoreOf)
+                                .toList())));
+    }
+
+    private static BigDecimal scoreOf(Player player) {
+        return player.score().points().toBigDecimal();
+    }
 
     private final PlayerSet players;
     private final AbsoluteCriteria absolute;
@@ -25,9 +52,15 @@ final class BracketPairer {
         this.players = players;
         this.round = round;
         this.edition = edition;
-        this.absolute = new AbsoluteCriteria(round);
-        this.completion = CompletionCriterion.forRound(players, absolute);
+        this.absolute = new AbsoluteCriteria(round, edition.pairingAllocatedByeBar());
+        this.completion =
+                CompletionCriterion.forRound(players, absolute, edition.foldsPairingAllocatedByeScoreIntoCompletion());
         this.colours = new ColourAllocation(round);
+    }
+
+    /** Whether these players (downfloaters plus everyone below) can still complete the round ([C1]–[C3], PAB). */
+    boolean allowsCompletion(List<Player> notYetPaired) {
+        return completion.isSatisfiedBy(players.maskOf(notYetPaired));
     }
 
     boolean isRoundCompletable() {
@@ -39,16 +72,23 @@ final class BracketPairer {
     }
 
     /** The bracket's candidate; empty only when no candidate keeps the round completable. */
-    Optional<BracketOutcome> pair(Bracket bracket, List<Player> lowerPlayers, List<Player> nextResidents) {
-        return new BracketPairing(bracket, lowerPlayers, nextResidents, edition.criteria()).bestCandidate();
+    Optional<BracketOutcome> pair(
+            Bracket bracket,
+            List<Player> lowerPlayers,
+            List<Player> nextResidents,
+            CompletionScope scope,
+            SearchHeartbeat heartbeat) {
+        return new BracketPairing(bracket, lowerPlayers, nextResidents, edition.criteria(), scope, Optional.empty())
+                .bestCandidate(heartbeat);
     }
 
     /** The pairing of one bracket: its optimum and its candidate sequence. */
     private final class BracketPairing {
 
         private final Bracket bracket;
+        private final CompletionScope scope;
         private final List<Player> lowerPlayers;
-        private final Lookahead lookahead;
+        private final FollowingBrackets lookahead;
         private final List<CandidateCriterion> criteria;
         private final OptimumFinder finder;
         private final Map<Pair, List<Failure>> pairContributions = new HashMap<>();
@@ -58,18 +98,24 @@ final class BracketPairer {
                 Bracket bracket,
                 List<Player> lowerPlayers,
                 List<Player> nextResidents,
-                List<CandidateCriterion> criteria) {
+                List<CandidateCriterion> criteria,
+                CompletionScope scope,
+                Optional<ToIntFunction<Player>> unpairedWeightOverride) {
             this.bracket = bracket;
+            this.scope = scope;
             this.lowerPlayers = lowerPlayers;
-            this.lookahead = new FollowingBrackets(lowerPlayers, nextResidents);
+            this.lookahead = new FollowingBrackets(lowerPlayers, nextResidents, scope, unpairedWeightOverride);
             this.criteria = criteria;
             var setting = new RoundWideMatching.Setting(
                     criteria,
                     new SplitCriteria(),
                     absolute::mayMeet,
                     completion::mayTakePairingAllocatedBye,
-                    this::pairOf);
-            var matching = new RoundWideMatching(setting, bracket.playersInBsnOrder(), lowerPlayers, nextResidents);
+                    this::pairOf,
+                    scope,
+                    lookahead.unpairedWeight());
+            var seen = scope == CompletionScope.WHOLE_ROUND ? lowerPlayers : nextResidents;
+            var matching = new RoundWideMatching(setting, bracket.playersInBsnOrder(), seen, nextResidents);
             this.finder = new OptimumFinder(criteria, matching, this::vectorOf);
         }
 
@@ -77,11 +123,11 @@ final class BracketPairer {
          * Article 3.4 accepts the first perfect candidate. The optimum finder makes "perfect" exact, so the first
          * candidate that reaches it is also the best one of 3.8, ties going to the earliest.
          */
-        Optional<BracketOutcome> bestCandidate() {
-            return finder.optimum(wholeBracket()).map(this::firstReaching);
+        Optional<BracketOutcome> bestCandidate(SearchHeartbeat heartbeat) {
+            return finder.optimum(wholeBracket()).map(optimum -> firstReaching(optimum, heartbeat));
         }
 
-        private BracketOutcome firstReaching(OptimumFinder.Optimum optimum) {
+        private BracketOutcome firstReaching(OptimumFinder.Optimum optimum, SearchHeartbeat heartbeat) {
             var maxPairs = (bracket.playersInBsnOrder().size()
                             - optimum.candidate().downfloaters().size())
                     / 2;
@@ -89,6 +135,7 @@ final class BracketPairer {
                     ? homogeneousCandidates(bracket.residents(), maxPairs, List.of(), List.of(), optimum)
                     : heterogeneousCandidates(optimum);
             var first = candidates
+                    .peek(candidate -> heartbeat.tick())
                     .filter(this::keepsRoundCompletable)
                     .filter(candidate -> vectorOf(candidate).equals(optimum.vector()))
                     .findFirst()
@@ -123,7 +170,8 @@ final class BracketPairer {
         /** Article 3.7: remainder first, then the next transposition of S2, then the next MDP set. */
         private Stream<Candidate> heterogeneousCandidates(OptimumFinder.Optimum optimum) {
             var bestAchievableLimbo = limboOf(optimum.candidate().downfloaters());
-            return MdpSets.validInOrder(bracket.movedDown(), bestAchievableLimbo)
+            return edition.mdpSelection()
+                    .inOrder(bracket.movedDown(), bestAchievableLimbo)
                     .flatMap(s1 -> {
                         var limbo = MdpSets.limboOf(bracket.movedDown(), s1);
                         return Transpositions.of(
@@ -232,6 +280,9 @@ final class BracketPairer {
         }
 
         private boolean keepsRoundCompletable(Candidate candidate) {
+            if (scope == CompletionScope.FOLLOWING_BRACKET_ONLY) {
+                return true;
+            }
             if (lookahead.isLastBracket() && candidate.downfloaters().size() > 1) {
                 return false;
             }
@@ -268,17 +319,36 @@ final class BracketPairer {
         }
     }
 
-    /** The brackets below the current one, as far as [C5], [C8] and [C9] look. */
+    /** The brackets below the current one, as far as [C5], [C8] and [C9] (2017: C.7) look. */
     private final class FollowingBrackets implements Lookahead {
 
         private final List<Player> lowerPlayers;
         private final List<Player> nextResidents;
+        private final CompletionScope scope;
+        private final ToIntFunction<Player> unpairedWeight;
         private final Map<BitSet, Failure> followingOutcomes = new HashMap<>();
         private final Map<BitSet, Optional<Player>> pabAssignees = new HashMap<>();
 
-        FollowingBrackets(List<Player> lowerPlayers, List<Player> nextResidents) {
+        /**
+         * When a 2017 following bracket is the last one, a player it leaves unpaired who may not take the PAB
+         * weighs 3 instead of 1 (reading R6, a text gap: bbpPairings' {@code finalBrackets}; JaVaFo agrees).
+         */
+        FollowingBrackets(
+                List<Player> lowerPlayers,
+                List<Player> nextResidents,
+                CompletionScope scope,
+                Optional<ToIntFunction<Player>> unpairedWeightOverride) {
             this.lowerPlayers = lowerPlayers;
             this.nextResidents = nextResidents;
+            this.scope = scope;
+            var followingIsLast =
+                    scope == CompletionScope.FOLLOWING_BRACKET_ONLY && lowerPlayers.size() == nextResidents.size();
+            this.unpairedWeight = unpairedWeightOverride.orElse(
+                    followingIsLast ? player -> completion.mayTakePairingAllocatedBye(player) ? 1 : 3 : player -> 1);
+        }
+
+        ToIntFunction<Player> unpairedWeight() {
+            return unpairedWeight;
         }
 
         @Override
@@ -303,30 +373,33 @@ final class BracketPairer {
 
         /**
          * [C8] read as bbpPairings and [ANN p.25] do: the following bracket, with these downfloaters as its MDPs,
-         * paired on [C6] and [C7] alone; the result is how many it leaves unpaired, then their scores.
+         * paired on the fewest unpaired, then their scores; the result is how many it leaves unpaired, then their
+         * scores. 2017 C.7 asks the same "just in the following bracket", without the completion requirement.
          */
         private Failure outcomeOfFollowingBracket(List<Player> downfloaters) {
             var following = new Bracket(downfloaters, nextResidents);
-            var belowFollowing = lowerPlayers.stream()
-                    .filter(player -> !nextResidents.contains(player))
-                    .toList();
-            var pairing = new BracketPairing(following, belowFollowing, List.of(), criteriaBeforeFollowingBracket());
+            var belowFollowing = scope == CompletionScope.WHOLE_ROUND
+                    ? lowerPlayers.stream()
+                            .filter(player -> !nextResidents.contains(player))
+                            .toList()
+                    : List.<Player>of();
+            var pairing = new BracketPairing(
+                    following,
+                    belowFollowing,
+                    List.of(),
+                    followingBracketCriteria(unpairedWeight),
+                    scope,
+                    Optional.<ToIntFunction<Player>>of(player -> 1));
             return pairing.finder
                     .optimum(pairing.wholeBracket())
                     .map(best -> downfloatersThenTheirScores(best.candidate().downfloaters()))
                     .orElseGet(() -> Failure.of(BigDecimal.valueOf(Integer.MAX_VALUE)));
         }
 
-        private List<CandidateCriterion> criteriaBeforeFollowingBracket() {
-            return edition.criteria().stream()
-                    .takeWhile(criterion -> criterion.scope() != Scope.FOLLOWING_BRACKET)
-                    .filter(criterion -> criterion.scope() == Scope.COUNT || criterion.scope() == Scope.SCORES)
-                    .toList();
-        }
-
-        private static Failure downfloatersThenTheirScores(List<Player> downfloaters) {
+        private Failure downfloatersThenTheirScores(List<Player> downfloaters) {
             var values = new ArrayList<BigDecimal>();
-            values.add(BigDecimal.valueOf(downfloaters.size()));
+            values.add(BigDecimal.valueOf(
+                    downfloaters.stream().mapToInt(unpairedWeight).sum()));
             values.addAll(Failure.descending(downfloaters.stream()
                             .map(player -> player.score().points().toBigDecimal())
                             .toList())

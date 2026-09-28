@@ -1,5 +1,6 @@
 package io.github.markdechamps.fideswiss.rules;
 
+import io.github.markdechamps.fideswiss.history.PairingAllocatedByeBar;
 import io.github.markdechamps.fideswiss.history.TournamentHistory;
 import io.github.markdechamps.fideswiss.pairing.ProposedPairing;
 import io.github.markdechamps.fideswiss.pairing.Violation;
@@ -88,8 +89,9 @@ public final class BasicRules {
     private static List<Violation> pairingAllocatedByeOnlyForTheEligible(
             Tournament tournament, ProposedPairing proposed) {
         var history = TournamentHistory.of(tournament);
+        var bar = PairingAllocatedByeBar.of(tournament.settings().swissRulesEdition());
         return proposed.pairingAllocatedBye().stream()
-                .filter(participant -> !history.of(participant).mayReceivePairingAllocatedBye())
+                .filter(participant -> !history.of(participant).mayReceivePairingAllocatedBye(bar))
                 .map(participant -> Violation.of(
                         "C.04.1 Art. 4",
                         participant + " already had a PAB or a win's points without playing",

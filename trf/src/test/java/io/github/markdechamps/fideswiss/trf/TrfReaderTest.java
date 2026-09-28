@@ -58,6 +58,11 @@ class TrfReaderTest {
         }
 
         @Test
+        void fallsBackToTheProfilesTieBreakListWithout202Or212() {
+            assertThat(file.settings().tieBreakList().toString()).isEqualTo("BH/C1, BH, SB, DE");
+        }
+
+        @Test
         void pairsTheNextRoundWithoutTheParticipantMarkedAbsent() {
             var pairing = file.tournament().pairNextRound();
 
@@ -65,6 +70,24 @@ class TrfReaderTest {
             assertThat(boardsOf(pairing)).containsExactlyInAnyOrder("5-1", "3-4");
             assertThat(pairing.roundNumber()).isEqualTo(RoundNumber.of(2));
             assertThat(pairing.unpaired()).isEqualTo(Map.of(ParticipantId.of("2"), Bye.HALF_POINT));
+        }
+    }
+
+    @Nested
+    class GivenATieBreakRecord {
+
+        @Test
+        void takesTheListFrom202() {
+            var file = TrfReader.read(resource("half-point-bye-in-round-2.trf") + "202 SB,BH/C1/P,DE\r");
+
+            assertThat(file.settings().tieBreakList().toString()).isEqualTo("SB, BH/C1/P, DE");
+        }
+
+        @Test
+        void takesTheListFrom212WithoutItsLeadingPts() {
+            var file = TrfReader.read(resource("half-point-bye-in-round-2.trf") + "212 PTS,WIN,BH\r");
+
+            assertThat(file.settings().tieBreakList().toString()).isEqualTo("WIN, BH");
         }
     }
 
