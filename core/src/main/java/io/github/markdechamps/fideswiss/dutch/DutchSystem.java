@@ -53,6 +53,12 @@ public final class DutchSystem implements PairingSystem {
     }
 
     @Override
+    public String name() {
+        return "C.04.3 Dutch System "
+                + (edition.filter(SwissRulesEdition.PRE_2026::equals).isPresent() ? "2017" : "2026");
+    }
+
+    @Override
     public List<Problem> problemsWith(TournamentSettings settings) {
         return edition.filter(pinned -> pinned != settings.swissRulesEdition())
                 .map(pinned -> List.of(Problem.citing(
