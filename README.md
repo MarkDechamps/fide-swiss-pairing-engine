@@ -29,6 +29,8 @@ The Swiss rules edition and the tie-break edition are chosen explicitly per tour
 
 Statuses follow the definition of done in the Verification strategy: **experimental** (in progress), **Handbook-verified** (with witness review) or **Oracle-verified** (the 50,000-tournament release gate passed).
 
+Every article of the Dutch System 2026 is cited by at least one test, and both of its Handbook worked examples (4.2.2) pass; [`docs/verification/dutch-2026.md`](docs/verification/dutch-2026.md) maps each article to its tests.
+
 ### Readings of the Dutch 2026 text
 
 Where the text leaves room, the library follows one documented reading, each verified against bbpPairings v6:
