@@ -135,6 +135,30 @@ class TournamentGeneratorTest {
     }
 
     @Nested
+    class GivenLateEntries {
+
+        private final GeneratorSettings late =
+                DUTCH.withPlayers(Range.of(40)).withRounds(Range.of(9)).withLateEntryPercentage(Range.of(10));
+
+        @Test
+        void entersTheGivenShareOfTheFieldAfterTheFirstRound() {
+            var tournament = completed(late, 13);
+
+            assertThat(tournament.participants()).hasSize(40);
+            assertThat(tournament.rounds().getFirst().byes().values())
+                    .filteredOn(Bye.NOT_YET_ENTERED::equals)
+                    .hasSize(4);
+        }
+
+        @Test
+        void entersEveryLateParticipantByTheMiddleRound() {
+            var rounds = completed(late, 13).rounds();
+
+            assertThat(rounds.get(4).byes()).doesNotContainValue(Bye.NOT_YET_ENTERED);
+        }
+    }
+
+    @Nested
     class GivenARoundWithoutALegalPairing {
 
         @Test

@@ -22,11 +22,23 @@ public record GeneratorSettings(
         Range fullPointByeRate,
         Range withdrawalPercentage,
         Optional<Range> retirementRate,
+        Range lateEntryPercentage,
         ResultModel resultModel) {
 
     public GeneratorSettings {
         Objects.requireNonNull(tournament, "tournament");
+        Objects.requireNonNull(players, "players");
+        Objects.requireNonNull(rounds, "rounds");
+        Objects.requireNonNull(highestRating, "highestRating");
+        Objects.requireNonNull(lowestRating, "lowestRating");
+        Objects.requireNonNull(unratedPercentage, "unratedPercentage");
+        Objects.requireNonNull(forfeitRate, "forfeitRate");
+        Objects.requireNonNull(halfPointByeRate, "halfPointByeRate");
+        Objects.requireNonNull(zeroPointByeRate, "zeroPointByeRate");
+        Objects.requireNonNull(fullPointByeRate, "fullPointByeRate");
+        Objects.requireNonNull(withdrawalPercentage, "withdrawalPercentage");
         Objects.requireNonNull(retirementRate, "retirementRate");
+        Objects.requireNonNull(lateEntryPercentage, "lateEntryPercentage");
         Objects.requireNonNull(resultModel, "resultModel");
     }
 
@@ -44,6 +56,7 @@ public record GeneratorSettings(
                 Range.of(0),
                 Range.of(0, 5),
                 Optional.empty(),
+                Range.of(0, 5),
                 new MilvangModel());
     }
 
@@ -61,6 +74,7 @@ public record GeneratorSettings(
                 fullPointByeRate,
                 withdrawalPercentage,
                 retirementRate,
+                lateEntryPercentage,
                 resultModel);
     }
 
@@ -78,6 +92,7 @@ public record GeneratorSettings(
                 fullPointByeRate,
                 withdrawalPercentage,
                 retirementRate,
+                lateEntryPercentage,
                 resultModel);
     }
 
@@ -95,6 +110,7 @@ public record GeneratorSettings(
                 fullPointByeRate,
                 withdrawalPercentage,
                 retirementRate,
+                lateEntryPercentage,
                 resultModel);
     }
 
@@ -112,6 +128,7 @@ public record GeneratorSettings(
                 fullPointByeRate,
                 withdrawalPercentage,
                 retirementRate,
+                lateEntryPercentage,
                 resultModel);
     }
 
@@ -129,6 +146,7 @@ public record GeneratorSettings(
                 fullPointByeRate,
                 withdrawalPercentage,
                 retirementRate,
+                lateEntryPercentage,
                 resultModel);
     }
 
@@ -146,6 +164,7 @@ public record GeneratorSettings(
                 fullPointByeRate,
                 withdrawalPercentage,
                 retirementRate,
+                lateEntryPercentage,
                 resultModel);
     }
 
@@ -163,6 +182,7 @@ public record GeneratorSettings(
                 fullPointByeRate,
                 withdrawalPercentage,
                 retirementRate,
+                lateEntryPercentage,
                 resultModel);
     }
 
@@ -180,6 +200,7 @@ public record GeneratorSettings(
                 fullPointByeRate,
                 withdrawalPercentage,
                 retirementRate,
+                lateEntryPercentage,
                 resultModel);
     }
 
@@ -197,6 +218,7 @@ public record GeneratorSettings(
                 fullPointByeRate,
                 withdrawalPercentage,
                 retirementRate,
+                lateEntryPercentage,
                 resultModel);
     }
 
@@ -214,6 +236,7 @@ public record GeneratorSettings(
                 range,
                 withdrawalPercentage,
                 retirementRate,
+                lateEntryPercentage,
                 resultModel);
     }
 
@@ -231,6 +254,7 @@ public record GeneratorSettings(
                 fullPointByeRate,
                 range,
                 retirementRate,
+                lateEntryPercentage,
                 resultModel);
     }
 
@@ -249,6 +273,26 @@ public record GeneratorSettings(
                 fullPointByeRate,
                 withdrawalPercentage,
                 Optional.of(range),
+                lateEntryPercentage,
+                resultModel);
+    }
+
+    /** The share of the field entering late (GHR 2.4), each in a round from 2 to the middle round. */
+    public GeneratorSettings withLateEntryPercentage(Range range) {
+        return new GeneratorSettings(
+                tournament,
+                players,
+                rounds,
+                highestRating,
+                lowestRating,
+                unratedPercentage,
+                forfeitRate,
+                halfPointByeRate,
+                zeroPointByeRate,
+                fullPointByeRate,
+                withdrawalPercentage,
+                retirementRate,
+                range,
                 resultModel);
     }
 
@@ -266,6 +310,7 @@ public record GeneratorSettings(
                 fullPointByeRate,
                 withdrawalPercentage,
                 retirementRate,
+                lateEntryPercentage,
                 model);
     }
 }

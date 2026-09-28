@@ -27,5 +27,6 @@ public sealed interface GeneratedTournament {
             int halfPointByeRate,
             int zeroPointByeRate,
             int fullPointByeRate,
-            int withdrawals) {}
+            int withdrawals,
+            int lateEntries) {}
 }

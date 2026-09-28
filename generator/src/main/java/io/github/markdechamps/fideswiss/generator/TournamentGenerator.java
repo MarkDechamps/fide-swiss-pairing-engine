@@ -26,8 +26,8 @@ import java.util.Set;
 import java.util.random.RandomGenerator;
 
 /**
- * The Random Tournament Generator: the library itself playing a whole tournament. It builds a field, then for
- * each round applies the round's withdrawals and requested byes, pairs it with {@code pairNextRound()}, draws the
+ * The Random Tournament Generator: the library itself playing a whole tournament. It builds a field and enters
+ * its late participants, then for each round applies the round's withdrawals and requested byes, pairs it with {@code pairNextRound()}, draws the
  * results and records the round. Every event goes through the public API, so it can only produce valid input.
  */
 public final class TournamentGenerator {
@@ -66,6 +66,7 @@ public final class TournamentGenerator {
             this.parameters = drawParameters(draws.stream("parameters"));
             this.tournament = Tournament.of(tournamentSettings(), field());
             planWithdrawals();
+            enterLateParticipants();
         }
 
         GeneratedTournament play() {
@@ -90,6 +91,9 @@ public final class TournamentGenerator {
                     (int) Math.round(players * settings.unratedPercentage().draw(random) / 100.0);
             var withdrawals =
                     (int) Math.round(players * settings.withdrawalPercentage().draw(random) / 100.0);
+            var lateEntries = rounds < 3
+                    ? 0
+                    : (int) Math.round(players * settings.lateEntryPercentage().draw(random) / 100.0);
             return new GeneratedTournament.Parameters(
                     players,
                     rounds,
@@ -100,7 +104,8 @@ public final class TournamentGenerator {
                     settings.halfPointByeRate().draw(random),
                     settings.zeroPointByeRate().draw(random),
                     settings.fullPointByeRate().draw(random),
-                    withdrawals);
+                    withdrawals,
+                    lateEntries);
         }
 
         private TournamentSettings tournamentSettings() {
@@ -119,7 +124,7 @@ public final class TournamentGenerator {
         private List<Participant> field() {
             var random = draws.stream("field");
             var strengthsDrawn = new ArrayList<Integer>();
-            for (var index = 0; index < parameters.players(); index++) {
+            for (var index = 0; index < parameters.players() - parameters.lateEntries(); index++) {
                 strengthsDrawn.add(random.nextInt(parameters.lowestRating(), parameters.highestRating() + 1));
             }
             strengthsDrawn.sort((a, b) -> Integer.compare(b, a));
@@ -160,6 +165,21 @@ public final class TournamentGenerator {
             }
         }
 
+        /**
+         * The late participants register before the first round with the round they enter in, from 2 to
+         * ⌈rounds/2⌉, so every round records their absence; they are rated within the span and listed last.
+         */
+        private void enterLateParticipants() {
+            var random = draws.stream("late entries");
+            var lastEntryRound = (parameters.rounds() + 1) / 2;
+            for (var entrant = 0; entrant < parameters.lateEntries(); entrant++) {
+                var strength = random.nextInt(parameters.lowestRating(), parameters.highestRating() + 1);
+                var firstRound = RoundNumber.of(random.nextInt(2, lastEntryRound + 1));
+                var startRank = tournament.participants().size() + 1;
+                tournament = tournament.enterLate(participant(startRank, Rating.of(strength), strength), firstRound);
+            }
+        }
+
         private void applyEvents(int round) {
             var number = RoundNumber.of(round);
             var retiring = new ArrayList<>(withdrawalsByRound.getOrDefault(round, List.of()));
@@ -193,7 +213,7 @@ public final class TournamentGenerator {
             for (var participant : tournament.participants()) {
                 var id = participant.id();
                 var bye = requestedBye(random);
-                if (bye.isEmpty() || withdrawn.contains(id)) {
+                if (bye.isEmpty() || withdrawn.contains(id) || isAbsent(id, round)) {
                     continue;
                 }
                 if (requestedByes.getOrDefault(id, 0) < MAXIMUM_REQUESTED_BYES) {
@@ -201,6 +221,10 @@ public final class TournamentGenerator {
                     tournament = tournament.requestBye(id, RoundNumber.of(round), bye.get());
                 }
             }
+        }
+
+        private boolean isAbsent(ParticipantId participant, int round) {
+            return tournament.absenceIn(participant, RoundNumber.of(round)).isPresent();
         }
 
         private Optional<RequestedBye> requestedBye(RandomGenerator random) {
