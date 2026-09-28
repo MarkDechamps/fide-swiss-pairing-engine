@@ -13,8 +13,8 @@ class DutchRoundOneTest {
 
         var pairing = tournament.pairNextRound();
 
-        // C.04.3 3.2 (S1 = first half, S2 = second half), 3.3.1 (S1[i] meets S2[i]), 5.2.5 (odd TPN gets the
-        // initial colour, White by default).
+        // C.04.3 1.1 (Pairing Numbers by rating), 3.2 (S1 = first half, S2 = second half), 3.3.1 (S1[i] meets
+        // S2[i]), 5.2.5 (odd TPN gets the initial colour, White by default).
         assertThatPairing(pairing).hasBoards("1-3", "4-2").givesNoPairingAllocatedBye();
     }
 

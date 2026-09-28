@@ -49,6 +49,19 @@ class DutchPairingCriteriaTest {
         }
 
         @Test
+        void barAWinWithoutPlayingFromThePairingAllocatedBye() {
+            var tournament = TournamentMother.individualSwiss(5, 5);
+            tournament = withRound(tournament, "4-5 -+", "1-2 1-0", "3 PAB");
+            tournament = withRound(tournament, "1-5 1-0", "2-3 1-0", "4 PAB");
+
+            var pairing = tournament.pairNextRound();
+
+            // [C2]: 5 won by forfeit and 3 and 4 had the PAB, so of the 1-point players only 2 may take it. 4 and
+            // 5 meet again: a forfeit is no game played ([C1] with GHR 3.5).
+            assertThatPairing(pairing).hasBoards("3-1", "5-4").givesPairingAllocatedByeTo("2");
+        }
+
+        @Test
         void neverPairTwoNonTopscorersWithTheSameAbsolutePreference() {
             var tournament = TournamentMother.individualSwiss(6, 5);
             tournament = withRound(tournament, "1-4 ½", "2-5 ½", "3-6 ½");
