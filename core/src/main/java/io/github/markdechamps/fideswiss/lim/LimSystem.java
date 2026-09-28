@@ -3,6 +3,7 @@ package io.github.markdechamps.fideswiss.lim;
 import io.github.markdechamps.fideswiss.history.ParticipantHistory;
 import io.github.markdechamps.fideswiss.history.RoundRecord;
 import io.github.markdechamps.fideswiss.history.TournamentHistory;
+import io.github.markdechamps.fideswiss.pairing.Edition2026Only;
 import io.github.markdechamps.fideswiss.pairing.MaxiTournament;
 import io.github.markdechamps.fideswiss.pairing.NoLegalPairingException;
 import io.github.markdechamps.fideswiss.pairing.PairedBoard;
@@ -21,6 +22,7 @@ import io.github.markdechamps.fideswiss.tournament.ParticipantId;
 import io.github.markdechamps.fideswiss.tournament.Problem;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
+import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -48,6 +50,11 @@ public final class LimSystem implements PairingSystem {
     @Override
     public String name() {
         return "C.04.4.3 Lim System 2026" + (maxiTournament == MaxiTournament.DECLARED ? " (Maxi-tournament)" : "");
+    }
+
+    @Override
+    public List<Problem> problemsWith(TournamentSettings settings) {
+        return Edition2026Only.problemsWith(this, settings);
     }
 
     @Override
