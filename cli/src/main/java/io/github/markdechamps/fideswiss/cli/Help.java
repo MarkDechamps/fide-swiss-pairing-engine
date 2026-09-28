@@ -10,7 +10,7 @@ final class Help {
               fide-swiss standings <in.trf> [--after <r>] [--why <id> <id>]
               fide-swiss generate -o <out%d.trf> [--seed <n>] [--count <k>] [--profile <name>] [--config <cfg>] [--model <in.trf>]
                                   [ranges] [tournament flags]
-              fide-swiss -g [<cfg>|<seed>] -o <out.trf> [-s <seed>]
+              fide-swiss -g [<cfg>|<seed>] -o <out.trf> [-s <seed>] [--dutch|--dubov|--lim]
               fide-swiss version | -r
 
             generator ranges (a number, or A..B drawn per tournament):
@@ -20,6 +20,7 @@ final class Help {
 
             generator tournament flags:
               --profile individual-swiss|accelerated-open   the starting settings
+              --system dutch|dubov|lim (or --dutch, --dubov, --lim)  --maxi-tournament (Lim)
               --edition 2026|pre-2026  --tiebreak-edition 2026-03|2024-08
               --acceleration none|baku|random   random: Baku for 20% of the tournaments
               --tiebreaks "<list>"|random       random: 3-5 entries drawn per tournament

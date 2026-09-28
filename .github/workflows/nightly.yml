@@ -28,7 +28,7 @@ jobs:
           distribution: temurin
           java-version: '25'
           cache: maven
-      # 5,000 generated tournaments per Swiss Rules Edition, from a corpus seed that rotates each night.
+      # 5,000 generated tournaments per system and edition, from a corpus seed that rotates each night.
       - name: Invariant checker on the generated corpus
         run: >-
           ./mvnw -B test -pl generator -am -Dtest=InvariantRunTest -Dsurefire.failIfNoSpecifiedTests=false

@@ -3,6 +3,7 @@ package io.github.markdechamps.fideswiss.cli;
 import io.github.markdechamps.fideswiss.generator.FlatDrawModel;
 import io.github.markdechamps.fideswiss.generator.GeneratorSettings;
 import io.github.markdechamps.fideswiss.generator.Range;
+import io.github.markdechamps.fideswiss.pairing.PairingSystems;
 import io.github.markdechamps.fideswiss.standings.TieBreakList;
 import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
@@ -10,7 +11,6 @@ import io.github.markdechamps.fideswiss.tournament.Profiles;
 import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
@@ -33,6 +33,7 @@ final class GenerateArguments {
         var baseline = GeneratorSettings.of(Profiles.individualSwiss(DRAWN));
         Optional<String> configuration = Optional.empty();
         Optional<String> model = Optional.empty();
+        var maxiTournament = false;
         var overrides = new ArrayList<UnaryOperator<GeneratorSettings>>();
         while (!queue.isEmpty()) {
             var argument = queue.removeFirst();
@@ -44,8 +45,13 @@ final class GenerateArguments {
                 case "--config" -> configuration = Optional.of(CommandLineParser.value(queue, argument));
                 case "--model" -> model = Optional.of(CommandLineParser.value(queue, argument));
                 case "--system" -> overrides.add(system(CommandLineParser.value(queue, argument)));
+                case "--maxi-tournament" -> maxiTournament = true;
                 default -> overrides.add(flag(argument, queue));
             }
+        }
+        if (maxiTournament) {
+            overrides.add(inTournament(
+                    tournament -> tournament.with(PairingSystems.asMaxiTournament(tournament.pairingSystem()))));
         }
         if (output == null) {
             throw new UsageException("generate needs -o <file or pattern with %d>");
@@ -53,11 +59,12 @@ final class GenerateArguments {
         return new Command.Generate(seed, count, output, baseline, configuration, model, overrides);
     }
 
-    /** JaVaFo/bbp: {@code -g [<cfg>|<seed>] -o <out> [-s <seed>]}; one tournament. */
+    /** JaVaFo/bbp: {@code [--dutch|--dubov|--lim] -g [<cfg>|<seed>] -o <out> [-s <seed>]}; one tournament. */
     static Command compatible(Deque<String> queue) {
         Optional<Long> seed = Optional.empty();
         Optional<String> configuration = Optional.empty();
         String output = null;
+        var overrides = new ArrayList<UnaryOperator<GeneratorSettings>>();
         var given = CommandLineParser.optionalValue(queue);
         if (given.isPresent()) {
             if (given.get().matches("\\d+")) {
@@ -75,6 +82,7 @@ final class GenerateArguments {
                     if (!isSystemFlag(argument)) {
                         throw new UsageException("unexpected argument " + argument);
                     }
+                    overrides.add(system(argument.substring(2)));
                 }
             }
         }
@@ -88,7 +96,7 @@ final class GenerateArguments {
                 GeneratorSettings.of(Profiles.individualSwiss(DRAWN)),
                 configuration,
                 Optional.empty(),
-                List.of());
+                overrides);
     }
 
     private static UnaryOperator<GeneratorSettings> flag(String flag, Deque<String> queue) {

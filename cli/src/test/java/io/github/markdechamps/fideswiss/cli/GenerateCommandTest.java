@@ -90,6 +90,26 @@ class GenerateCommandTest {
         }
 
         @Test
+        void playsTheSystemGiven() throws IOException {
+            assertThat(generated("--system", "dubov")).contains("\r\n192 FIDE_DUBOV\r\n");
+            assertThat(generated("--lim", "--maxi-tournament")).contains("\r\n192 FIDE_LIM\r\n");
+        }
+
+        @Test
+        void refusesAnEditionTheSystemHasNoTextFor() {
+            var exit = run(
+                    "generate",
+                    "--system",
+                    "dubov",
+                    "--edition",
+                    "pre-2026",
+                    "-o",
+                    directory.resolve("x.trf").toString());
+
+            assertThat(exit).isEqualTo(3);
+        }
+
+        @Test
         void startsFromTheAcceleratedOpenProfile() throws IOException {
             assertThat(generated("--profile", "accelerated-open")).contains("\r\n192 FIDE_DUTCH_BAKU\r\n");
         }
@@ -176,6 +196,16 @@ class GenerateCommandTest {
             var file = TrfReader.read(Files.readString(out));
             assertThat(file.participants()).hasSize(17);
             assertThat(file.recordedRounds()).hasSize(6);
+        }
+
+        @Test
+        void playsTheSystemFlagged() throws IOException {
+            var out = directory.resolve("lim.trf");
+
+            var exit = run("-g", "5", "--lim", "-o", out.toString());
+
+            assertThat(exit).isZero();
+            assertThat(Files.readString(out)).contains("\r\n192 FIDE_LIM\r\n");
         }
 
         @Test
