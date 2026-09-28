@@ -2,8 +2,11 @@ package io.github.markdechamps.fideswiss.tournament;
 
 import io.github.markdechamps.fideswiss.pairing.NoLegalPairingException;
 import io.github.markdechamps.fideswiss.pairing.PairingCheck;
+import io.github.markdechamps.fideswiss.pairing.PairingProgress;
 import io.github.markdechamps.fideswiss.pairing.ProposedPairing;
 import io.github.markdechamps.fideswiss.pairing.RoundPairing;
+import io.github.markdechamps.fideswiss.standings.Standings;
+import io.github.markdechamps.fideswiss.tiebreak.StandingsCalculator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,7 +50,7 @@ public final class Tournament {
     }
 
     public static Tournament of(TournamentSettings settings, List<Participant> participants) {
-        var settingsProblems = new ArrayList<>(settings.acceleration().problemsWith(settings));
+        var settingsProblems = new ArrayList<Problem>(settings.acceleration().problemsWith(settings));
         settingsProblems.addAll(settings.pairingSystem().problemsWith(settings));
         if (!settingsProblems.isEmpty()) {
             throw new InvalidSettingsException(settingsProblems);
@@ -238,12 +241,30 @@ public final class Tournament {
         return ranked.indexOf(participant) <= ranked.indexOf(lastAccelerated);
     }
 
+    /** The Standings after the last recorded round, by the settings' Tie-break List and Tie-break Edition. */
+    public Standings standings() {
+        return StandingsCalculator.standingsOf(this, rounds.size());
+    }
+
+    /** The Standings as they were after the given recorded round. */
+    public Standings standingsAfter(RoundNumber round) {
+        if (round.value() > rounds.size()) {
+            throw new InvalidTournamentException(Problem.of("Round " + round + " is not recorded yet"));
+        }
+        return StandingsCalculator.standingsOf(this, round.value());
+    }
+
     public RoundPairing pairNextRound() {
+        return pairNextRound(PairingProgress.NONE);
+    }
+
+    /** Pairs the next round, telling the listener how it advances; interrupt the thread to cancel. */
+    public RoundPairing pairNextRound(PairingProgress progress) {
         if (!settings.numberOfRounds().includes(nextRound())) {
             throw new InvalidTournamentException(Problem.of(
                     "The tournament has only " + settings.numberOfRounds().value() + " rounds"));
         }
-        return settings.pairingSystem().pairNextRound(this);
+        return settings.pairingSystem().pairNextRound(this, progress);
     }
 
     /**

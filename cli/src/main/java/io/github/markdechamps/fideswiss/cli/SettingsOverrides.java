@@ -1,25 +1,49 @@
 package io.github.markdechamps.fideswiss.cli;
 
+import io.github.markdechamps.fideswiss.standings.TieBreakEdition;
+import io.github.markdechamps.fideswiss.standings.TieBreakList;
 import io.github.markdechamps.fideswiss.tournament.InitialColour;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
+import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
 import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
 import java.util.Optional;
 
 /** Settings given as flags, which override the file's records (Tournament profiles: profile < file < flags). */
-record SettingsOverrides(Optional<NumberOfRounds> rounds, Optional<InitialColour> initialColour) {
+record SettingsOverrides(
+        Optional<NumberOfRounds> rounds,
+        Optional<InitialColour> initialColour,
+        Optional<SwissRulesEdition> edition,
+        Optional<TieBreakList> tieBreaks,
+        Optional<TieBreakEdition> tieBreakEdition) {
 
-    static final SettingsOverrides NONE = new SettingsOverrides(Optional.empty(), Optional.empty());
+    static final SettingsOverrides NONE = new SettingsOverrides(
+            Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
 
     SettingsOverrides withRounds(NumberOfRounds value) {
-        return new SettingsOverrides(Optional.of(value), initialColour);
+        return new SettingsOverrides(Optional.of(value), initialColour, edition, tieBreaks, tieBreakEdition);
     }
 
     SettingsOverrides withInitialColour(InitialColour value) {
-        return new SettingsOverrides(rounds, Optional.of(value));
+        return new SettingsOverrides(rounds, Optional.of(value), edition, tieBreaks, tieBreakEdition);
+    }
+
+    SettingsOverrides withEdition(SwissRulesEdition value) {
+        return new SettingsOverrides(rounds, initialColour, Optional.of(value), tieBreaks, tieBreakEdition);
+    }
+
+    SettingsOverrides withTieBreaks(TieBreakList value) {
+        return new SettingsOverrides(rounds, initialColour, edition, Optional.of(value), tieBreakEdition);
+    }
+
+    SettingsOverrides withTieBreakEdition(TieBreakEdition value) {
+        return new SettingsOverrides(rounds, initialColour, edition, tieBreaks, Optional.of(value));
     }
 
     TournamentSettings applyTo(TournamentSettings settings) {
-        var withRounds = rounds.map(settings::with).orElse(settings);
-        return initialColour.map(withRounds::with).orElse(withRounds);
+        var overridden = rounds.map(settings::with).orElse(settings);
+        overridden = initialColour.map(overridden::with).orElse(overridden);
+        overridden = edition.map(overridden::with).orElse(overridden);
+        overridden = tieBreaks.map(overridden::with).orElse(overridden);
+        return tieBreakEdition.map(overridden::with).orElse(overridden);
     }
 }

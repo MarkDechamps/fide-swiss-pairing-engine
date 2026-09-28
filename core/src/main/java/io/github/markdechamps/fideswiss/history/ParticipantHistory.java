@@ -1,6 +1,5 @@
 package io.github.markdechamps.fideswiss.history;
 
-import io.github.markdechamps.fideswiss.tournament.Bye;
 import io.github.markdechamps.fideswiss.tournament.Colour;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
 import io.github.markdechamps.fideswiss.tournament.Points;
@@ -55,7 +54,12 @@ public final class ParticipantHistory {
      * without playing.
      */
     public boolean mayReceivePairingAllocatedBye() {
-        return records.stream().noneMatch(this::barsPairingAllocatedBye);
+        return mayReceivePairingAllocatedBye(PairingAllocatedByeBar.BASIC_RULES_2026);
+    }
+
+    /** The same under the PAB bar of the given edition of the Basic Rules. */
+    public boolean mayReceivePairingAllocatedBye(PairingAllocatedByeBar bar) {
+        return records.stream().noneMatch(record -> bar.bars(record, winValue));
     }
 
     /** The colours of the games actually played, in order; unplayed rounds drop out (GHR 3.4). */
@@ -71,15 +75,6 @@ public final class ParticipantHistory {
 
     public int unplayedRounds() {
         return (int) records.stream().filter(record -> !record.isPlayed()).count();
-    }
-
-    private boolean barsPairingAllocatedBye(RoundRecord record) {
-        return switch (record) {
-            case RoundRecord.Game game -> false;
-            case RoundRecord.Forfeit forfeit -> !forfeit.points().isLessThan(winValue);
-            case RoundRecord.NoBoard noBoard ->
-                noBoard.bye() == Bye.PAIRING_ALLOCATED || !noBoard.points().isLessThan(winValue);
-        };
     }
 
     private Score scoreAfter(int rounds) {

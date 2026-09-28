@@ -5,6 +5,7 @@ import io.github.markdechamps.fideswiss.tournament.Bye;
 import io.github.markdechamps.fideswiss.tournament.Round;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
 import io.github.markdechamps.fideswiss.tournament.SwissPairingException;
+import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -16,7 +17,16 @@ final class RecordedRoundReplay {
     private RecordedRoundReplay() {}
 
     static List<String> differences(String name, String trf) {
+        return differences(name, TrfReader.read(trf));
+    }
+
+    /** The same, pairing under the given Swiss Rules Edition whatever the file declares. */
+    static List<String> differences(String name, String trf, SwissRulesEdition edition) {
         var file = TrfReader.read(trf);
+        return differences(name, file.with(file.settings().with(edition)));
+    }
+
+    private static List<String> differences(String name, TrfTournament file) {
         var differences = new ArrayList<String>();
         for (var index = 0; index < file.recordedRounds().size(); index++) {
             var number = RoundNumber.of(index + 1);

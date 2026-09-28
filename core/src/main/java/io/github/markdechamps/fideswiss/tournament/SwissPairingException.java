@@ -1,12 +1,16 @@
 package io.github.markdechamps.fideswiss.tournament;
 
 import io.github.markdechamps.fideswiss.pairing.NoLegalPairingException;
+import io.github.markdechamps.fideswiss.pairing.PairingCancelledException;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /** Every failure the library reports. Each one carries all the problems found, not only the first. */
 public abstract sealed class SwissPairingException extends RuntimeException
-        permits InvalidSettingsException, InvalidTournamentException, NoLegalPairingException {
+        permits InvalidSettingsException,
+                InvalidTournamentException,
+                NoLegalPairingException,
+                PairingCancelledException {
 
     private static final long serialVersionUID = 1L;
 

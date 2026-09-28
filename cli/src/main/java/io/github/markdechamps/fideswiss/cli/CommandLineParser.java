@@ -1,7 +1,10 @@
 package io.github.markdechamps.fideswiss.cli;
 
+import io.github.markdechamps.fideswiss.standings.TieBreakEdition;
+import io.github.markdechamps.fideswiss.standings.TieBreakList;
 import io.github.markdechamps.fideswiss.tournament.InitialColour;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
+import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -28,6 +31,10 @@ final class CommandLineParser {
                 queue.removeFirst();
                 yield canonicalPair(queue);
             }
+            case "standings" -> {
+                queue.removeFirst();
+                yield canonicalStandings(queue);
+            }
             case "check" -> {
                 queue.removeFirst();
                 yield canonicalCheck(queue);
@@ -47,8 +54,12 @@ final class CommandLineParser {
         Optional<String> reply = Optional.empty();
         Optional<String> trace = Optional.empty();
         var overrides = SettingsOverrides.NONE;
+        var extras = new PairExtras();
         while (!queue.isEmpty()) {
             var argument = queue.removeFirst();
+            if (extras.accepts(argument, queue)) {
+                continue;
+            }
             switch (argument) {
                 case "-o" -> reply = Optional.of(value(queue, "-o"));
                 case "-l" -> trace = Optional.of(optionalValue(queue).orElse(""));
@@ -64,7 +75,34 @@ final class CommandLineParser {
                 }
             }
         }
-        return pairCommand(input, reply, trace, overrides);
+        return pairCommand(input, reply, trace, extras, overrides);
+    }
+
+    private static Command canonicalStandings(Deque<String> queue) {
+        String input = null;
+        Optional<Integer> after = Optional.empty();
+        Optional<List<String>> why = Optional.empty();
+        var overrides = SettingsOverrides.NONE;
+        while (!queue.isEmpty()) {
+            var argument = queue.removeFirst();
+            if (argument.equals("--after")) {
+                after = Optional.of(number(value(queue, argument)));
+                continue;
+            }
+            if (argument.equals("--why")) {
+                why = Optional.of(List.of(value(queue, argument), value(queue, argument)));
+                continue;
+            }
+            var parsed = settingsFlag(argument, queue, overrides);
+            if (parsed.isPresent()) {
+                overrides = parsed.get();
+            } else if (input == null && !argument.startsWith("--")) {
+                input = argument;
+            } else {
+                throw new UsageException("unexpected argument " + argument);
+            }
+        }
+        return new Command.Standings(required(input), after, why, overrides);
     }
 
     private static Command canonicalCheck(Deque<String> queue) {
@@ -97,8 +135,12 @@ final class CommandLineParser {
         Optional<String> reply = Optional.empty();
         Optional<String> trace = Optional.empty();
         var overrides = SettingsOverrides.NONE;
+        var extras = new PairExtras();
         while (!queue.isEmpty()) {
             var argument = queue.removeFirst();
+            if (extras.accepts(argument, queue)) {
+                continue;
+            }
             switch (argument) {
                 case "-p" -> {
                     pair = true;
@@ -127,15 +169,36 @@ final class CommandLineParser {
         if (!pair) {
             throw new UsageException("nothing to do: give -p to pair the next round or -c to check");
         }
-        return pairCommand(input, reply, trace, overrides);
+        return pairCommand(input, reply, trace, extras, overrides);
     }
 
     /** A bare {@code -l} writes the trace beside the input as {@code <input>.trace.txt}. */
     private static Command pairCommand(
-            String input, Optional<String> reply, Optional<String> trace, SettingsOverrides overrides) {
+            String input,
+            Optional<String> reply,
+            Optional<String> trace,
+            PairExtras extras,
+            SettingsOverrides overrides) {
         var file = required(input);
         var traceFile = trace.map(given -> given.isEmpty() ? file + ".trace.txt" : given);
-        return new Command.Pair(file, reply, traceFile, overrides);
+        return new Command.Pair(file, reply, traceFile, List.copyOf(extras.explain), extras.quiet, overrides);
+    }
+
+    /** The pairing flags both grammars share: {@code --explain <id>} (repeatable) and {@code --quiet}. */
+    private static final class PairExtras {
+        private final List<String> explain = new java.util.ArrayList<>();
+        private boolean quiet;
+
+        boolean accepts(String argument, Deque<String> queue) {
+            switch (argument) {
+                case "--explain" -> explain.add(value(queue, argument));
+                case "--quiet" -> quiet = true;
+                default -> {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 
     private static Optional<SettingsOverrides> settingsFlag(
@@ -152,8 +215,28 @@ final class CommandLineParser {
                 yield Optional.of(overrides);
             }
             case "--rounds" -> Optional.of(overrides.withRounds(NumberOfRounds.of(number(value(queue, argument)))));
+            case "--tiebreaks" -> Optional.of(overrides.withTieBreaks(TieBreakList.parse(value(queue, argument))));
+            case "--tiebreak-edition" ->
+                Optional.of(overrides.withTieBreakEdition(tieBreakEdition(value(queue, argument))));
             case "--initial-colour" -> Optional.of(overrides.withInitialColour(colour(value(queue, argument))));
+            case "--edition" -> Optional.of(overrides.withEdition(edition(value(queue, argument))));
             default -> Optional.empty();
+        };
+    }
+
+    private static SwissRulesEdition edition(String value) {
+        return switch (value) {
+            case "2026" -> SwissRulesEdition.EDITION_2026;
+            case "pre-2026" -> SwissRulesEdition.PRE_2026;
+            default -> throw new UsageException("--edition takes 2026 or pre-2026, not " + value);
+        };
+    }
+
+    private static TieBreakEdition tieBreakEdition(String value) {
+        return switch (value) {
+            case "2026-03" -> TieBreakEdition.EDITION_2026_03;
+            case "2024-08" -> TieBreakEdition.EDITION_2024_08;
+            default -> throw new UsageException("--tiebreak-edition takes 2026-03 or 2024-08, not " + value);
         };
     }
 

@@ -19,6 +19,11 @@ public interface PairingSystem {
 
     RoundPairing pairNextRound(Tournament tournament);
 
+    /** As {@link #pairNextRound(Tournament)}, telling the listener how it advances. */
+    default RoundPairing pairNextRound(Tournament tournament, PairingProgress progress) {
+        return pairNextRound(tournament);
+    }
+
     /** The rules a proposed pairing for the next round breaks: the Basic Rules, and the system's own. */
     default List<Violation> violationsOf(Tournament tournament, ProposedPairing proposed) {
         return BasicRules.violationsOf(tournament, proposed);
@@ -29,7 +34,10 @@ public interface PairingSystem {
         return CompetitionType.INDIVIDUAL;
     }
 
-    /** What makes these settings unusable with the system; {@code Tournament.of} refuses them. */
+    /**
+     * What makes these settings unfit for the system, such as a Swiss Rules Edition it has no text for;
+     * {@code Tournament.of} refuses them.
+     */
     default List<Problem> problemsWith(TournamentSettings settings) {
         return List.of();
     }

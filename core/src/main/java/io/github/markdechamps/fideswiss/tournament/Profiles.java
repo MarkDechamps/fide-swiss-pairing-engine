@@ -1,13 +1,18 @@
 package io.github.markdechamps.fideswiss.tournament;
 
 import io.github.markdechamps.fideswiss.pairing.PairingSystems;
+import io.github.markdechamps.fideswiss.standings.TieBreakEdition;
+import io.github.markdechamps.fideswiss.standings.TieBreakList;
 
 /** Ready-made settings for common kinds of event; only the number of rounds is left to the client. */
 public final class Profiles {
 
     private Profiles() {}
 
-    /** The baseline: Dutch System, 2026 rules, 1 / ½ / 0, the PAB worth a win, White for the top participant. */
+    /**
+     * The baseline: Dutch System, 2026 rules, 1 / ½ / 0, the PAB worth a win, White for the top participant, and
+     * the tie-breaks {@code BH/C1, BH, SB, DE} under C.07 2026-03 (our choice; C.07 2.1 leaves it open).
+     */
     public static TournamentSettings individualSwiss(NumberOfRounds rounds) {
         return new TournamentSettings(
                 PairingSystems.dutch(),
@@ -16,7 +21,9 @@ public final class Profiles {
                 RankingKey.strengthTitleName(),
                 InitialColour.white(),
                 Acceleration.none(),
-                rounds);
+                rounds,
+                TieBreakList.parse("BH/C1, BH, SB, DE"),
+                TieBreakEdition.EDITION_2026_03);
     }
 
     /** As {@link #individualSwiss}, with Baku acceleration (C.04.7). */
