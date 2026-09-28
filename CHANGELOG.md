@@ -15,6 +15,9 @@ Every change that can alter a pairing, a standing or a check verdict is listed u
 - Pairing progress (`PairingProgress`), cancellation by interrupt and `RoundPairing.about(id)`.
 - The `trf` reader for TRF26 and TRF16 (with `XXR`, `XXC`, `XXA`, `250` and `_BAKU`).
 - The `fide-swiss` command line: `pair` and `-p`, `check`, `-c` and `-check`, `version`, `--explain`, `--quiet`, and bbp's exit codes plus 6; a portable distribution with launchers.
+- The TRF26 writer: `012`, `142`, `152`, `162`, `192` (with `_BAKU`), `212` and the `001` records, read back to the same rounds and settings.
+- The Random Tournament Generator (`generator` module): whole Dutch tournaments under either Swiss Rules Edition from a logged seed, with Milvang's result model, forfeits, requested byes, withdrawals, late entries, and per-tournament Baku, scoring and Tie-break List; JaVaFo/bbp configuration files and model tournaments; the invariant checker on 200 tournaments per edition in every build and 5,000 nightly.
+- `fide-swiss generate` and the JaVaFo/bbp `-g` form, with a manifest per corpus and exit code 7 when more than 0.1% of the seeds are skipped.
 
 ### Pairing changes
 
