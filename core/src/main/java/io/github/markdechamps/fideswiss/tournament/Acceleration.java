@@ -52,7 +52,7 @@ public sealed interface Acceleration {
             if (!tournament.isInAcceleratedGroup(participant)) {
                 return Points.ZERO;
             }
-            var win = tournament.settings().scoring().win();
+            var win = tournament.settings().scoring().primaryWin();
             var accelerated = (tournament.settings().numberOfRounds().value() + 1) / 2;
             var atFullValue = (accelerated + 1) / 2;
             if (round.value() <= atFullValue) {
@@ -63,12 +63,13 @@ public sealed interface Acceleration {
                     : Points.ZERO;
         }
 
-        /** C.04.7 1.1: a win equals two draws and a loss scores nothing. */
+        /** C.04.7 1.1: a win equals two draws and a loss scores nothing, in the primary score. */
         @Override
         public List<Problem> problemsWith(TournamentSettings settings) {
             var scoring = settings.scoring();
-            var winIsTwoDraws = scoring.win().equals(scoring.draw().times(2));
-            return winIsTwoDraws && scoring.loss().equals(Points.ZERO)
+            var winIsTwoDraws =
+                    scoring.primaryWin().equals(scoring.primaryDraw().times(2));
+            return winIsTwoDraws && scoring.primaryLoss().equals(Points.ZERO)
                     ? List.of()
                     : List.of(Problem.citing(
                             "C.04.7 1.1", "Baku acceleration needs a win worth two draws and a loss worth nothing"));

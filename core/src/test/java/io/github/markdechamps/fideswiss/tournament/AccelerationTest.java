@@ -56,6 +56,21 @@ class AccelerationTest {
         }
 
         @Test
+        void givesATeamEventOnMatchPointsMatchPoints() {
+            // C.04.7 1.4.4: an 11-round team event on match points gives GA +2 MP for three rounds, +1 for three.
+            var teams = Tournament.of(
+                    Profiles.teamSwiss(NumberOfRounds.of(11)).with(Acceleration.baku()),
+                    TournamentMother.participants(8));
+
+            var virtualPoints = IntStream.rangeClosed(1, 7)
+                    .mapToObj(round ->
+                            teams.virtualPointsOf(id(1), RoundNumber.of(round)).toString())
+                    .toList();
+
+            assertThat(virtualPoints).containsExactly("2", "2", "2", "1", "1", "1", "0");
+        }
+
+        @Test
         void isRejectedWhenAWinIsNotWorthTwoDraws() {
             var football = new ScoringScheme(Points.of(3), Points.of(1), Points.ZERO, java.util.Optional.empty());
 

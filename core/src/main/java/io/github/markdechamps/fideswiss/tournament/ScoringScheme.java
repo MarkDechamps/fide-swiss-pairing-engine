@@ -52,6 +52,23 @@ public record ScoringScheme(
         return matches.map(MatchScoring::primary).orElse(PrimaryScore.GAME_POINTS);
     }
 
+    /** What a win is worth in the primary score: a match win's match points, else a game win. */
+    public Points primaryWin() {
+        return inMatchPoints() ? matchScoring().win() : win;
+    }
+
+    public Points primaryDraw() {
+        return inMatchPoints() ? matchScoring().draw() : draw;
+    }
+
+    public Points primaryLoss() {
+        return inMatchPoints() ? matchScoring().loss() : loss;
+    }
+
+    private boolean inMatchPoints() {
+        return matches.isPresent() && primaryScore() == PrimaryScore.MATCH_POINTS;
+    }
+
     public Points pointsFor(GameResult result) {
         return switch (result) {
             case WIN -> win;
