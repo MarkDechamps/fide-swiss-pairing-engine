@@ -6,8 +6,6 @@ import io.github.markdechamps.fideswiss.generator.GeneratedTournament;
 import io.github.markdechamps.fideswiss.generator.GeneratorSettings;
 import io.github.markdechamps.fideswiss.generator.RtgConfiguration;
 import io.github.markdechamps.fideswiss.generator.TournamentGenerator;
-import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
-import io.github.markdechamps.fideswiss.tournament.Profiles;
 import io.github.markdechamps.fideswiss.trf.TrfWriter;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -21,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * {@code generate} and {@code -g}: plays a corpus of tournaments and writes each as a TRF26 file named from the
- * output pattern, with a manifest of every seed when there is more than one. Precedence: the generator's
+ * output pattern, with a manifest of every seed when there is more than one. Precedence: the profile's generator
  * defaults, then the configuration file, then the flags.
  */
 final class TournamentFiles {
@@ -57,7 +55,7 @@ final class TournamentFiles {
     }
 
     private GeneratorSettings settings(Command.Generate command) {
-        var settings = GeneratorSettings.of(Profiles.individualSwiss(NumberOfRounds.of(9)));
+        var settings = command.baseline();
         if (command.configuration().isPresent()) {
             settings = RtgConfiguration.applyTo(
                     settings, read(command.configuration().get()));

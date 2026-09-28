@@ -23,14 +23,16 @@ sealed interface Command {
 
     /**
      * Generate {@code count} tournaments from a corpus seed (a fresh one, printed, when none is given) into
-     * {@code output}, where {@code %d} stands for the index; a configuration file, then the flags, override the
-     * generator's defaults.
+     * {@code output}, where {@code %d} stands for the index. Precedence: the profile's {@code baseline}, then a
+     * configuration file or a model TRF, then the flags.
      */
     record Generate(
             Optional<Long> seed,
             int count,
             String output,
+            GeneratorSettings baseline,
             Optional<String> configuration,
+            Optional<String> model,
             List<UnaryOperator<GeneratorSettings>> overrides)
             implements Command {
 

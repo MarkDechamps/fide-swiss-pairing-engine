@@ -8,14 +8,22 @@ final class Help {
               fide-swiss [--dutch] <in.trf> -p [<reply>] [-l [<trace>]] [settings]
               fide-swiss check <in.trf> [--round <r>]  |  <in.trf> -c [<r>]  |  -check <in.trf>
               fide-swiss standings <in.trf> [--after <r>] [--why <id> <id>]
-              fide-swiss generate -o <out%d.trf> [--seed <n>] [--count <k>] [--config <cfg>] [ranges]
+              fide-swiss generate -o <out%d.trf> [--seed <n>] [--count <k>] [--profile <name>] [--config <cfg>]
+                                  [ranges] [tournament flags]
               fide-swiss -g [<cfg>|<seed>] -o <out.trf> [-s <seed>]
               fide-swiss version | -r
 
             generator ranges (a number, or A..B drawn per tournament):
               --players --rounds --highest-rating --lowest-rating --unrated <%>
-              --forfeit-rate --hpb-rate --zpb-rate --fpb-rate <1 in N>  --withdrawals <%>
+              --forfeit-rate --hpb-rate --zpb-rate --fpb-rate <1 in N>  --withdrawals <%>  --late-entries <%>
               --draw-percentage <P> (a flat draw share instead of Milvang's model)
+
+            generator tournament flags:
+              --profile individual-swiss|accelerated-open   the starting settings
+              --edition 2026|pre-2026  --tiebreak-edition 2026-03|2024-08
+              --acceleration none|baku|random   random: Baku for 20% of the tournaments
+              --tiebreaks "<list>"|random       random: 3-5 entries drawn per tournament
+              --random-scoring                  3/1/0 or 2/1/0 for 10% of the tournaments
 
             settings (override the file's records):
               --system dutch | --dutch     the pairing system
