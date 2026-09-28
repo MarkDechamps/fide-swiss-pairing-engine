@@ -2,6 +2,8 @@ package io.github.markdechamps.fideswiss.trf;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.github.markdechamps.fideswiss.standings.TieBreakList;
+import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.BoardNumber;
 import io.github.markdechamps.fideswiss.tournament.Bye;
 import io.github.markdechamps.fideswiss.tournament.GameOutcome;
@@ -91,6 +93,30 @@ class TrfWriterTest {
             assertThat(read.tournament().absencesInNextRound()).containsEntry(id(3), Bye.HALF_POINT);
             assertThat(read.tournament().pairNextRound().samePairingAs(tournament.pairNextRound()))
                     .isTrue();
+        }
+    }
+
+    @Nested
+    class GivenAnAcceleratedTournamentWithItsTieBreaks {
+
+        private final Tournament tournament = played(
+                Profiles.acceleratedOpen(NumberOfRounds.of(3)).with(TieBreakList.parse("BH/M1, KS, TPN")),
+                GameOutcome.DRAW,
+                GameOutcome.BLACK_WINS);
+
+        @Test
+        void writesTheTieBreakListAfterThePointsAndBakuInTheSystemCode() {
+            var text = TrfWriter.write(tournament, TrfWriter.Options.named("Accelerated"));
+
+            assertThat(text).contains("\r\n192 FIDE_DUTCH_BAKU\r\n212 PTS,BH/M1,KS,TPN\r\n");
+        }
+
+        @Test
+        void readsBackTheAccelerationAndTheTieBreakList() {
+            var read = TrfReader.read(TrfWriter.write(tournament, TrfWriter.Options.named("Accelerated")));
+
+            assertThat(read.settings().acceleration()).isEqualTo(Acceleration.baku());
+            assertThat(read.settings().tieBreakList()).isEqualTo(TieBreakList.parse("BH/M1, KS, TPN"));
         }
     }
 

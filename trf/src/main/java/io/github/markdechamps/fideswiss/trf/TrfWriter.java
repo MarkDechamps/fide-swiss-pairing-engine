@@ -1,5 +1,7 @@
 package io.github.markdechamps.fideswiss.trf;
 
+import io.github.markdechamps.fideswiss.standings.TieBreakList;
+import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.Board;
 import io.github.markdechamps.fideswiss.tournament.Bye;
 import io.github.markdechamps.fideswiss.tournament.Colour;
@@ -21,7 +23,8 @@ import java.util.Optional;
 
 /**
  * Writes a tournament as TRF26: the header records the library's settings can fill ({@code 142}, {@code 152},
- * {@code 162} when the scoring is not the default, {@code 192}), then one {@code 001} record per participant in
+ * {@code 162} when the scoring is not the default, {@code 192} with {@code _BAKU} for Baku acceleration, {@code 212}
+ * for the Tie-break List), then one {@code 001} record per participant in
  * registration order, whose position is its starting rank. Absences already known for the next round go into
  * one more round column. Lines end with CR LF (TRF CLI surface).
  */
@@ -70,7 +73,10 @@ public final class TrfWriter {
         lines.add("142 " + settings.numberOfRounds().value());
         lines.add("152 " + (settings.initialColour().colour() == Colour.WHITE ? "W" : "B"));
         scoringRecord(settings.scoring()).ifPresent(lines::add);
-        lines.add("192 " + systemCode(settings.swissRulesEdition()));
+        lines.add("192 " + systemCode(settings.swissRulesEdition()) + accelerationSuffix(settings.acceleration()));
+        if (!settings.tieBreakList().isEmpty()) {
+            lines.add("212 " + tieBreakRecord(settings.tieBreakList()));
+        }
         if (options.jaVaFoLines()) {
             lines.add("XXR " + settings.numberOfRounds().value());
             lines.add("XXC " + (settings.initialColour().colour() == Colour.WHITE ? "white1" : "black1"));
@@ -86,6 +92,19 @@ public final class TrfWriter {
      */
     private static String systemCode(SwissRulesEdition edition) {
         return edition == SwissRulesEdition.EDITION_2026 ? "FIDE_DUTCH" : "FIDE_DUTCH_2017";
+    }
+
+    /** Baku acceleration travels as the {@code _BAKU} suffix of the system code (Acceleration readings). */
+    private static String accelerationSuffix(Acceleration acceleration) {
+        return acceleration instanceof Acceleration.Baku ? "_BAKU" : "";
+    }
+
+    /** {@code 212}: the Tie-break List after {@code PTS}, the score, comma-separated as TRF26 lists it. */
+    private static String tieBreakRecord(TieBreakList list) {
+        var codes = new ArrayList<String>();
+        codes.add("PTS");
+        list.codes().forEach(code -> codes.add(code.toString()));
+        return String.join(",", codes);
     }
 
     /** {@code 162}: symbol at column 6 with points at 7–10, each next pair 9 columns on; defaults left out. */
