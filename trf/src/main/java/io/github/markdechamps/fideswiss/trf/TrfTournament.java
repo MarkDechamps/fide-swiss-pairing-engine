@@ -11,6 +11,7 @@ import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import io.github.markdechamps.fideswiss.tournament.Participant;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
 import io.github.markdechamps.fideswiss.tournament.Points;
+import io.github.markdechamps.fideswiss.tournament.PrimaryScore;
 import io.github.markdechamps.fideswiss.tournament.Profiles;
 import io.github.markdechamps.fideswiss.tournament.RankingKey;
 import io.github.markdechamps.fideswiss.tournament.RequestedBye;
@@ -36,7 +37,8 @@ public final class TrfTournament {
     private final List<Participant> participants;
     private final List<Round> recordedRounds;
     private final Map<ParticipantId, Bye> nextRoundAbsences;
-    private final List<PlayerRecord> players;
+    private final Map<ParticipantId, Points> declaredPoints;
+    private final Map<ParticipantId, Integer> declaredRanks;
     private final boolean declaresTieBreaks;
 
     private TrfTournament(
@@ -44,10 +46,12 @@ public final class TrfTournament {
             List<Participant> participants,
             List<Round> recordedRounds,
             Map<ParticipantId, Bye> nextRoundAbsences,
-            List<PlayerRecord> players,
+            Map<ParticipantId, Points> declaredPoints,
+            Map<ParticipantId, Integer> declaredRanks,
             boolean declaresTieBreaks) {
         this.settings = settings;
-        this.players = List.copyOf(players);
+        this.declaredPoints = java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(declaredPoints));
+        this.declaredRanks = java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(declaredRanks));
         this.declaresTieBreaks = declaresTieBreaks;
         this.participants = List.copyOf(participants);
         this.recordedRounds = List.copyOf(recordedRounds);
@@ -55,6 +59,9 @@ public final class TrfTournament {
     }
 
     static TrfTournament of(List<PlayerRecord> players, Map<String, List<String>> records) {
+        if (TeamSettingsRecords.declaresATeamSystem(records)) {
+            return ofTeams(players, records);
+        }
         var columns = players.stream()
                 .mapToInt(player -> player.rounds().size())
                 .max()
@@ -79,8 +86,59 @@ public final class TrfTournament {
                 participants,
                 rounds,
                 absences,
-                players,
+                declared(players, PlayerRecord::declaredPoints),
+                declared(players, PlayerRecord::declaredRank),
                 declaredTieBreaks(records).isPresent());
+    }
+
+    /**
+     * A team file: the {@code 310} teams in team-number order are the participants, their matches the rounds;
+     * the declared points are the teams' primary scores.
+     */
+    private static TrfTournament ofTeams(List<PlayerRecord> players, Map<String, List<String>> records) {
+        var teams = records.getOrDefault("310", List.of()).stream()
+                .map(TeamRecord::parse)
+                .sorted(java.util.Comparator.comparingInt(TeamRecord::number))
+                .toList();
+        var teamRounds = new TeamRounds(teams, players, records);
+        var columns = teamRounds.columns();
+        var lastColumnOnlyMarksAbsences = columns > 0 && teamRounds.isOnlyAbsenceMarks(columns);
+        var completeRounds = lastColumnOnlyMarksAbsences ? columns - 1 : columns;
+        var rounds = new ArrayList<Round>();
+        for (var round = 1; round <= completeRounds; round++) {
+            rounds.add(teamRounds.roundOf(round));
+        }
+        var absences = lastColumnOnlyMarksAbsences ? teamRounds.absenceMarks(columns) : Map.<ParticipantId, Bye>of();
+        var numberOfRounds = declaredNumberOfRounds(records).orElse(Math.max(columns, 1));
+        var declared = TeamSettingsRecords.read(records, NumberOfRounds.of(numberOfRounds), teamRounds.boards());
+        var inMatchPoints = declared.scoring().primaryScore() == PrimaryScore.MATCH_POINTS;
+        var profile = declared.with(RankingKey.asListed())
+                .with(declaredInitialColour(records).orElseGet(() -> inferredInitialColour(rounds, teams)))
+                .with(AccelerationRecords.read(records, numberOfRounds, inMatchPoints));
+        var settings = declaredTieBreaks(records).map(profile::with).orElse(profile);
+        var points = new java.util.LinkedHashMap<ParticipantId, Points>();
+        var ranks = new java.util.LinkedHashMap<ParticipantId, Integer>();
+        for (var team : teams) {
+            (inMatchPoints ? team.declaredMatchPoints() : team.declaredGamePoints())
+                    .ifPresent(value -> points.put(team.id(), value));
+            team.declaredRank().ifPresent(rank -> ranks.put(team.id(), rank));
+        }
+        return new TrfTournament(
+                settings,
+                teams.stream().map(TeamRecord::participant).toList(),
+                rounds,
+                absences,
+                points,
+                ranks,
+                declaredTieBreaks(records).isPresent());
+    }
+
+    private static <T> Map<ParticipantId, T> declared(
+            List<PlayerRecord> players, java.util.function.Function<PlayerRecord, Optional<T>> value) {
+        var declared = new java.util.LinkedHashMap<ParticipantId, T>();
+        players.forEach(player -> value.apply(player)
+                .ifPresent(found -> declared.put(player.participant().id(), found)));
+        return declared;
     }
 
     /**
@@ -106,23 +164,23 @@ public final class TrfTournament {
     /** The same file under other settings, such as the command line's overrides. */
     public TrfTournament with(TournamentSettings overridden) {
         return new TrfTournament(
-                overridden, participants, recordedRounds, nextRoundAbsences, players, declaresTieBreaks);
+                overridden,
+                participants,
+                recordedRounds,
+                nextRoundAbsences,
+                declaredPoints,
+                declaredRanks,
+                declaresTieBreaks);
     }
 
     /** The Points each {@code 001} record states (columns 81–84), where it states them. */
     public Map<ParticipantId, Points> declaredPoints() {
-        var points = new java.util.LinkedHashMap<ParticipantId, Points>();
-        players.forEach(player -> player.declaredPoints()
-                .ifPresent(value -> points.put(player.participant().id(), value)));
-        return points;
+        return declaredPoints;
     }
 
     /** The rank each {@code 001} record states (columns 86–89), where it states one. */
     public Map<ParticipantId, Integer> declaredRanks() {
-        var ranks = new java.util.LinkedHashMap<ParticipantId, Integer>();
-        players.forEach(player -> player.declaredRank()
-                .ifPresent(rank -> ranks.put(player.participant().id(), rank)));
-        return ranks;
+        return declaredRanks;
     }
 
     /** Whether the file names its own Tie-break List (202 or 212), so that its ranks can be held to it. */
@@ -237,7 +295,7 @@ public final class TrfTournament {
                 .orElseThrow(() -> new InvalidTrfException("Round " + round + " refers to unknown player " + id));
     }
 
-    private static GameOutcome outcomeOf(char white, char black) {
+    static GameOutcome outcomeOf(char white, char black) {
         return switch (white) {
             case '1', 'W' -> GameOutcome.WHITE_WINS;
             case '=', 'D' -> GameOutcome.DRAW;
@@ -248,7 +306,7 @@ public final class TrfTournament {
         };
     }
 
-    private static Bye byeOf(RoundCell cell) {
+    static Bye byeOf(RoundCell cell) {
         return switch (cell.result()) {
             case 'U' -> Bye.PAIRING_ALLOCATED;
             case 'F', '+' -> Bye.FULL_POINT;
@@ -268,7 +326,11 @@ public final class TrfTournament {
      * TRF26 prescribes for 152 and bbpPairings infers.
      */
     private static InitialColour initialColour(Map<String, List<String>> records, List<PlayerRecord> players) {
-        var declared = firstValue(records, "152")
+        return declaredInitialColour(records).orElseGet(() -> inferredInitialColour(players));
+    }
+
+    private static Optional<InitialColour> declaredInitialColour(Map<String, List<String>> records) {
+        return firstValue(records, "152")
                 .map(value ->
                         value.trim().toUpperCase().startsWith("B") ? InitialColour.black() : InitialColour.white())
                 .or(() -> records.getOrDefault("XXC", List.of()).stream()
@@ -276,7 +338,19 @@ public final class TrfTournament {
                         .filter(word -> word.equals("white1") || word.equals("black1"))
                         .reduce((first, second) -> second)
                         .map(word -> word.equals("black1") ? InitialColour.black() : InitialColour.white()));
-        return declared.orElseGet(() -> inferredInitialColour(players));
+    }
+
+    /** Without 152, the board-1 colour the first team had in round 1 (as TPN 1, 4.3.1 gives it the initial colour). */
+    private static InitialColour inferredInitialColour(List<Round> rounds, List<TeamRecord> teams) {
+        if (rounds.isEmpty() || teams.isEmpty()) {
+            return InitialColour.white();
+        }
+        var first = teams.getFirst().id();
+        return rounds.getFirst()
+                .boardOf(first)
+                .filter(board -> board.outcome().isPlayed())
+                .map(board -> new InitialColour(board.colourOf(first)))
+                .orElse(InitialColour.white());
     }
 
     private static InitialColour inferredInitialColour(List<PlayerRecord> players) {

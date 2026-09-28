@@ -42,9 +42,12 @@ public record MatchOutcome(List<GameOutcome> games) implements Outcome {
         return games.stream().allMatch(game -> game.isForfeitedBy(side));
     }
 
-    /** The match result, by the game points of each side (at 1 / ½ / 0). */
+    /** The match result, by the game points of each side (at 1 / ½ / 0); a side that forfeited it loses. */
     @Override
     public GameResult resultOf(Colour side) {
+        if (isForfeitedBy(side)) {
+            return GameResult.LOSS;
+        }
         var own = halfPointsOf(side);
         var other = halfPointsOf(side.opposite());
         if (own.isGreaterThan(other)) {

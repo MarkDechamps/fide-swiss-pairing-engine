@@ -62,6 +62,15 @@ class MatchOutcomeTest {
             assertThat(forfeited.isMeeting()).isFalse();
             assertThat(forfeited.resultOf(Colour.WHITE)).isEqualTo(GameResult.WIN);
         }
+
+        @Test
+        void isLostByBothSidesWhenBothForfeitedIt() {
+            // Gacrux probe case 4a: a double-forfeited match scores no match points for either team.
+            var doubleForfeit = MatchOutcome.ofGames(List.of(DOUBLE_FORFEIT, DOUBLE_FORFEIT));
+
+            assertThat(teamScoring.pointsFor(doubleForfeit, Colour.WHITE)).isEqualTo(Points.ZERO);
+            assertThat(teamScoring.pointsFor(doubleForfeit, Colour.BLACK)).isEqualTo(Points.ZERO);
+        }
     }
 
     @Nested
