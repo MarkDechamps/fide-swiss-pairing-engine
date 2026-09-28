@@ -7,6 +7,7 @@ import io.github.markdechamps.fideswiss.tournament.GameResult;
 import io.github.markdechamps.fideswiss.tournament.Participant;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
 import io.github.markdechamps.fideswiss.tournament.Round;
+import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,7 +19,8 @@ import java.util.Set;
 /**
  * Our own invariant checker (Verification strategy): on any generated tournament it asserts the absolute criteria
  * every edition shares. No rematch (C.04.1 Art. 2, GHR 3.5), at most one PAB per round and none for a participant
- * who already had one or a win's points without playing (Art. 3–4), everyone in every round either on a board or
+ * who already had one or a win's points without playing (Art. 3–4; before 2026 a requested full-point bye does not
+ * bar it, Dutch 2017 reading R9), everyone in every round either on a board or
  * given a reason, nobody on a board after withdrawing (GHR 3.2), and the colour limits of Art. 6–7 in every round
  * but the last, where Dutch topscorers may break them.
  */
@@ -33,6 +35,7 @@ final class InvariantChecker {
         var withdrawn = new HashSet<ParticipantId>();
         var colours = new HashMap<ParticipantId, List<Colour>>();
         var lastRound = tournament.settings().numberOfRounds().value();
+        var edition = tournament.settings().swissRulesEdition();
         for (var round : tournament.rounds()) {
             var number = round.number().value();
             everyoneAccountedFor(tournament, round, violations);
@@ -43,7 +46,7 @@ final class InvariantChecker {
             if (number < lastRound) {
                 colourLimits(number, colours, violations);
             }
-            bars(round, barredFromPab);
+            bars(round, edition, barredFromPab);
         }
         return violations;
     }
@@ -94,10 +97,11 @@ final class InvariantChecker {
                         violations.add("round " + round.number() + ": " + participant + " may not receive the PAB"));
     }
 
-    /** After this round: a PAB, a forfeit win or a full-point bye bars a later PAB (C.04.1 Art. 4). */
-    private static void bars(Round round, Set<ParticipantId> barred) {
+    /** After this round: a PAB, a forfeit win or (from 2026) a full-point bye bars a later PAB (C.04.1 Art. 4). */
+    private static void bars(Round round, SwissRulesEdition edition, Set<ParticipantId> barred) {
+        var fullPointByeBars = edition == SwissRulesEdition.EDITION_2026;
         round.byes().forEach((participant, bye) -> {
-            if (bye == Bye.PAIRING_ALLOCATED || bye == Bye.FULL_POINT) {
+            if (bye == Bye.PAIRING_ALLOCATED || (bye == Bye.FULL_POINT && fullPointByeBars)) {
                 barred.add(participant);
             }
         });

@@ -11,6 +11,7 @@ import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import io.github.markdechamps.fideswiss.tournament.Problem;
 import io.github.markdechamps.fideswiss.tournament.Profiles;
 import io.github.markdechamps.fideswiss.tournament.Rating;
+import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import java.util.List;
 import org.junit.jupiter.api.Nested;
@@ -49,6 +50,17 @@ class TournamentGeneratorTest {
 
             assertThat(corpus.tournament(0)).isNotEqualTo(corpus.tournament(1));
             assertThat(corpus.tournament(3)).isEqualTo(CorpusSeed.of(7).tournament(3));
+        }
+
+        @Test
+        void playsTheSwissRulesEditionOfTheSettings() {
+            var settings = DUTCH.with(DUTCH.tournament().with(SwissRulesEdition.PRE_2026));
+
+            var tournament = completed(settings.withPlayers(Range.of(20)), 9);
+
+            assertThat(tournament.settings().swissRulesEdition()).isEqualTo(SwissRulesEdition.PRE_2026);
+            assertThat(tournament.rounds())
+                    .hasSize(tournament.settings().numberOfRounds().value());
         }
 
         @Test
