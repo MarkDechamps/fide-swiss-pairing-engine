@@ -19,7 +19,7 @@ A Java reference library for the FIDE Swiss pairing systems: it pairs the next r
 | C.04.4.3 | Lim System | 2026 | experimental: agrees with a plain enumeration of the text in every simulated round, never blocks a round that has a legal pairing; Handbook examples pass; no Oracle exists and a Witness (chesspairing) never gates |
 | C.04.5 | Double-Swiss System | 2026 | planned |
 | C.04.6 | Swiss Team Pairing System | 2026 | planned |
-| C.04.7 | Acceleration methods: Baku, for every C.04 system (not the Olympiad Pairing Rules), or explicit virtual points from TRF `250` | 2026 / pre-2026 | experimental (2026): Baku and explicit Virtual Points (`250`, `XXA`, `_BAKU`) for the Dutch System, identical to bbpPairings v6 on 159 accelerated tournaments |
+| C.04.7 | Acceleration methods: Baku, for every C.04 system (not the Olympiad Pairing Rules), or explicit virtual points from TRF `250` | 2026 / pre-2026 | experimental (2026): Baku and explicit Virtual Points (`250`, `XXA`, `_BAKU`) for the Dutch System, identical to bbpPairings v6 on 159 accelerated tournaments; for Dubov and Lim, on the Pairing Score, checked only against their Literal Enumerators |
 | D.02 | Olympiad Pairing Rules | 2022 | planned |
 | C.07 | Tie-break Regulations: the individual tie-breaks DE, WIN, WON, BPG, BWG, PS, REP, STD, TPN, BH, AOB, FB, SB, KS, ARO, TPR, PTP, APRO, APPO, RTNG, with Cut-1/2, Median-1/2, Limit, `/P` and `/F`; the team tie-breaks (art. 12–13) are planned | 2026-03 | experimental: hand-worked fixtures only (no official 2026 data exists) |
 | C.07 | Tie-break Regulations (historic: an uncapped Dummy Opponent, no STD/TPN/RTNG) | 2024-08 | experimental |
@@ -67,6 +67,7 @@ No Oracle exists for Dubov, so the search is checked against a test-scope Litera
 - **ARO** is an integer rounded half up (1.7.1), and S1 (3.2.5) and 4.3.2 use the rounded value.
 - **3.1.4** "played the highest number of games" counts games played over the board; **5.2.4** compares the colours of games played, from the latest back (GHR 3.4).
 - **MaxT** (1.8.2) uses the planned number of rounds.
+- **Under acceleration** brackets, the PAB, upfloats (of the round in which the game was paired) and board order read the Pairing Score.
 
 ### Readings of the Lim 2026 text
 
@@ -79,10 +80,12 @@ Lim is a procedure, not an optimisation: every choice is "the first in this orde
 - **Floated the round before** (3.10): played the previous round against an opponent with a different score before it.
 - **Incoming floaters** are paired first (3.6–3.8), each with the first available player due the other colour, otherwise the first available; *available* means compatible with the rest still pairable.
 - **Article 4** is generalised: the first player tries the bottom half in order, then the top half from the bottom up; compatibility and the 5.2 colour exchange are one walk.
+- **Edition**: Dubov and Lim have only their 2026 text, so a pre-2026 Swiss Rules Edition is rejected (GHR 1.3).
 - **Maxi-tournament**: declared by the organiser (`--maxi-tournament`, or `PairingSystems.lim(MaxiTournament.DECLARED)`), never inferred; an exchange for colour (3.8, 5.7) and the colour choice of floater (3.2.3) need ratings within 100 points.
 - **Cracking** (2.6): pairings are taken back last made first, from the lower side when more floaters came from above, and the median is paired again.
 - **PAB** (1.1): the lowest-ranked eligible player of the lowest scoregroup whose bye leaves the others pairable; round 1 follows 7.1, the lowest rated, unrated counting lowest.
 - **Colours** (Article 5): the limits, the due colours, then the history back to the latest difference (5.4), then the higher ranked gets their due colour in the median or above and the lower ranked below it; round parity (5.5/5.6) is read on the player's own played games.
+- **Under acceleration** scoregroups, the PAB, 3.10 and board order read the Pairing Score, while the Median Scoregroup keeps its value; an accelerated round 1 therefore has the Accelerated Group above a median of 0 and takes the general procedure, not Article 7.
 
 ### Readings of the C.07 text
 
