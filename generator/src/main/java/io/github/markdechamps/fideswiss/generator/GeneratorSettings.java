@@ -23,6 +23,9 @@ public record GeneratorSettings(
         Range withdrawalPercentage,
         Optional<Range> retirementRate,
         Range lateEntryPercentage,
+        Chance bakuAcceleration,
+        Chance nonStandardScoring,
+        Chance drawnTieBreaks,
         ResultModel resultModel) {
 
     public GeneratorSettings {
@@ -39,6 +42,9 @@ public record GeneratorSettings(
         Objects.requireNonNull(withdrawalPercentage, "withdrawalPercentage");
         Objects.requireNonNull(retirementRate, "retirementRate");
         Objects.requireNonNull(lateEntryPercentage, "lateEntryPercentage");
+        Objects.requireNonNull(bakuAcceleration, "bakuAcceleration");
+        Objects.requireNonNull(nonStandardScoring, "nonStandardScoring");
+        Objects.requireNonNull(drawnTieBreaks, "drawnTieBreaks");
         Objects.requireNonNull(resultModel, "resultModel");
     }
 
@@ -57,7 +63,25 @@ public record GeneratorSettings(
                 Range.of(0, 5),
                 Optional.empty(),
                 Range.of(0, 5),
+                Chance.never(),
+                Chance.never(),
+                Chance.never(),
                 new MilvangModel());
+    }
+
+    /** {@code --acceleration random}: Baku for 20% of the tournaments. */
+    public GeneratorSettings withRandomAcceleration() {
+        return withBakuAcceleration(Chance.percent(20));
+    }
+
+    /** {@code --random-scoring}: a non-standard scoring for 10% of the tournaments. */
+    public GeneratorSettings withRandomScoring() {
+        return withNonStandardScoring(Chance.percent(10));
+    }
+
+    /** {@code --tiebreaks random}: every tournament draws its own Tie-break List. */
+    public GeneratorSettings withRandomTieBreaks() {
+        return withDrawnTieBreaks(Chance.always());
     }
 
     public GeneratorSettings with(TournamentSettings settings) {
@@ -75,6 +99,9 @@ public record GeneratorSettings(
                 withdrawalPercentage,
                 retirementRate,
                 lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
                 resultModel);
     }
 
@@ -93,6 +120,9 @@ public record GeneratorSettings(
                 withdrawalPercentage,
                 retirementRate,
                 lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
                 resultModel);
     }
 
@@ -111,6 +141,9 @@ public record GeneratorSettings(
                 withdrawalPercentage,
                 retirementRate,
                 lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
                 resultModel);
     }
 
@@ -129,6 +162,9 @@ public record GeneratorSettings(
                 withdrawalPercentage,
                 retirementRate,
                 lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
                 resultModel);
     }
 
@@ -147,6 +183,9 @@ public record GeneratorSettings(
                 withdrawalPercentage,
                 retirementRate,
                 lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
                 resultModel);
     }
 
@@ -165,6 +204,9 @@ public record GeneratorSettings(
                 withdrawalPercentage,
                 retirementRate,
                 lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
                 resultModel);
     }
 
@@ -183,6 +225,9 @@ public record GeneratorSettings(
                 withdrawalPercentage,
                 retirementRate,
                 lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
                 resultModel);
     }
 
@@ -201,6 +246,9 @@ public record GeneratorSettings(
                 withdrawalPercentage,
                 retirementRate,
                 lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
                 resultModel);
     }
 
@@ -219,6 +267,9 @@ public record GeneratorSettings(
                 withdrawalPercentage,
                 retirementRate,
                 lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
                 resultModel);
     }
 
@@ -237,6 +288,9 @@ public record GeneratorSettings(
                 withdrawalPercentage,
                 retirementRate,
                 lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
                 resultModel);
     }
 
@@ -255,6 +309,9 @@ public record GeneratorSettings(
                 range,
                 retirementRate,
                 lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
                 resultModel);
     }
 
@@ -274,6 +331,9 @@ public record GeneratorSettings(
                 withdrawalPercentage,
                 Optional.of(range),
                 lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
                 resultModel);
     }
 
@@ -293,6 +353,75 @@ public record GeneratorSettings(
                 withdrawalPercentage,
                 retirementRate,
                 range,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
+                resultModel);
+    }
+
+    /** The share of tournaments accelerated by Baku (C.04.7) when their scoring allows it. */
+    public GeneratorSettings withBakuAcceleration(Chance chance) {
+        return new GeneratorSettings(
+                tournament,
+                players,
+                rounds,
+                highestRating,
+                lowestRating,
+                unratedPercentage,
+                forfeitRate,
+                halfPointByeRate,
+                zeroPointByeRate,
+                fullPointByeRate,
+                withdrawalPercentage,
+                retirementRate,
+                lateEntryPercentage,
+                chance,
+                nonStandardScoring,
+                drawnTieBreaks,
+                resultModel);
+    }
+
+    /** The share of tournaments scored 3/1/0 or 2/1/0 instead of the settings' scoring. */
+    public GeneratorSettings withNonStandardScoring(Chance chance) {
+        return new GeneratorSettings(
+                tournament,
+                players,
+                rounds,
+                highestRating,
+                lowestRating,
+                unratedPercentage,
+                forfeitRate,
+                halfPointByeRate,
+                zeroPointByeRate,
+                fullPointByeRate,
+                withdrawalPercentage,
+                retirementRate,
+                lateEntryPercentage,
+                bakuAcceleration,
+                chance,
+                drawnTieBreaks,
+                resultModel);
+    }
+
+    /** The share of tournaments whose Tie-break List is drawn from the Tie-break Edition's catalogue. */
+    public GeneratorSettings withDrawnTieBreaks(Chance chance) {
+        return new GeneratorSettings(
+                tournament,
+                players,
+                rounds,
+                highestRating,
+                lowestRating,
+                unratedPercentage,
+                forfeitRate,
+                halfPointByeRate,
+                zeroPointByeRate,
+                fullPointByeRate,
+                withdrawalPercentage,
+                retirementRate,
+                lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                chance,
                 resultModel);
     }
 
@@ -311,6 +440,9 @@ public record GeneratorSettings(
                 withdrawalPercentage,
                 retirementRate,
                 lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
                 model);
     }
 }

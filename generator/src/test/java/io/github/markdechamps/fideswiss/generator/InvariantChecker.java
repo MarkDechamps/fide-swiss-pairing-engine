@@ -22,7 +22,7 @@ import java.util.Set;
  * who already had one or a win's points without playing (Art. 3–4; before 2026 a requested full-point bye does not
  * bar it, Dutch 2017 reading R9), everyone in every round either on a board or
  * given a reason, nobody on a board after withdrawing (GHR 3.2), and the colour limits of Art. 6–7 in every round
- * but the last, where Dutch topscorers may break them.
+ * but the last, where Dutch topscorers may break them. The Standings after the last round rank everyone.
  */
 final class InvariantChecker {
 
@@ -48,7 +48,17 @@ final class InvariantChecker {
             }
             bars(round, edition, barredFromPab);
         }
+        everyoneRanked(tournament, violations);
         return violations;
+    }
+
+    /** The Standings after the last round rank every participant under the drawn Tie-break List (C.07). */
+    private static void everyoneRanked(Tournament tournament, List<String> violations) {
+        var ranked = tournament.standings().ranked().size();
+        if (ranked != tournament.participants().size()) {
+            violations.add("standings rank " + ranked + " of "
+                    + tournament.participants().size() + " participants");
+        }
     }
 
     private static void everyoneAccountedFor(Tournament tournament, Round round, List<String> violations) {

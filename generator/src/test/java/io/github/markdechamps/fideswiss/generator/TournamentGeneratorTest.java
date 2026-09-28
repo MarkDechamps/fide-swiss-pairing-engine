@@ -6,14 +6,21 @@ import io.github.markdechamps.fideswiss.pairing.NoLegalPairingException;
 import io.github.markdechamps.fideswiss.pairing.PairingSystem;
 import io.github.markdechamps.fideswiss.pairing.PairingTrace;
 import io.github.markdechamps.fideswiss.pairing.RoundPairing;
+import io.github.markdechamps.fideswiss.standings.TieBreakCode;
+import io.github.markdechamps.fideswiss.standings.TieBreakEdition;
+import io.github.markdechamps.fideswiss.standings.TieBreakList;
+import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.Bye;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import io.github.markdechamps.fideswiss.tournament.Problem;
 import io.github.markdechamps.fideswiss.tournament.Profiles;
 import io.github.markdechamps.fideswiss.tournament.Rating;
+import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
 import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
+import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
 import java.util.List;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -159,6 +166,66 @@ class TournamentGeneratorTest {
     }
 
     @Nested
+    class GivenRandomVariations {
+
+        private final GeneratorSettings small = DUTCH.withPlayers(Range.of(12)).withRounds(Range.of(5));
+
+        @Test
+        void acceleratesSomeTournamentsByBaku() {
+            var accelerations = settingsOf(small.withRandomAcceleration()).stream()
+                    .map(TournamentSettings::acceleration)
+                    .toList();
+
+            assertThat(accelerations).contains(Acceleration.baku(), Acceleration.none());
+        }
+
+        @Test
+        void scoresSomeTournamentsOtherwiseThanOneHalfZero() {
+            var scorings = settingsOf(small.withRandomScoring()).stream()
+                    .map(TournamentSettings::scoring)
+                    .toList();
+
+            assertThat(scorings).contains(ScoringScheme.standard());
+            assertThat(scorings).anySatisfy(scoring -> assertThat(scoring).isNotEqualTo(ScoringScheme.standard()));
+        }
+
+        @Test
+        void drawsThreeToFiveTieBreaksFromTheEditionsCatalogue() {
+            var old = small.with(small.tournament().with(TieBreakEdition.EDITION_2024_08));
+
+            var lists = settingsOf(old.withRandomTieBreaks()).stream()
+                    .map(TournamentSettings::tieBreakList)
+                    .toList();
+
+            assertThat(lists).allSatisfy(list -> assertThat(list.codes()).hasSizeBetween(3, 5));
+            assertThat(lists)
+                    .flatExtracting(TieBreakList::codes)
+                    .extracting(TieBreakCode::acronym)
+                    .doesNotContain("STD", "TPN", "RTNG");
+            assertThat(lists).doesNotHaveDuplicates();
+        }
+
+        @Test
+        void recordsTheDrawnVariationsWithTheParameters() {
+            var generated = TournamentGenerator.of(small.withRandomTieBreaks()).generate(TournamentSeed.of(4));
+
+            assertThat(generated)
+                    .isInstanceOfSatisfying(
+                            GeneratedTournament.Completed.class,
+                            completed -> assertThat(completed.parameters().tieBreaks())
+                                    .isEqualTo(completed.tournament().settings().tieBreakList()));
+        }
+
+        private static List<TournamentSettings> settingsOf(GeneratorSettings settings) {
+            var corpus = CorpusSeed.of(99);
+            return IntStream.range(0, 40)
+                    .mapToObj(index ->
+                            completed(settings, corpus.tournament(index)).settings())
+                    .toList();
+        }
+    }
+
+    @Nested
     class GivenARoundWithoutALegalPairing {
 
         @Test
@@ -176,7 +243,11 @@ class TournamentGeneratorTest {
     }
 
     private static Tournament completed(GeneratorSettings settings, long seed) {
-        var generated = TournamentGenerator.of(settings).generate(TournamentSeed.of(seed));
+        return completed(settings, TournamentSeed.of(seed));
+    }
+
+    private static Tournament completed(GeneratorSettings settings, TournamentSeed seed) {
+        var generated = TournamentGenerator.of(settings).generate(seed);
         assertThat(generated).isInstanceOf(GeneratedTournament.Completed.class);
         return ((GeneratedTournament.Completed) generated).tournament();
     }

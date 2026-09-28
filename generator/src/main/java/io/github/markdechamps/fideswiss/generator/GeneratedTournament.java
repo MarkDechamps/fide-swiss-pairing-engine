@@ -1,6 +1,9 @@
 package io.github.markdechamps.fideswiss.generator;
 
+import io.github.markdechamps.fideswiss.standings.TieBreakList;
+import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
+import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 
 /** What one seed produced: a completed tournament, or the round in which no legal pairing existed. */
@@ -28,5 +31,8 @@ public sealed interface GeneratedTournament {
             int zeroPointByeRate,
             int fullPointByeRate,
             int withdrawals,
-            int lateEntries) {}
+            int lateEntries,
+            ScoringScheme scoring,
+            Acceleration acceleration,
+            TieBreakList tieBreaks) {}
 }

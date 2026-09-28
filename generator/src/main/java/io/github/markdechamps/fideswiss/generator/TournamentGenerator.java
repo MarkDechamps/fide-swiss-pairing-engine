@@ -2,6 +2,7 @@ package io.github.markdechamps.fideswiss.generator;
 
 import io.github.markdechamps.fideswiss.pairing.NoLegalPairingException;
 import io.github.markdechamps.fideswiss.pairing.PairedBoard;
+import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.BoardNumber;
 import io.github.markdechamps.fideswiss.tournament.GameOutcome;
 import io.github.markdechamps.fideswiss.tournament.InitialColour;
@@ -10,10 +11,12 @@ import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import io.github.markdechamps.fideswiss.tournament.Outcome;
 import io.github.markdechamps.fideswiss.tournament.Participant;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
+import io.github.markdechamps.fideswiss.tournament.Points;
 import io.github.markdechamps.fideswiss.tournament.RankingKey;
 import io.github.markdechamps.fideswiss.tournament.Rating;
 import io.github.markdechamps.fideswiss.tournament.RequestedBye;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
+import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
 import java.util.ArrayList;
@@ -33,6 +36,10 @@ import java.util.random.RandomGenerator;
 public final class TournamentGenerator {
 
     private static final int MAXIMUM_REQUESTED_BYES = 2;
+
+    private static final List<ScoringScheme> NON_STANDARD_SCORINGS = List.of(
+            new ScoringScheme(Points.of(3), Points.of(1), Points.ZERO, Optional.empty()),
+            new ScoringScheme(Points.of(2), Points.of(1), Points.ZERO, Optional.empty()));
 
     private final GeneratorSettings settings;
 
@@ -91,6 +98,7 @@ public final class TournamentGenerator {
                     (int) Math.round(players * settings.unratedPercentage().draw(random) / 100.0);
             var withdrawals =
                     (int) Math.round(players * settings.withdrawalPercentage().draw(random) / 100.0);
+            var variations = variations(draws.stream("variations"));
             var lateEntries = rounds < 3
                     ? 0
                     : (int) Math.round(players * settings.lateEntryPercentage().draw(random) / 100.0);
@@ -105,13 +113,39 @@ public final class TournamentGenerator {
                     settings.zeroPointByeRate().draw(random),
                     settings.fullPointByeRate().draw(random),
                     withdrawals,
-                    lateEntries);
+                    lateEntries,
+                    variations.scoring(),
+                    variations.acceleration(),
+                    variations.tieBreakList());
+        }
+
+        /**
+         * The tournament-level variations: a non-standard scoring, then Baku where that scoring allows it (C.04.7
+         * 1.1), then a Tie-break List drawn from the Tie-break Edition's catalogue.
+         */
+        private TournamentSettings variations(RandomGenerator random) {
+            var variations = settings.tournament();
+            if (settings.nonStandardScoring().happens(random)) {
+                variations = variations.with(NON_STANDARD_SCORINGS.get(random.nextInt(NON_STANDARD_SCORINGS.size())));
+            }
+            if (settings.bakuAcceleration().happens(random)
+                    && Acceleration.baku().problemsWith(variations).isEmpty()) {
+                variations = variations.with(Acceleration.baku());
+            }
+            if (settings.drawnTieBreaks().happens(random)) {
+                variations = variations.with(
+                        TieBreakCatalogue.of(variations.tieBreakEdition()).draw(random));
+            }
+            return variations;
         }
 
         private TournamentSettings tournamentSettings() {
             var initialColour =
                     draws.stream("initial colour").nextBoolean() ? InitialColour.white() : InitialColour.black();
             return settings.tournament()
+                    .with(parameters.scoring())
+                    .with(parameters.acceleration())
+                    .with(parameters.tieBreaks())
                     .with(NumberOfRounds.of(parameters.rounds()))
                     .with(RankingKey.asListed())
                     .with(initialColour);

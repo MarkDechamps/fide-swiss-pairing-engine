@@ -29,7 +29,10 @@ class InvariantRunTest {
                 .withHalfPointByeRate(Range.of(10, 200))
                 .withZeroPointByeRate(Range.of(10, 200))
                 .withFullPointByeRate(Range.of(20, 200))
-                .withWithdrawalPercentage(Range.of(0, 8));
+                .withWithdrawalPercentage(Range.of(0, 8))
+                .withRandomAcceleration()
+                .withRandomScoring()
+                .withRandomTieBreaks();
         var generator = TournamentGenerator.of(settings);
         var violations = new ArrayList<String>();
         var skipped = 0;
