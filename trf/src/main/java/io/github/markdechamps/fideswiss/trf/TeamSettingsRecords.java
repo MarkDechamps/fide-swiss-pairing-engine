@@ -19,7 +19,8 @@ import java.util.regex.Pattern;
 /**
  * The settings of a team file over the {@code teamSwiss} profile: {@code 192}
  * ({@code FIDE_TEAM[_TYPEA|_TYPEB][_MP|_GP][_GP|_MP][_BAKU]}), game points from {@code 162}, match points from
- * {@code 362}, the boards from {@code 352} and the PAB's points from {@code 320}.
+ * {@code 362}, the boards from {@code 352} and the PAB's points from {@code 320} (or, under game points, from
+ * {@code 162}'s {@code P} on every board).
  */
 final class TeamSettingsRecords {
 
@@ -39,7 +40,11 @@ final class TeamSettingsRecords {
         }
         var matches = matchScoring(records, code).withBoards(boards);
         var scoring = gameScoring(records).with(matches);
+        var perBoard = symbols(records, "162").get("P");
         scoring = pairingAllocatedByeValue(records, matches.primary())
+                .or(() -> Optional.ofNullable(perBoard)
+                        .filter(value -> matches.primary() == PrimaryScore.GAME_POINTS)
+                        .map(value -> value.times(boards)))
                 .map(scoring::withPairingAllocatedBye)
                 .orElse(scoring);
         return Profiles.teamSwiss(rounds)
