@@ -7,8 +7,10 @@ import io.github.markdechamps.fideswiss.pairing.PairingCancelledException;
 import io.github.markdechamps.fideswiss.pairing.PairingProgress;
 import io.github.markdechamps.fideswiss.pairing.PairingSystem;
 import io.github.markdechamps.fideswiss.pairing.PairingTrace;
+import io.github.markdechamps.fideswiss.pairing.ProposedPairing;
 import io.github.markdechamps.fideswiss.pairing.RoundPairing;
 import io.github.markdechamps.fideswiss.pairing.TraceStep;
+import io.github.markdechamps.fideswiss.pairing.Violation;
 import io.github.markdechamps.fideswiss.search.SearchHeartbeat;
 import io.github.markdechamps.fideswiss.search.SearchInterrupted;
 import io.github.markdechamps.fideswiss.tournament.BoardNumber;
@@ -27,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * The Dutch System (C.04.3): the edition's own procedure pairs the brackets (2026 1.9, 2017 A.9), then colours are
@@ -59,6 +62,45 @@ public final class DutchSystem implements PairingSystem {
                 .orElse(List.of());
     }
 
+    /** The Basic Rules, and [C3]: two non-topscorers with the same absolute colour preference shall not meet. */
+    @Override
+    public List<Violation> violationsOf(Tournament tournament, ProposedPairing proposed) {
+        var violations = new ArrayList<>(PairingSystem.super.violationsOf(tournament, proposed));
+        var edition = this.edition.orElse(tournament.settings().swissRulesEdition());
+        var rules = DutchEdition.of(edition);
+        var players = playersToPair(tournament, tournament.pairingNumbers(), rules).stream()
+                .collect(Collectors.toMap(Player::id, player -> player));
+        var absolute = new AbsoluteCriteria(roundToPair(tournament), rules.pairingAllocatedByeBar());
+        var article = edition == SwissRulesEdition.PRE_2026 ? "C.04.3 (2017) C.3" : "C.04.3 [C3]";
+        for (var board : proposed.boards()) {
+            var white = Optional.ofNullable(players.get(board.white()));
+            var black = Optional.ofNullable(players.get(board.black()));
+            if (white.isPresent()
+                    && black.isPresent()
+                    && absolute.areNonTopscorersWithSameAbsolutePreference(white.get(), black.get())) {
+                violations.add(sameAbsolutePreference(article, white.get(), black.get()));
+            }
+        }
+        return violations;
+    }
+
+    private static Violation sameAbsolutePreference(String article, Player white, Player black) {
+        var colour = white.colourPreference().colour().orElseThrow().name().toLowerCase();
+        return Violation.of(
+                article,
+                white.id() + " and " + black.id() + " both have an absolute preference for " + colour,
+                white.id(),
+                black.id());
+    }
+
+    private static RoundToPair roundToPair(Tournament tournament) {
+        return new RoundToPair(
+                tournament.nextRound(),
+                tournament.settings().numberOfRounds(),
+                tournament.settings().initialColour(),
+                tournament.settings().scoring().win());
+    }
+
     @Override
     public RoundPairing pairNextRound(Tournament tournament) {
         return pairNextRound(tournament, PairingProgress.NONE);
@@ -78,11 +120,7 @@ public final class DutchSystem implements PairingSystem {
         SearchHeartbeat.checkInterrupted();
         var rules = DutchEdition.of(edition.orElse(tournament.settings().swissRulesEdition()));
         var numbers = tournament.pairingNumbers();
-        var round = new RoundToPair(
-                tournament.nextRound(),
-                tournament.settings().numberOfRounds(),
-                tournament.settings().initialColour(),
-                tournament.settings().scoring().win());
+        var round = roundToPair(tournament);
         var players = playersToPair(tournament, numbers, rules);
         var pairer = new BracketPairer(new PlayerSet(players), round, rules);
         var walk = new BracketWalk(pairer, progress, players.size());

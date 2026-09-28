@@ -28,7 +28,7 @@ final class AbsoluteCriteria {
     }
 
     /** [C3]. */
-    private boolean areNonTopscorersWithSameAbsolutePreference(Player a, Player b) {
+    boolean areNonTopscorersWithSameAbsolutePreference(Player a, Player b) {
         var preferenceA = a.colourPreference();
         var preferenceB = b.colourPreference();
         return !round.isTopscorer(a)
