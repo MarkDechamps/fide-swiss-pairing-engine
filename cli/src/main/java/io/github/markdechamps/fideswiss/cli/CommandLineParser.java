@@ -18,7 +18,7 @@ import java.util.function.Supplier;
 final class CommandLineParser {
 
     private static final Map<String, Supplier<PairingSystem>> SYSTEMS =
-            Map.of("dutch", PairingSystems::dutch, "dubov", PairingSystems::dubov);
+            Map.of("dutch", PairingSystems::dutch, "dubov", PairingSystems::dubov, "lim", PairingSystems::lim);
 
     private CommandLineParser() {}
 
@@ -149,6 +149,7 @@ final class CommandLineParser {
         }
         return switch (argument) {
             case "--system" -> Optional.of(overrides.withSystem(system(value(queue, argument))));
+            case "--maxi-tournament" -> Optional.of(overrides.asMaxiTournament());
             case "--rounds" -> Optional.of(overrides.withRounds(NumberOfRounds.of(number(value(queue, argument)))));
             case "--initial-colour" -> Optional.of(overrides.withInitialColour(colour(value(queue, argument))));
             default -> Optional.empty();

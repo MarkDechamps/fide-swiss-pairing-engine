@@ -18,7 +18,9 @@ final class PairingSystemCode {
             "FIDE_DUTCH_2026", PairingSystems::dutch,
             "FIDE_DUTCH_2025", PairingSystems::dutch,
             "FIDE_DUBOV", PairingSystems::dubov,
-            "FIDE_DUBOV_2026", PairingSystems::dubov);
+            "FIDE_DUBOV_2026", PairingSystems::dubov,
+            "FIDE_LIM", PairingSystems::lim,
+            "FIDE_LIM_2026", PairingSystems::lim);
 
     private PairingSystemCode() {}
 

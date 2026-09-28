@@ -12,7 +12,7 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 class TimingRun {
 
     private static final Map<String, Supplier<PairingSystem>> SYSTEMS =
-            Map.of("dutch", PairingSystems::dutch, "dubov", PairingSystems::dubov);
+            Map.of("dutch", PairingSystems::dutch, "dubov", PairingSystems::dubov, "lim", PairingSystems::lim);
 
     @Test
     void reportsTheSlowestRound() {
