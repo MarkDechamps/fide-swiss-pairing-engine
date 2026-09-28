@@ -47,7 +47,8 @@ public final class Tournament {
     }
 
     public static Tournament of(TournamentSettings settings, List<Participant> participants) {
-        var settingsProblems = settings.acceleration().problemsWith(settings);
+        var settingsProblems = new ArrayList<>(settings.acceleration().problemsWith(settings));
+        settingsProblems.addAll(settings.pairingSystem().problemsWith(settings));
         if (!settingsProblems.isEmpty()) {
             throw new InvalidSettingsException(settingsProblems);
         }
