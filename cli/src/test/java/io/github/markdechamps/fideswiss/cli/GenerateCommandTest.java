@@ -40,8 +40,10 @@ class GenerateCommandTest {
                 assertThat(file.recordedRounds()).hasSize(5);
                 assertThat(file.participants()).hasSizeBetween(12, 20);
             }
-            assertThat(Files.readAllLines(directory.resolve("t%d.trf.manifest.tsv")))
-                    .hasSize(4);
+            var manifest = Files.readAllLines(directory.resolve("t%d.trf.manifest.tsv"));
+            assertThat(manifest).hasSize(4);
+            assertThat(manifest.getFirst()).startsWith("index\tseed\tstatus\tplayers\trounds\t");
+            assertThat(manifest.get(1).split("\t")).hasSize(17).contains("ok", "1/0.5/0", "none", "BH/C1, BH, SB, DE");
         }
 
         @Test

@@ -15,8 +15,6 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -43,12 +41,15 @@ final class TournamentFiles {
             err.println("seed " + Long.toUnsignedString(corpusSeed.value()));
         }
         var corpus = Corpus.of(TournamentGenerator.of(settings(command)), corpusSeed, command.count());
-        var manifest = new ArrayList<String>();
-        manifest.add("index\tseed\tstatus\tplayers\trounds");
+        var manifest = new Manifest();
         var index = new AtomicInteger();
-        corpus.generate(generated -> manifest.add(written(command.output(), index.getAndIncrement(), generated)));
+        corpus.generate(generated -> {
+            var position = index.getAndIncrement();
+            written(command.output(), position, generated);
+            manifest.add(position, generated);
+        });
         if (command.count() > 1) {
-            write(command.output() + ".manifest.tsv", String.join("\n", manifest) + "\n");
+            write(command.output() + ".manifest.tsv", manifest.text());
         }
         if (corpus.skipped() > 0) {
             err.println("skipped " + corpus.skipped() + " of " + command.count() + " seeds");
@@ -72,30 +73,13 @@ final class TournamentFiles {
         return settings;
     }
 
-    private static String written(String pattern, int index, GeneratedTournament generated) {
-        return switch (generated) {
-            case GeneratedTournament.Completed completed -> {
-                var name = "RTG " + Version.number() + " seed " + completed.seed();
-                write(
-                        pattern.replace(INDEX, String.valueOf(index)),
-                        TrfWriter.write(completed.tournament(), TrfWriter.Options.named(name)));
-                yield manifestLine(index, generated, "ok", completed.parameters());
-            }
-            case GeneratedTournament.Skipped skipped ->
-                manifestLine(index, generated, "skipped in round " + skipped.round(), skipped.parameters());
-        };
-    }
-
-    private static String manifestLine(
-            int index, GeneratedTournament generated, String status, GeneratedTournament.Parameters parameters) {
-        return String.join(
-                "\t",
-                List.of(
-                        String.valueOf(index),
-                        generated.seed().toString(),
-                        status,
-                        String.valueOf(parameters.players()),
-                        String.valueOf(parameters.rounds())));
+    private static void written(String pattern, int index, GeneratedTournament generated) {
+        if (generated instanceof GeneratedTournament.Completed completed) {
+            var name = "RTG " + Version.number() + " seed " + completed.seed();
+            write(
+                    pattern.replace(INDEX, String.valueOf(index)),
+                    TrfWriter.write(completed.tournament(), TrfWriter.Options.named(name)));
+        }
     }
 
     private static String read(String file) {
