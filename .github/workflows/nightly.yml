@@ -19,6 +19,21 @@ jobs:
       - name: Oracle comparison runs
         run: ./mvnw -B verify -pl oracle-it -am
 
+  invariants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      # 5,000 generated tournaments per system and edition, from a corpus seed that rotates each night.
+      - name: Invariant checker on the generated corpus
+        run: >-
+          ./mvnw -B test -pl generator -am -Dtest=InvariantRunTest -Dsurefire.failIfNoSpecifiedTests=false
+          -Dfideswiss.invariant.tournaments=5000 -Dfideswiss.invariant.seed=$(date +%Y%m%d)
+
   mutation:
     runs-on: ubuntu-latest
     steps:

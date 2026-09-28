@@ -20,7 +20,7 @@ import java.util.function.Supplier;
  */
 final class CommandLineParser {
 
-    private static final Map<String, Supplier<PairingSystem>> SYSTEMS =
+    static final Map<String, Supplier<PairingSystem>> SYSTEMS =
             Map.of("dutch", PairingSystems::dutch, "dubov", PairingSystems::dubov, "lim", PairingSystems::lim);
 
     private CommandLineParser() {}
@@ -46,6 +46,14 @@ final class CommandLineParser {
             case "-check" -> {
                 queue.removeFirst();
                 yield new Command.Check(required(queue.pollFirst()), Optional.empty(), SettingsOverrides.NONE);
+            }
+            case "generate" -> {
+                queue.removeFirst();
+                yield GenerateArguments.canonical(queue);
+            }
+            case "-g" -> {
+                queue.removeFirst();
+                yield GenerateArguments.compatible(queue);
             }
             case "version", "-r" -> new Command.Version();
             case "help", "--help", "-h" -> new Command.Help();
@@ -223,7 +231,7 @@ final class CommandLineParser {
         };
     }
 
-    private static PairingSystem system(String name) {
+    static PairingSystem system(String name) {
         var system = SYSTEMS.get(name);
         if (system == null) {
             throw new UsageException("unsupported pairing system " + name);
@@ -231,7 +239,7 @@ final class CommandLineParser {
         return system.get();
     }
 
-    private static SwissRulesEdition edition(String value) {
+    static SwissRulesEdition edition(String value) {
         return switch (value) {
             case "2026" -> SwissRulesEdition.EDITION_2026;
             case "pre-2026" -> SwissRulesEdition.PRE_2026;
@@ -239,7 +247,7 @@ final class CommandLineParser {
         };
     }
 
-    private static TieBreakEdition tieBreakEdition(String value) {
+    static TieBreakEdition tieBreakEdition(String value) {
         return switch (value) {
             case "2026-03" -> TieBreakEdition.EDITION_2026_03;
             case "2024-08" -> TieBreakEdition.EDITION_2024_08;
@@ -255,7 +263,7 @@ final class CommandLineParser {
         };
     }
 
-    private static int number(String value) {
+    static int number(String value) {
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
@@ -263,7 +271,7 @@ final class CommandLineParser {
         }
     }
 
-    private static String value(Deque<String> queue, String flag) {
+    static String value(Deque<String> queue, String flag) {
         if (queue.isEmpty()) {
             throw new UsageException(flag + " needs a value");
         }
@@ -271,7 +279,7 @@ final class CommandLineParser {
     }
 
     /** The next argument, unless it is a flag or there is none. */
-    private static Optional<String> optionalValue(Deque<String> queue) {
+    static Optional<String> optionalValue(Deque<String> queue) {
         var next = queue.peekFirst();
         if (next == null || (next.startsWith("-") && !next.equals("-"))) {
             return Optional.empty();

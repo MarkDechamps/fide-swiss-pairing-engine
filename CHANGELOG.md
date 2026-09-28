@@ -17,6 +17,9 @@ Every change that can alter a pairing, a standing or a check verdict is listed u
 - Pairing progress (`PairingProgress`), cancellation by interrupt and `RoundPairing.about(id)`.
 - The `trf` reader for TRF26 and TRF16 (with `XXR`, `XXC`, `XXA`, `250` and `_BAKU`); record `192` selects Dutch (`FIDE_DUTCH`, `_2026`, `_2025`, `_2017`), Dubov (`FIDE_DUBOV`, `_2026`) or Lim (the provisional `FIDE_LIM`, `_2026`).
 - The `fide-swiss` command line: `pair` and `-p`, `check`, `-c` and `-check`, `version`, `--explain`, `--quiet`, `--system dutch|dubov|lim` with `--dutch`, `--dubov` and `--lim`, `--maxi-tournament`, and bbp's exit codes plus 6; a portable distribution with launchers.
+- The TRF26 writer: `012`, `142`, `152`, `162`, `192` (Dutch, Dutch 2017, Dubov, Lim, with `_BAKU`), `212` and the `001` records, read back to the same rounds and settings.
+- The Random Tournament Generator (`generator` module): whole Dutch (2026 and pre-2026), Dubov and Lim tournaments from a logged seed, with Milvang's result model, forfeits, requested byes, withdrawals, late entries, and per-tournament Baku, scoring and Tie-break List; JaVaFo/bbp configuration files and model tournaments; the invariant checker on 200 tournaments per system and edition in every build and 5,000 nightly.
+- `fide-swiss generate` and the JaVaFo/bbp `-g` form, with a manifest per corpus and exit code 7 when more than 0.1% of the seeds are skipped.
 
 ### Pairing changes
 
