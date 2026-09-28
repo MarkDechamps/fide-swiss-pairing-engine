@@ -124,7 +124,7 @@ class LimHandbookExamplesTest {
                             unrated.id(),
                             unrated.pairingNumber(),
                             Rating.unrated(),
-                            unrated.score(),
+                            unrated.pairingScore(),
                             List.of(),
                             Set.of(),
                             true,

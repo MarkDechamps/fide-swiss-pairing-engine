@@ -15,6 +15,7 @@ import io.github.markdechamps.fideswiss.rules.BasicRules;
 import io.github.markdechamps.fideswiss.rules.BoardOrder;
 import io.github.markdechamps.fideswiss.tournament.BoardNumber;
 import io.github.markdechamps.fideswiss.tournament.PairingNumber;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import io.github.markdechamps.fideswiss.tournament.Participant;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
 import io.github.markdechamps.fideswiss.tournament.Problem;
@@ -32,8 +33,8 @@ import java.util.stream.Collectors;
 public final class DubovSystem implements PairingSystem {
 
     private static final Comparator<Game> BOARD_ORDER = BoardOrder.of(
-            game -> higherRanked(game).score(),
-            game -> lowerRanked(game).score(),
+            game -> new PairingScore(higherRanked(game).score().points()),
+            game -> new PairingScore(lowerRanked(game).score().points()),
             game -> higherRanked(game).pairingNumber());
 
     @Override

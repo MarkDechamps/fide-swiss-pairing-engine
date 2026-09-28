@@ -44,7 +44,7 @@ final class PairingAllocatedByeAssignment {
         }
         var order = round.isFirstRound()
                 ? Comparator.comparing(Player::rating).thenComparing(LOWEST_RANK_FIRST)
-                : Comparator.comparing(Player::score).thenComparing(LOWEST_RANK_FIRST);
+                : Comparator.comparing(Player::pairingScore).thenComparing(LOWEST_RANK_FIRST);
         return players.stream()
                 .filter(Player::mayReceivePairingAllocatedBye)
                 .sorted(order)

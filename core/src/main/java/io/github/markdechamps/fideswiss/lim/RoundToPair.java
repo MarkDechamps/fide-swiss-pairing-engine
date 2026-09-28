@@ -4,9 +4,9 @@ import io.github.markdechamps.fideswiss.pairing.MaxiTournament;
 import io.github.markdechamps.fideswiss.tournament.Colour;
 import io.github.markdechamps.fideswiss.tournament.InitialColour;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import io.github.markdechamps.fideswiss.tournament.Points;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
-import io.github.markdechamps.fideswiss.tournament.Score;
 import java.math.BigDecimal;
 
 /** What the Lim rules need to know about the round being paired. */
@@ -32,9 +32,9 @@ record RoundToPair(
     }
 
     /** 2.2, read as half of what the rounds played can give: rounds played × a win's points ÷ 2. */
-    Score medianScore() {
+    PairingScore medianScore() {
         var total = winValue.times(round.value() - 1).toBigDecimal();
-        return new Score(Points.of(total.divide(BigDecimal.valueOf(2))));
+        return new PairingScore(Points.of(total.divide(BigDecimal.valueOf(2))));
     }
 
     /**

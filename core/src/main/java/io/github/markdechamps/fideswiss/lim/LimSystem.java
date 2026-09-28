@@ -1,5 +1,6 @@
 package io.github.markdechamps.fideswiss.lim;
 
+import io.github.markdechamps.fideswiss.history.ParticipantHistory;
 import io.github.markdechamps.fideswiss.history.RoundRecord;
 import io.github.markdechamps.fideswiss.history.TournamentHistory;
 import io.github.markdechamps.fideswiss.pairing.MaxiTournament;
@@ -14,6 +15,7 @@ import io.github.markdechamps.fideswiss.pairing.Violation;
 import io.github.markdechamps.fideswiss.rules.BasicRules;
 import io.github.markdechamps.fideswiss.rules.BoardOrder;
 import io.github.markdechamps.fideswiss.tournament.BoardNumber;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import io.github.markdechamps.fideswiss.tournament.Participant;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
 import io.github.markdechamps.fideswiss.tournament.Problem;
@@ -21,8 +23,8 @@ import io.github.markdechamps.fideswiss.tournament.RoundNumber;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -30,11 +32,11 @@ import java.util.stream.Collectors;
 public final class LimSystem implements PairingSystem {
 
     private static final Comparator<Player> RANKING =
-            Comparator.comparing(Player::score).reversed().thenComparingInt(Player::tpn);
+            Comparator.comparing(Player::pairingScore).reversed().thenComparingInt(Player::tpn);
 
     private static final Comparator<Game> BOARD_ORDER = BoardOrder.of(
-            game -> higherRanked(game).score(),
-            game -> lowerRanked(game).score(),
+            game -> higherRanked(game).pairingScore(),
+            game -> lowerRanked(game).pairingScore(),
             game -> higherRanked(game).pairingNumber());
 
     private final MaxiTournament maxiTournament;
@@ -89,35 +91,51 @@ public final class LimSystem implements PairingSystem {
                 maxiTournament);
     }
 
+    /** Scoregroups, the PAB, board order and 3.10 read the Pairing Score (Acceleration readings). */
     static List<Player> playersToPair(Tournament tournament) {
         var numbers = tournament.pairingNumbers();
         var history = TournamentHistory.of(tournament);
-        var previous = tournament.rounds().size();
         return tournament.participantsToBePaired().stream()
                 .map(Participant::id)
                 .map(id -> {
                     var own = history.of(id);
-                    var met = new HashSet<ParticipantId>();
-                    own.records().stream()
-                            .filter(RoundRecord.Game.class::isInstance)
-                            .map(record -> ((RoundRecord.Game) record).opponent())
-                            .forEach(met::add);
-                    var floatedPreviousRound = previous > 0
-                            && own.recordOf(RoundNumber.of(previous)) instanceof RoundRecord.Game game
-                            && !history.of(game.opponent())
-                                    .scoreBefore(RoundNumber.of(previous))
-                                    .equals(own.scoreBefore(RoundNumber.of(previous)));
                     return new Player(
                             id,
                             numbers.numberOf(id),
                             tournament.participant(id).rating(),
-                            own.score(),
+                            pairingScoreBefore(tournament, history, id, tournament.nextRound()),
                             own.playedColours(),
-                            met,
+                            opponentsMet(own),
                             own.mayReceivePairingAllocatedBye(),
-                            floatedPreviousRound);
+                            floatedPreviousRound(tournament, history, own));
                 })
                 .toList();
+    }
+
+    private static Set<ParticipantId> opponentsMet(ParticipantHistory player) {
+        return player.records().stream()
+                .filter(RoundRecord.Game.class::isInstance)
+                .map(record -> ((RoundRecord.Game) record).opponent())
+                .collect(Collectors.toSet());
+    }
+
+    /** 3.10: played the previous round against an opponent whose Pairing Score then was another. */
+    private static boolean floatedPreviousRound(
+            Tournament tournament, TournamentHistory history, ParticipantHistory player) {
+        var played = tournament.rounds().size();
+        if (played == 0) {
+            return false;
+        }
+        var previous = RoundNumber.of(played);
+        return player.recordOf(previous) instanceof RoundRecord.Game game
+                && !pairingScoreBefore(tournament, history, game.opponent(), previous)
+                        .equals(pairingScoreBefore(tournament, history, player.participant(), previous));
+    }
+
+    private static PairingScore pairingScoreBefore(
+            Tournament tournament, TournamentHistory history, ParticipantId participant, RoundNumber round) {
+        return PairingScore.of(
+                history.of(participant).scoreBefore(round), tournament.virtualPointsOf(participant, round));
     }
 
     private static RoundPairing roundPairing(Tournament tournament, LimProcedure.Outcome outcome) {

@@ -21,4 +21,16 @@ class LimSystemTest {
         // 7.1: the lowest rated player gets the PAB; 7.2: 1 v 3, 4 v 2 with #1 White.
         assertThatPairing(pairing).hasBoards("1-3", "4-2").givesPairingAllocatedByeTo("5");
     }
+
+    @Test
+    void pairsTheAcceleratedGroupAboveTheMedianInRoundOne() {
+        var settings = Profiles.acceleratedOpen(NumberOfRounds.of(9)).with(PairingSystems.lim());
+        var tournament = Tournament.of(settings, TournamentMother.participants(8));
+
+        var pairing = tournament.pairNextRound();
+
+        // Acceleration readings: #1-#4 have a Pairing Score of 1 over a median of 0 and pair inside their
+        // scoregroup (Article 4); #5-#8 form the median. Nobody has played, so 5.4 gives the lot colour.
+        assertThatPairing(pairing).hasBoards("1-3", "2-4", "5-7", "6-8").givesNoPairingAllocatedBye();
+    }
 }

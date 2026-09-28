@@ -1,7 +1,7 @@
 package io.github.markdechamps.fideswiss.lim;
 
 import io.github.markdechamps.fideswiss.tournament.Colour;
-import io.github.markdechamps.fideswiss.tournament.Score;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -17,7 +17,8 @@ import java.util.stream.Collectors;
  * The Lim System (C.04.4.3, 2026) for one round: the PAB (Article 1), then the scoregroups in the order of 2.2
  * (from the top down to just above the Median Scoregroup, from the bottom up to just below it, the Median
  * Scoregroup last and downward), each passing its floaters on towards the median (3.2.1); a blocked Median
- * Scoregroup cracks pairings of its neighbours (2.6); then the colours (Article 5). Round 1 is Article 7.
+ * Scoregroup cracks pairings of its neighbours (2.6); then the colours (Article 5). Round 1 is Article 7, unless
+ * acceleration splits it into scoregroups.
  */
 final class LimProcedure {
 
@@ -40,7 +41,12 @@ final class LimProcedure {
         var toPair = players.stream()
                 .filter(player -> bye.filter(assignee -> assignee == player).isEmpty())
                 .toList();
-        return round.isFirstRound() ? roundOne(toPair, bye) : laterRound(toPair, bye);
+        return round.isFirstRound() && formOneScoregroup(toPair) ? roundOne(toPair, bye) : laterRound(toPair, bye);
+    }
+
+    /** Article 7 pairs a single scoregroup; an accelerated round 1 has several and takes the general procedure. */
+    private static boolean formOneScoregroup(List<Player> players) {
+        return players.stream().map(Player::pairingScore).distinct().count() <= 1;
     }
 
     /** 7.2: 1 v n/2+1, ...; #1 takes the lot colour and the odd-numbered players of the top half with it. */
@@ -65,8 +71,8 @@ final class LimProcedure {
         if (!reachability.canPairAll(players, round::compatible)) {
             throw new NoRoundPairingException("C.04.4.3 2.1", "no compatible pairing of every player exists");
         }
-        var scoregroups =
-                players.stream().collect(Collectors.groupingBy(Player::score, TreeMap::new, Collectors.toList()));
+        var scoregroups = players.stream()
+                .collect(Collectors.groupingBy(Player::pairingScore, TreeMap::new, Collectors.toList()));
         var median = round.medianScore();
         var higherSide = new ArrayDeque<Made>();
         var lowerSide = new ArrayDeque<Made>();
@@ -86,7 +92,7 @@ final class LimProcedure {
     }
 
     /** 2.2: the scoregroups above the median, from the top down. */
-    static List<Score> higherScores(Set<Score> scores, Score median) {
+    static List<PairingScore> higherScores(Set<PairingScore> scores, PairingScore median) {
         return scores.stream()
                 .filter(score -> score.isHigherThan(median))
                 .sorted(Comparator.reverseOrder())
@@ -94,13 +100,16 @@ final class LimProcedure {
     }
 
     /** 2.2: the scoregroups below the median, from the bottom up. */
-    static List<Score> lowerScores(Set<Score> scores, Score median) {
+    static List<PairingScore> lowerScores(Set<PairingScore> scores, PairingScore median) {
         return scores.stream().filter(median::isHigherThan).sorted().toList();
     }
 
     /** Pairs one side of the median in the order of 2.2 and returns the floaters it hands to the median. */
     private List<Player> pairSide(
-            List<Score> scores, Direction direction, Map<Score, List<Player>> scoregroups, Deque<Made> made) {
+            List<PairingScore> scores,
+            Direction direction,
+            Map<PairingScore, List<Player>> scoregroups,
+            Deque<Made> made) {
         var incoming = new ArrayList<Floater>();
         for (var index = 0; index < scores.size(); index++) {
             var adjacent = index + 1 < scores.size()

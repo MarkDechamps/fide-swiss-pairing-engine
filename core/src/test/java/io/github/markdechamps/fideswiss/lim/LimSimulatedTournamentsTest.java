@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.markdechamps.fideswiss.pairing.MaxiTournament;
 import io.github.markdechamps.fideswiss.tournament.Colour;
+import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
+import io.github.markdechamps.fideswiss.tournament.Profiles;
 import io.github.markdechamps.fideswiss.tournament.SimulatedTournaments;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import java.util.ArrayList;
@@ -33,6 +35,23 @@ class LimSimulatedTournamentsTest {
             });
         }
         assertThat(rounds[0]).isGreaterThan(700);
+    }
+
+    @Test
+    void agreesWithPlainEnumerationAndKeepsTheRulesUnderBakuAcceleration() {
+        // Acceleration readings: scoregroups, the PAB and 3.10 read the Pairing Score; the median keeps its value.
+        var system = new LimSystem(MaxiTournament.NOT_DECLARED);
+        var rounds = new int[1];
+        for (var seed = 0; seed < 60; seed++) {
+            var random = new Random(seed);
+            var settings = Profiles.acceleratedOpen(NumberOfRounds.of(7 + random.nextInt(3)))
+                    .with(system);
+            SimulatedTournaments.play(settings, 8 + random.nextInt(13), seed, tournament -> {
+                rounds[0]++;
+                assertRound(system, tournament);
+            });
+        }
+        assertThat(rounds[0]).isGreaterThan(300);
     }
 
     @Test

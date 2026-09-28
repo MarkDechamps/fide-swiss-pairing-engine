@@ -17,8 +17,13 @@ public final class SimulatedTournaments {
     /** Plays until the last round or until the system finds no legal pairing (1.9.3). */
     public static void play(
             PairingSystem system, int players, int rounds, long seed, Consumer<Tournament> beforeEachRound) {
+        play(Profiles.individualSwiss(NumberOfRounds.of(rounds)).with(system), players, seed, beforeEachRound);
+    }
+
+    /** As {@link #play(PairingSystem, int, int, long, Consumer)}, under the given settings (acceleration, say). */
+    public static void play(TournamentSettings settings, int players, long seed, Consumer<Tournament> beforeEachRound) {
         var random = new Random(seed);
-        var settings = Profiles.individualSwiss(NumberOfRounds.of(rounds)).with(system);
+        var rounds = settings.numberOfRounds().value();
         var tournament = Tournament.of(settings, TournamentMother.participants(players));
         for (var round = 1; round <= rounds; round++) {
             tournament = withRandomAbsences(tournament, random);

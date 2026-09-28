@@ -23,6 +23,7 @@ record Floater(Player player, boolean fromAhead) {
     }
 
     static Comparator<Player> byScoreThenNumber(Direction direction) {
-        return Comparator.comparing(Player::score, direction.scoresFromAhead()).thenComparing(direction.order());
+        return Comparator.comparing(Player::pairingScore, direction.scoresFromAhead())
+                .thenComparing(direction.order());
     }
 }

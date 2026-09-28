@@ -1,6 +1,6 @@
 package io.github.markdechamps.fideswiss.lim;
 
-import io.github.markdechamps.fideswiss.tournament.Score;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import java.util.Comparator;
 
 /**
@@ -19,8 +19,8 @@ enum Direction {
     }
 
     /** 3.6/3.7: floaters from the side the pairing started at come first, the higher (lower) score first. */
-    Comparator<Score> scoresFromAhead() {
-        return this == DOWNWARD ? Comparator.<Score>reverseOrder() : Comparator.<Score>naturalOrder();
+    Comparator<PairingScore> scoresFromAhead() {
+        return this == DOWNWARD ? Comparator.<PairingScore>reverseOrder() : Comparator.<PairingScore>naturalOrder();
     }
 
     Direction mirrored() {

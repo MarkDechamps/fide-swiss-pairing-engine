@@ -5,11 +5,11 @@ import io.github.markdechamps.fideswiss.tournament.Colour;
 import io.github.markdechamps.fideswiss.tournament.InitialColour;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import io.github.markdechamps.fideswiss.tournament.PairingNumber;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
 import io.github.markdechamps.fideswiss.tournament.Points;
 import io.github.markdechamps.fideswiss.tournament.Rating;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
-import io.github.markdechamps.fideswiss.tournament.Score;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Set;
@@ -44,7 +44,7 @@ final class LimPlayerMother {
                 player.id(),
                 player.pairingNumber(),
                 player.rating(),
-                player.score(),
+                player.pairingScore(),
                 player.playedColours(),
                 met.stream().map(LimPlayerMother::id).collect(Collectors.toSet()),
                 player.mayReceivePairingAllocatedBye(),
@@ -68,8 +68,8 @@ final class LimPlayerMother {
                 maxi ? MaxiTournament.DECLARED : MaxiTournament.NOT_DECLARED);
     }
 
-    static Score score(int halfPoints) {
-        return new Score(Points.of(BigDecimal.valueOf(halfPoints, 0).divide(BigDecimal.valueOf(2))));
+    static PairingScore score(int halfPoints) {
+        return new PairingScore(Points.of(BigDecimal.valueOf(halfPoints, 0).divide(BigDecimal.valueOf(2))));
     }
 
     private static ParticipantId id(int number) {
