@@ -16,6 +16,11 @@ public interface PairingSystem {
 
     RoundPairing pairNextRound(Tournament tournament);
 
+    /** The system and edition, as the Chief Arbiter declares it (GHR 1.3). */
+    default String name() {
+        return getClass().getSimpleName();
+    }
+
     /** As {@link #pairNextRound(Tournament)}, telling the listener how it advances. */
     default RoundPairing pairNextRound(Tournament tournament, PairingProgress progress) {
         return pairNextRound(tournament);

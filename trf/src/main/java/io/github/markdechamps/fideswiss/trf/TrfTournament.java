@@ -72,13 +72,17 @@ public final class TrfTournament {
         var absences = lastColumnOnlyMarksAbsences ? absenceMarks(players, columns) : Map.<ParticipantId, Bye>of();
         var participants = players.stream().map(PlayerRecord::participant).toList();
         var numberOfRounds = declaredNumberOfRounds(records).orElse(Math.max(columns, 1));
-        var profile = Profiles.individualSwiss(NumberOfRounds.of(numberOfRounds))
+        var profile = Profiles.individualSwiss(NumberOfRounds.of(numberOfRounds));
+        var withSystem = firstValue(records, "192")
+                .flatMap(PairingSystemCode::parse)
+                .map(profile::with)
+                .orElse(profile)
                 .with(RankingKey.asListed())
                 .with(initialColour(records, players))
                 .with(scoring(records))
                 .with(swissRulesEdition(records))
                 .with(AccelerationRecords.read(records, numberOfRounds));
-        var settings = declaredTieBreaks(records).map(profile::with).orElse(profile);
+        var settings = declaredTieBreaks(records).map(withSystem::with).orElse(withSystem);
         return new TrfTournament(
                 settings,
                 participants,
@@ -101,11 +105,8 @@ public final class TrfTournament {
 
     /** A {@code _BAKU} suffix adds acceleration (read by AccelerationRecords) and leaves the edition alone. */
     private static SwissRulesEdition editionOf(String code) {
-        return switch (code.toUpperCase().replaceFirst("_BAKU$", "")) {
-            case "FIDE_DUTCH_2017" -> SwissRulesEdition.PRE_2026;
-            case "FIDE_DUTCH", "FIDE_DUTCH_2025", "FIDE_DUTCH_2026" -> SwissRulesEdition.EDITION_2026;
-            default -> throw new InvalidTrfException("Unsupported 192 code " + code);
-        };
+        var system = code.toUpperCase().replaceFirst("_BAKU$", "");
+        return system.equals("FIDE_DUTCH_2017") ? SwissRulesEdition.PRE_2026 : SwissRulesEdition.EDITION_2026;
     }
 
     /** The same file under other settings, such as the command line's overrides. */

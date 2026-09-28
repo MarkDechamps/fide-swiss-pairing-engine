@@ -38,6 +38,19 @@ class PairCommandTest {
         }
 
         @Test
+        void pairsByTheLimSystemWithTheLimFlag() throws IOException {
+            var input = copy("half-point-bye-in-round-2.trf");
+            var trace = directory.resolve("trace.txt");
+
+            var exit = run("--lim", input.toString(), "-p", "-l", trace.toString());
+
+            // C.04.4.3 2.2: 1 and 5 pair above the median of 0.5, #3 floats up to #4 in it; 5.1 gives due colours.
+            assertThat(exit).isZero();
+            assertThat(stdout()).isEqualTo("2\n5 1\n3 4\n");
+            assertThat(Files.readString(trace)).contains("C.04.4.3 5.1");
+        }
+
+        @Test
         void writesTheReplyToStandardOutputWithoutAnOutputFile() throws IOException {
             var input = copy("half-point-bye-in-round-2.trf");
 

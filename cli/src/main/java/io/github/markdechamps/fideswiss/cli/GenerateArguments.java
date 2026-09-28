@@ -43,7 +43,7 @@ final class GenerateArguments {
                 case "--profile" -> baseline = GeneratorSettings.of(profile(CommandLineParser.value(queue, argument)));
                 case "--config" -> configuration = Optional.of(CommandLineParser.value(queue, argument));
                 case "--model" -> model = Optional.of(CommandLineParser.value(queue, argument));
-                case "--system" -> requireSupportedSystem(CommandLineParser.value(queue, argument));
+                case "--system" -> overrides.add(system(CommandLineParser.value(queue, argument)));
                 default -> overrides.add(flag(argument, queue));
             }
         }
@@ -93,7 +93,7 @@ final class GenerateArguments {
 
     private static UnaryOperator<GeneratorSettings> flag(String flag, Deque<String> queue) {
         if (isSystemFlag(flag)) {
-            return settings -> settings;
+            return system(flag.substring(2));
         }
         return switch (flag) {
             case "--players" -> withRange(flag, queue, GeneratorSettings::withPlayers);
@@ -171,13 +171,12 @@ final class GenerateArguments {
     }
 
     private static boolean isSystemFlag(String argument) {
-        return argument.startsWith("--") && CommandLineParser.SYSTEMS.contains(argument.substring(2));
+        return argument.startsWith("--") && CommandLineParser.SYSTEMS.containsKey(argument.substring(2));
     }
 
-    private static void requireSupportedSystem(String system) {
-        if (!CommandLineParser.SYSTEMS.contains(system)) {
-            throw new UsageException("unsupported pairing system " + system);
-        }
+    private static UnaryOperator<GeneratorSettings> system(String name) {
+        var system = CommandLineParser.system(name);
+        return inTournament(tournament -> tournament.with(system));
     }
 
     private static long seed(String value) {
