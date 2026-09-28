@@ -265,6 +265,29 @@ class LimHandbookExamplesTest {
         }
     }
 
+    @Nested
+    class GivenAColourExchange {
+
+        private final List<Player> members = List.of(
+                player(1, 2, "B", 2500), player(2, 2, "B", 2400), player(3, 2, "B", 2300), player(4, 2, "W", 2150));
+
+        @Test
+        void exchangesForTheOpponentDueTheOtherColour() {
+            // 5.2: #1 is due White like #3, the first available, so #4, due Black, is taken instead.
+            var pairs = new Scrutiny(round(2, false), MATCHING, Direction.DOWNWARD, members).pair(List.of());
+
+            assertThat(show(pairs)).isEqualTo("1-4 2-3");
+        }
+
+        @Test
+        void exchangesOnlyWithinAHundredPointsInAMaxiTournament() {
+            // 5.7: #4 is rated 150 below #3, the first available, so #1 keeps #3.
+            var pairs = new Scrutiny(round(2, true), MATCHING, Direction.DOWNWARD, members).pair(List.of());
+
+            assertThat(show(pairs)).isEqualTo("1-3 2-4");
+        }
+    }
+
     private static ScoregroupPairing downward(RoundToPair round) {
         return new ScoregroupPairing(round, MATCHING, Direction.DOWNWARD);
     }
