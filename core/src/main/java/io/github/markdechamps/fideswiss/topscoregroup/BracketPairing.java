@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * 3.6: the first pairing, in the order of the Pairing Identifiers (3.6.2, 3.6.3), that complies with [C1] and best
@@ -36,6 +37,7 @@ final class BracketPairing {
 
     private final class Search {
         private final List<Contender> contenders;
+        private final Set<Contender> upfloaters;
         private final LexicographicWeights weights;
         private final Map<Contender, Role> roles = new HashMap<>();
         private final Map<Contender, Contender> fixed = new HashMap<>();
@@ -46,6 +48,7 @@ final class BracketPairing {
             this.contenders = new ArrayList<>(residents);
             this.contenders.addAll(upfloaters);
             this.contenders.sort(Comparator.comparingInt(Contender::tpn));
+            this.upfloaters = Set.copyOf(upfloaters);
             this.weights = new LexicographicWeights(
                     contenders.size() + 1, Math.max(1, round.pairCriteria().size()));
             var best = CheapestPerfectMatching.of(contenders, this::cost)
@@ -122,7 +125,7 @@ final class BracketPairing {
             var total = BigInteger.ZERO;
             for (var position = 0; position < round.pairCriteria().size(); position++) {
                 total = total.add(
-                        weights.of(position, round.pairCriteria().get(position).failureOf(pair)));
+                        weights.of(position, round.pairCriteria().get(position).failureOf(pair, upfloaters)));
             }
             return Optional.of(total);
         }

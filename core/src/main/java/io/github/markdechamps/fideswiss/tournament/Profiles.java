@@ -30,4 +30,16 @@ public final class Profiles {
     public static TournamentSettings acceleratedOpen(NumberOfRounds rounds) {
         return individualSwiss(rounds).with(Acceleration.baku());
     }
+
+    /**
+     * The Swiss Team System (C.04.6, 2026): match points 2 / 1 / 0 primary over four boards, game points for
+     * colours, a PAB worth a drawn match, Type A colour preferences and every Interpretation at its default. The
+     * team tie-breaks ({@code MPvGP, EDE, EMGSB/C1}) are not implemented yet, so the list is empty for now.
+     */
+    public static TournamentSettings teamSwiss(NumberOfRounds rounds) {
+        return individualSwiss(rounds)
+                .with(PairingSystems.swissTeam())
+                .with(ScoringScheme.teams())
+                .with(TieBreakList.none());
+    }
 }

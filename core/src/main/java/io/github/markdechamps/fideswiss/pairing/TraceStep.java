@@ -46,6 +46,33 @@ public sealed interface TraceStep {
         }
     }
 
+    /**
+     * One bracket of the Top-Scoregroup Procedure (Swiss Team, Double-Swiss): the top-scoregroup's residents, the
+     * upfloaters chosen for it, its pairs (top member first) and how they fail the bracket criteria.
+     */
+    record TopScoregroupBracket(
+            String label,
+            List<ParticipantId> residents,
+            List<ParticipantId> upfloaters,
+            List<List<ParticipantId>> pairs,
+            String criteria)
+            implements TraceStep {
+
+        public TopScoregroupBracket {
+            residents = List.copyOf(residents);
+            upfloaters = List.copyOf(upfloaters);
+            pairs = pairs.stream().map(List::copyOf).toList();
+        }
+
+        @Override
+        public String describe() {
+            var pairsText =
+                    pairs.stream().map(pair -> pair.get(0) + "-" + pair.get(1)).toList();
+            return "bracket " + label + ": residents " + residents + ", upfloaters " + upfloaters + "; pairs "
+                    + pairsText + (criteria.isEmpty() ? "" : "; fails " + criteria);
+        }
+    }
+
     /** The colour rule that decided a board's colours. */
     record ColourDecision(BoardNumber board, String article) implements TraceStep {
         @Override

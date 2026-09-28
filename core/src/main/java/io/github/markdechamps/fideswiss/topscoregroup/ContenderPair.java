@@ -1,6 +1,7 @@
 package io.github.markdechamps.fideswiss.topscoregroup;
 
 import java.util.Optional;
+import java.util.Set;
 
 /** 3.6.1: a pair of a bracket; the one with the smaller TPN is the top member. */
 public record ContenderPair(Contender top, Contender bottom) {
@@ -17,12 +18,12 @@ public record ContenderPair(Contender top, Contender bottom) {
         return top.equals(contender) ? bottom : top;
     }
 
-    /** The member with the higher score, when the scores differ: the upfloater's opponent (Gacrux's [C10]). */
-    public Optional<Contender> higherScored() {
-        var comparison = top.score().compareTo(bottom.score());
-        if (comparison == 0) {
+    /** The resident of a pair of one resident and one upfloater: the upfloater's opponent ([C10]). */
+    public Optional<Contender> upfloatersOpponent(Set<Contender> upfloaters) {
+        var topFloats = upfloaters.contains(top);
+        if (topFloats == upfloaters.contains(bottom)) {
             return Optional.empty();
         }
-        return Optional.of(comparison > 0 ? top : bottom);
+        return Optional.of(topFloats ? bottom : top);
     }
 }

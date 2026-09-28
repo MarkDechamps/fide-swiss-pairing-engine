@@ -45,6 +45,11 @@ public record ParticipantExplanation(
                         floatedFrom.add(bracketStep.label());
                     }
                 }
+                case TraceStep.TopScoregroupBracket bracketStep -> {
+                    if (bracketStep.pairs().stream().anyMatch(pair -> pair.contains(participant))) {
+                        bracket = Optional.of(bracketStep.label());
+                    }
+                }
                 case TraceStep.ColourDecision decision -> {
                     if (board.map(PairedBoard::number)
                             .filter(decision.board()::equals)

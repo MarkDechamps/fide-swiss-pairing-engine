@@ -91,14 +91,35 @@ public record ScoringScheme(
                 .orElseGet(() -> pointsFor(outcome, side));
     }
 
+    /** What the outcome scores for one side in the secondary score: the other of match and game points. */
+    public Points secondaryPointsFor(Outcome outcome, Colour side) {
+        return primaryScore() == PrimaryScore.MATCH_POINTS
+                ? gamePointsFor(outcome, side)
+                : matchScoring().pointsFor(outcome.resultOf(side));
+    }
+
     /** What a round without a game is worth, given the PAB value the system resolved. */
     public Points pointsFor(Bye bye, Points pairingAllocatedByeValue) {
+        return pointsFor(bye, pairingAllocatedByeValue, primaryScore());
+    }
+
+    /** What a round without a game is worth in the secondary score, given the PAB's secondary value. */
+    public Points secondaryPointsFor(Bye bye, Points pairingAllocatedByeValue) {
+        return pointsFor(bye, pairingAllocatedByeValue, primaryScore().other());
+    }
+
+    /** The game points of a drawn match: every board drawn (C.04.6 1.4, a team PAB's game points). */
+    public Points drawnMatchGamePoints() {
+        return draw.times(matches.map(MatchScoring::boards).orElse(1));
+    }
+
+    private Points pointsFor(Bye bye, Points pairingAllocatedByeValue, PrimaryScore score) {
+        var inMatchPoints = score == PrimaryScore.MATCH_POINTS && matches.isPresent();
+        var boards = matches.map(MatchScoring::boards).orElse(1);
         return switch (bye) {
             case PAIRING_ALLOCATED -> pairingAllocatedByeValue;
-            case FULL_POINT ->
-                primaryScore() == PrimaryScore.MATCH_POINTS ? matchScoring().win() : win;
-            case HALF_POINT ->
-                primaryScore() == PrimaryScore.MATCH_POINTS ? matchScoring().draw() : draw;
+            case FULL_POINT -> inMatchPoints ? matchScoring().win() : win.times(boards);
+            case HALF_POINT -> inMatchPoints ? matchScoring().draw() : draw.times(boards);
             case ZERO_POINT, WITHDRAWN, NOT_YET_ENTERED -> Points.ZERO;
         };
     }
