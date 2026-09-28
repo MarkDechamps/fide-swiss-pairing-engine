@@ -36,15 +36,15 @@ final class DubovProcedure {
         var choices = new ArrayList<BracketChoice>();
         while (!unpaired.isEmpty()) {
             var score = unpaired.stream()
-                    .map(Player::score)
+                    .map(Player::pairingScore)
                     .max(Comparable::compareTo)
                     .orElseThrow();
             var residents = unpaired.stream()
-                    .filter(player -> player.score().equals(score))
+                    .filter(player -> player.pairingScore().equals(score))
                     .sorted(UpfloaterSelection.SEQUENCE)
                     .toList();
             var lower = unpaired.stream()
-                    .filter(player -> score.isHigherThan(player.score()))
+                    .filter(player -> score.isHigherThan(player.pairingScore()))
                     .sorted(UpfloaterSelection.SEQUENCE)
                     .toList();
             var choice = upfloaters.select(residents, lower);

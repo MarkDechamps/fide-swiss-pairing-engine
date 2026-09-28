@@ -33,8 +33,8 @@ import java.util.stream.Collectors;
 public final class DubovSystem implements PairingSystem {
 
     private static final Comparator<Game> BOARD_ORDER = BoardOrder.of(
-            game -> new PairingScore(higherRanked(game).score().points()),
-            game -> new PairingScore(lowerRanked(game).score().points()),
+            game -> higherRanked(game).pairingScore(),
+            game -> lowerRanked(game).pairingScore(),
             game -> higherRanked(game).pairingNumber());
 
     @Override
@@ -104,12 +104,12 @@ public final class DubovSystem implements PairingSystem {
                         tournament.participant(game.opponent()).rating().valueOrZero());
             }
         }
-        var upfloated = upfloatedRounds(own, history);
+        var upfloated = upfloatedRounds(tournament, own, history);
         return new Player(
                 id,
                 number,
                 tournament.participant(id).rating().valueOrZero(),
-                own.score(),
+                pairingScoreBefore(tournament, history, id, tournament.nextRound()),
                 own.playedColours(),
                 met,
                 opponentRatings,
@@ -119,19 +119,29 @@ public final class DubovSystem implements PairingSystem {
     }
 
     /**
-     * 1.8, read as: paired with an opponent who had a higher score when the round was paired, whether or not the
-     * game was then played. A bye is never an upfloat.
+     * 1.8, read as: paired with an opponent who had a higher Pairing Score when the round was paired, whether or
+     * not the game was then played (Acceleration readings). A bye is never an upfloat.
      */
-    private static List<Boolean> upfloatedRounds(ParticipantHistory own, TournamentHistory history) {
+    private static List<Boolean> upfloatedRounds(
+            Tournament tournament, ParticipantHistory own, TournamentHistory history) {
         var rounds = new ArrayList<Boolean>();
         for (var index = 0; index < own.records().size(); index++) {
             var round = RoundNumber.of(index + 1);
+            var ownScore = pairingScoreBefore(tournament, history, own.participant(), round);
             rounds.add(own.recordOf(round)
                     .pairedOpponent()
-                    .filter(opponent -> history.of(opponent).scoreBefore(round).isHigherThan(own.scoreBefore(round)))
+                    .filter(opponent -> pairingScoreBefore(tournament, history, opponent, round)
+                            .isHigherThan(ownScore))
                     .isPresent());
         }
         return rounds;
+    }
+
+    /** Brackets, the PAB, upfloats and board order read the Pairing Score (Acceleration readings). */
+    private static PairingScore pairingScoreBefore(
+            Tournament tournament, TournamentHistory history, ParticipantId participant, RoundNumber round) {
+        return PairingScore.of(
+                history.of(participant).scoreBefore(round), tournament.virtualPointsOf(participant, round));
     }
 
     private static RoundPairing roundPairing(Tournament tournament, DubovProcedure.Outcome outcome) {
@@ -159,7 +169,7 @@ public final class DubovSystem implements PairingSystem {
     private static TraceStep bracketStep(DubovProcedure.BracketChoice bracket) {
         var upfloaters = ids(bracket.upfloaters());
         var shifted = ids(bracket.shifted());
-        var label = bracket.residents().getFirst().score()
+        var label = bracket.residents().getFirst().pairingScore()
                 + (upfloaters.isEmpty() ? "" : " + upfloaters " + upfloaters)
                 + (shifted.isEmpty() ? "" : ", shifted " + shifted);
         return new TraceStep.BracketStep(

@@ -2,7 +2,7 @@ package io.github.markdechamps.fideswiss.dubov;
 
 import io.github.markdechamps.fideswiss.matching.CheapestPerfectMatching;
 import io.github.markdechamps.fideswiss.matching.OrderedSetSearch;
-import io.github.markdechamps.fideswiss.tournament.Score;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,7 +41,7 @@ final class UpfloaterSelection {
 
     /** 4.2.2: descending score, then ascending Pairing Number. */
     static final Comparator<Player> SEQUENCE =
-            Comparator.comparing(Player::score).reversed().thenComparingInt(Player::tpn);
+            Comparator.comparing(Player::pairingScore).reversed().thenComparingInt(Player::tpn);
 
     private final RoundToPair round;
 
@@ -60,7 +60,7 @@ final class UpfloaterSelection {
         private final List<Player> residents;
         private final List<Player> lower;
         private final Set<Player> residentSet = Collections.newSetFromMap(new IdentityHashMap<>());
-        private final Map<Score, Integer> levelPosition = new HashMap<>();
+        private final Map<PairingScore, Integer> levelPosition = new HashMap<>();
         private final int c7Position;
         private final LexicographicWeights weights;
 
@@ -68,7 +68,8 @@ final class UpfloaterSelection {
             this.residents = residents;
             this.lower = lower;
             residentSet.addAll(residents);
-            var levels = lower.stream().map(Player::score).distinct().sorted().toList();
+            var levels =
+                    lower.stream().map(Player::pairingScore).distinct().sorted().toList();
             for (var index = 0; index < levels.size(); index++) {
                 levelPosition.put(levels.get(index), C5 + 1 + index);
             }
@@ -88,7 +89,7 @@ final class UpfloaterSelection {
                     .descendingMap()
                     .forEach((score, count) -> levels.add(new OrderedSetSearch.Level<>(
                             lower.stream()
-                                    .filter(player -> player.score().equals(score))
+                                    .filter(player -> player.pairingScore().equals(score))
                                     .sorted(SEQUENCE)
                                     .toList(),
                             count)));
@@ -101,10 +102,10 @@ final class UpfloaterSelection {
             return new Choice(chosen, sameColourPairsOf(best));
         }
 
-        private TreeMap<Score, Integer> profileOf(CheapestPerfectMatching.Result<Player> result) {
-            var profile = new TreeMap<Score, Integer>();
+        private TreeMap<PairingScore, Integer> profileOf(CheapestPerfectMatching.Result<Player> result) {
+            var profile = new TreeMap<PairingScore, Integer>();
             for (var pair : result.pairs()) {
-                upfloaterIn(pair).ifPresent(player -> profile.merge(player.score(), 1, Integer::sum));
+                upfloaterIn(pair).ifPresent(player -> profile.merge(player.pairingScore(), 1, Integer::sum));
             }
             return profile;
         }
@@ -141,7 +142,7 @@ final class UpfloaterSelection {
                 return Optional.empty();
             }
             return Optional.of(weights.of(C5, 1)
-                    .add(weights.of(levelPosition.get(upfloater.score()), 1))
+                    .add(weights.of(levelPosition.get(upfloater.pairingScore()), 1))
                     .add(weights.of(c7Position, RoundToPair.sameColourWanted(a, b)))
                     .add(weights.of(c7Position + 1, maximumUpfloater(upfloater)))
                     .add(weights.of(c7Position + 2, upfloatsOfMaximumUpfloater(upfloater)))

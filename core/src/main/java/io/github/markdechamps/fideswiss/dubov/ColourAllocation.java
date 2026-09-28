@@ -9,7 +9,7 @@ final class ColourAllocation {
 
     /** 5.2.1: the player with more points or, when equal, the smaller Pairing Number ranks higher. */
     static final Comparator<Player> RANKING =
-            Comparator.comparing(Player::score).reversed().thenComparingInt(Player::tpn);
+            Comparator.comparing(Player::pairingScore).reversed().thenComparingInt(Player::tpn);
 
     private final RoundToPair round;
 

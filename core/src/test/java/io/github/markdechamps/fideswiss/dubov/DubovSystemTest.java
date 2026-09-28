@@ -35,6 +35,18 @@ class DubovSystemTest {
         assertThat(pairing.boards()).hasSize(2);
     }
 
+    @Test
+    void pairsTheAcceleratedGroupAsItsOwnBracketInRoundOne() {
+        var settings = Profiles.acceleratedOpen(NumberOfRounds.of(9)).with(PairingSystems.dubov());
+        var tournament = Tournament.of(settings, TournamentMother.participants(8));
+
+        var pairing = tournament.pairNextRound();
+
+        // Acceleration readings: #1-#4 have a Pairing Score of 1 and form the first bracket, #5-#8 the second;
+        // 3.2.3 pairs each by TPN halves and 5.2.1 gives the odd TPN the initial colour.
+        assertThatPairing(pairing).hasBoards("1-3", "4-2", "5-7", "8-6").givesNoPairingAllocatedBye();
+    }
+
     private static Tournament dubov(int players) {
         var settings = Profiles.individualSwiss(NumberOfRounds.of(5)).with(PairingSystems.dubov());
         return Tournament.of(settings, TournamentMother.participants(players));

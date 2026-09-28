@@ -2,8 +2,8 @@ package io.github.markdechamps.fideswiss.dubov;
 
 import io.github.markdechamps.fideswiss.tournament.Colour;
 import io.github.markdechamps.fideswiss.tournament.PairingNumber;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
-import io.github.markdechamps.fideswiss.tournament.Score;
 import java.util.List;
 import java.util.Set;
 
@@ -17,7 +17,7 @@ record Player(
         ParticipantId id,
         PairingNumber pairingNumber,
         int rating,
-        Score score,
+        PairingScore pairingScore,
         List<Colour> playedColours,
         Set<ParticipantId> met,
         List<Integer> opponentRatings,
@@ -79,6 +79,6 @@ record Player(
 
     @Override
     public String toString() {
-        return id + "(#" + pairingNumber + ", " + score + ")";
+        return id + "(#" + pairingNumber + ", " + pairingScore + ")";
     }
 }

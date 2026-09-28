@@ -1,7 +1,7 @@
 package io.github.markdechamps.fideswiss.dubov;
 
 import io.github.markdechamps.fideswiss.tournament.Colour;
-import io.github.markdechamps.fideswiss.tournament.Score;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -34,14 +34,14 @@ final class LiteralDubov {
         var games = new ArrayList<Game>();
         while (!unpaired.isEmpty()) {
             var score = unpaired.stream()
-                    .map(Player::score)
+                    .map(Player::pairingScore)
                     .max(Comparable::compareTo)
                     .orElseThrow();
             var residents = unpaired.stream()
-                    .filter(player -> player.score().equals(score))
+                    .filter(player -> player.pairingScore().equals(score))
                     .toList();
             var lower = unpaired.stream()
-                    .filter(player -> score.isHigherThan(player.score()))
+                    .filter(player -> score.isHigherThan(player.pairingScore()))
                     .sorted(UpfloaterSelection.SEQUENCE)
                     .toList();
             var bracket = new ArrayList<>(residents);
@@ -55,7 +55,7 @@ final class LiteralDubov {
     private Player pairingAllocatedBye(List<Player> players) {
         return players.stream()
                 .filter(Player::mayReceivePairingAllocatedBye)
-                .sorted(Comparator.comparing(Player::score)
+                .sorted(Comparator.comparing(Player::pairingScore)
                         .thenComparing(
                                 Comparator.comparingInt(Player::gamesPlayed).reversed())
                         .thenComparing(Comparator.comparingInt(Player::tpn).reversed()))
@@ -66,7 +66,7 @@ final class LiteralDubov {
     }
 
     /** A bracket's quality, compared criterion by criterion; lower is better. */
-    private record Quality(int upfloaters, List<Score> upfloaterScores, long c7, long c8, long c9, long c10) {
+    private record Quality(int upfloaters, List<PairingScore> upfloaterScores, long c7, long c8, long c9, long c10) {
 
         int compareAt(Quality other) {
             if (upfloaters != other.upfloaters) {
@@ -124,7 +124,7 @@ final class LiteralDubov {
         var maximum = upfloaters.stream().filter(round::isMaximumUpfloater).toList();
         return new Quality(
                 upfloaters.size(),
-                upfloaters.stream().map(Player::score).sorted().toList(),
+                upfloaters.stream().map(Player::pairingScore).sorted().toList(),
                 c7,
                 last ? 0 : maximum.size(),
                 last ? 0 : maximum.stream().mapToLong(Player::upfloats).sum(),

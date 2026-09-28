@@ -6,6 +6,7 @@ import io.github.markdechamps.fideswiss.pairing.PairingSystems;
 import io.github.markdechamps.fideswiss.tournament.Colour;
 import io.github.markdechamps.fideswiss.tournament.InitialColour;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
+import io.github.markdechamps.fideswiss.tournament.Profiles;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
 import io.github.markdechamps.fideswiss.tournament.SimulatedTournaments;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
@@ -31,6 +32,21 @@ class DubovAgainstLiteralEnumerationTest {
                     });
         }
         assertThat(rounds[0]).isGreaterThan(500);
+    }
+
+    @Test
+    void agreesInEveryRoundOfSimulatedTournamentsUnderBakuAcceleration() {
+        var rounds = new int[1];
+        for (var seed = 0; seed < 60; seed++) {
+            var random = new Random(seed);
+            var settings = Profiles.acceleratedOpen(NumberOfRounds.of(7 + random.nextInt(3)))
+                    .with(PairingSystems.dubov());
+            SimulatedTournaments.play(settings, 8 + random.nextInt(7), seed, tournament -> {
+                rounds[0]++;
+                assertAgreement(tournament);
+            });
+        }
+        assertThat(rounds[0]).isGreaterThan(300);
     }
 
     @Test
@@ -95,7 +111,7 @@ class DubovAgainstLiteralEnumerationTest {
                     player.id(),
                     player.pairingNumber(),
                     player.rating(),
-                    player.score(),
+                    player.pairingScore(),
                     player.playedColours(),
                     player.met(),
                     colours.stream().map(colour -> 1800 + random.nextInt(600)).toList(),

@@ -9,7 +9,7 @@ import java.util.Optional;
 final class PairingAllocatedByeAssignment {
 
     /** 3.1.3 lowest score, 3.1.4 most games played over the board, 3.1.5 largest Pairing Number. */
-    private static final Comparator<Player> PREFERENCE = Comparator.comparing(Player::score)
+    private static final Comparator<Player> PREFERENCE = Comparator.comparing(Player::pairingScore)
             .thenComparing(Comparator.comparingInt(Player::gamesPlayed).reversed())
             .thenComparing(Comparator.comparingInt(Player::tpn).reversed());
 

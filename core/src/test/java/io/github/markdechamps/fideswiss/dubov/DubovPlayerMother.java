@@ -2,9 +2,9 @@ package io.github.markdechamps.fideswiss.dubov;
 
 import io.github.markdechamps.fideswiss.tournament.Colour;
 import io.github.markdechamps.fideswiss.tournament.PairingNumber;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
 import io.github.markdechamps.fideswiss.tournament.Points;
-import io.github.markdechamps.fideswiss.tournament.Score;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -23,7 +23,7 @@ final class DubovPlayerMother {
                 ParticipantId.of(String.valueOf(number)),
                 PairingNumber.of(number),
                 2600 - number,
-                new Score(Points.of(score)),
+                new PairingScore(Points.of(score)),
                 colours,
                 met.stream()
                         .map(id -> ParticipantId.of(String.valueOf(id)))
@@ -39,7 +39,7 @@ final class DubovPlayerMother {
                 player.id(),
                 player.pairingNumber(),
                 player.rating(),
-                player.score(),
+                player.pairingScore(),
                 player.playedColours(),
                 player.met(),
                 Arrays.asList(ratings),
