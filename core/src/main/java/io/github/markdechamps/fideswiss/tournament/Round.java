@@ -54,4 +54,34 @@ public record Round(RoundNumber number, List<Board> boards, Map<ParticipantId, B
         mentioned.addAll(byes.keySet());
         return mentioned.stream();
     }
+
+    /** A Correction of the outcome on the participant's board (GHR 4.3). */
+    public Round withOutcome(ParticipantId participant, Outcome corrected) {
+        var correctedBoards = boards.stream()
+                .map(board -> board.seats(participant)
+                        ? new Board(board.number(), board.white(), board.black(), corrected)
+                        : board)
+                .toList();
+        return new Round(number, correctedBoards, byes);
+    }
+
+    /** A Correction of a board's colours (GHR 4.3): the players swap colours, the same player still wins. */
+    public Round withColoursSwapped(BoardNumber swapped) {
+        var corrected = boards.stream()
+                .map(board -> board.number().equals(swapped)
+                        ? new Board(board.number(), board.black(), board.white(), mirrored(board.outcome()))
+                        : board)
+                .toList();
+        return new Round(number, corrected, byes);
+    }
+
+    private static Outcome mirrored(Outcome outcome) {
+        return switch ((GameOutcome) outcome) {
+            case WHITE_WINS -> GameOutcome.BLACK_WINS;
+            case BLACK_WINS -> GameOutcome.WHITE_WINS;
+            case WHITE_WINS_BY_FORFEIT -> GameOutcome.BLACK_WINS_BY_FORFEIT;
+            case BLACK_WINS_BY_FORFEIT -> GameOutcome.WHITE_WINS_BY_FORFEIT;
+            case DRAW, ADJOURNED, DOUBLE_FORFEIT -> outcome;
+        };
+    }
 }

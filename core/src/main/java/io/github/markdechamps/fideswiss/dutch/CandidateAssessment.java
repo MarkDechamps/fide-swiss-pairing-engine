@@ -1,6 +1,7 @@
 package io.github.markdechamps.fideswiss.dutch;
 
 import io.github.markdechamps.fideswiss.tournament.Colour;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -41,6 +42,18 @@ final class CandidateAssessment {
         return candidate.pairs().stream()
                 .filter(pair -> bracket.isMovedDown(pair.s1Player()))
                 .toList();
+    }
+
+    List<Pair> pairs() {
+        return candidate.pairs();
+    }
+
+    /** 2017 A.8: the score of the lowest-ranked player of the current bracket. */
+    PairingScore lowestScoreInBracket() {
+        return bracket.playersInBsnOrder().stream()
+                .map(Player::score)
+                .min(PairingScore::compareTo)
+                .orElseThrow();
     }
 
     Stream<PlayerInGame> playersInGames() {

@@ -2,8 +2,11 @@ package io.github.markdechamps.fideswiss.tournament;
 
 import io.github.markdechamps.fideswiss.pairing.NoLegalPairingException;
 import io.github.markdechamps.fideswiss.pairing.PairingCheck;
+import io.github.markdechamps.fideswiss.pairing.PairingProgress;
 import io.github.markdechamps.fideswiss.pairing.ProposedPairing;
 import io.github.markdechamps.fideswiss.pairing.RoundPairing;
+import io.github.markdechamps.fideswiss.standings.Standings;
+import io.github.markdechamps.fideswiss.tiebreak.StandingsCalculator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,20 +23,38 @@ import java.util.stream.Collectors;
  */
 public final class Tournament {
 
+    private static final int NUMBERING_FREEZES_AFTER_ROUND = 4;
+
     private final TournamentSettings settings;
     private final List<Participant> participants;
     private final List<Round> rounds;
     private final Attendance attendance;
+    private final Map<ParticipantId, Rating> numberingRatings;
 
     private Tournament(
-            TournamentSettings settings, List<Participant> participants, List<Round> rounds, Attendance attendance) {
+            TournamentSettings settings,
+            List<Participant> participants,
+            List<Round> rounds,
+            Attendance attendance,
+            Map<ParticipantId, Rating> numberingRatings) {
         this.settings = Objects.requireNonNull(settings, "settings");
         this.participants = List.copyOf(participants);
         this.rounds = List.copyOf(rounds);
         this.attendance = attendance;
+        this.numberingRatings = Map.copyOf(numberingRatings);
+    }
+
+    private Tournament(
+            TournamentSettings settings, List<Participant> participants, List<Round> rounds, Attendance attendance) {
+        this(settings, participants, rounds, attendance, Map.of());
     }
 
     public static Tournament of(TournamentSettings settings, List<Participant> participants) {
+        var settingsProblems = new ArrayList<Problem>(settings.acceleration().problemsWith(settings));
+        settingsProblems.addAll(settings.pairingSystem().problemsWith(settings));
+        if (!settingsProblems.isEmpty()) {
+            throw new InvalidSettingsException(settingsProblems);
+        }
         var problems = duplicateIds(participants);
         if (!problems.isEmpty()) {
             throw new InvalidTournamentException(problems);
@@ -92,7 +113,78 @@ public final class Tournament {
     /** A Withdrawal: the participant is no longer paired from that round on (GHR 3.2). */
     public Tournament withdraw(ParticipantId participant, RoundNumber from) {
         requireFutureRound(participant, from);
-        return new Tournament(settings, participants, rounds, attendance.withWithdrawal(participant, from));
+        return new Tournament(
+                settings, participants, rounds, attendance.withWithdrawal(participant, from), numberingRatings);
+    }
+
+    /**
+     * A Late Entry (GHR 2.4): a participant only taken into account for the pairing of {@code firstRound} and
+     * later, scoring nothing for the rounds it missed.
+     */
+    public Tournament enterLate(Participant participant, RoundNumber firstRound) {
+        return enterLate(participant, firstRound, MissedRounds.zeroPoints());
+    }
+
+    public Tournament enterLate(Participant participant, RoundNumber firstRound, MissedRounds missed) {
+        if (findParticipant(participant.id()).isPresent()) {
+            throw new InvalidTournamentException(Problem.of("Two participants share an id", participant.id()));
+        }
+        if (firstRound.isBefore(nextRound())) {
+            throw new InvalidTournamentException(
+                    Problem.of("Round " + firstRound + " is already recorded", participant.id()));
+        }
+        var registered = new ArrayList<>(participants);
+        registered.add(participant);
+        return new Tournament(
+                settings,
+                registered,
+                rounds,
+                attendance.withLateEntry(participant.id(), firstRound, missed.bye()),
+                numberingRatings);
+    }
+
+    /** A Correction of a recorded outcome (GHR 4.3); it affects future pairings only. */
+    public Tournament withCorrectedOutcome(RoundNumber round, ParticipantId participant, Outcome corrected) {
+        return withRoundReplaced(round, recordedRound(round).withOutcome(participant, corrected));
+    }
+
+    /** A Correction of a board's colours (GHR 4.3). */
+    public Tournament withCorrectedColours(RoundNumber round, BoardNumber board) {
+        return withRoundReplaced(round, recordedRound(round).withColoursSwapped(board));
+    }
+
+    /**
+     * A Correction of a rating (GHR 2.3, 4.3). Pairing Numbers follow it until the fourth round has been paired
+     * (read as: four rounds recorded); after that the numbering keeps the rating it had.
+     */
+    public Tournament withCorrectedRating(ParticipantId corrected, Rating rating) {
+        var previous = participant(corrected);
+        var frozen = new HashMap<>(numberingRatings);
+        if (rounds.size() >= NUMBERING_FREEZES_AFTER_ROUND) {
+            frozen.putIfAbsent(corrected, previous.rating());
+        }
+        var updated = participants.stream()
+                .map(participant -> participant.id().equals(corrected) ? participant.withRating(rating) : participant)
+                .toList();
+        return new Tournament(settings, updated, rounds, attendance, frozen);
+    }
+
+    private Round recordedRound(RoundNumber round) {
+        if (round.value() > rounds.size()) {
+            throw new InvalidTournamentException(Problem.of("Round " + round + " is not recorded"));
+        }
+        return rounds.get(round.value() - 1);
+    }
+
+    private Tournament withRoundReplaced(RoundNumber round, Round corrected) {
+        var recorded = new ArrayList<>(rounds);
+        recorded.set(round.value() - 1, corrected);
+        return new Tournament(settings, participants, recorded, attendance, numberingRatings);
+    }
+
+    /** Why the participant is known in advance not to be paired in the round, if it is not. */
+    public Optional<Bye> absenceIn(ParticipantId participant, RoundNumber round) {
+        return attendance.absenceIn(participant, round);
     }
 
     private Optional<Bye> absenceInNextRound(ParticipantId participant) {
@@ -112,20 +204,67 @@ public final class Tournament {
      */
     public PairingNumbers pairingNumbers() {
         var toBePaired = new HashSet<>(participantsToBePaired());
-        var numbered = participants.stream()
-                .filter(participant -> toBePaired.contains(participant) || wasEverPaired(participant.id()))
-                .sorted(settings.rankingKey().order(participants))
+        var asRanked = participants.stream()
+                .map(participant ->
+                        participant.withRating(numberingRatings.getOrDefault(participant.id(), participant.rating())))
+                .toList();
+        var numbered = asRanked.stream()
+                .filter(participant ->
+                        toBePaired.stream().anyMatch(paired -> paired.id().equals(participant.id()))
+                                || wasEverPaired(participant.id()))
+                .sorted(settings.rankingKey().order(asRanked))
                 .map(Participant::id)
                 .toList();
         return PairingNumbers.inRankingOrder(numbered);
     }
 
+    /** The Virtual Points the settings' acceleration adds to the participant's score for the round's pairing. */
+    public Points virtualPointsOf(ParticipantId participant, RoundNumber round) {
+        return settings.acceleration().virtualPointsOf(participant, round, this);
+    }
+
+    /**
+     * C.04.7 1.2–1.3: the top 2·⌈N/4⌉ of the round-1 list, down to the Last Accelerated Participant; a Late Entry
+     * ranked above that participant joins the group.
+     */
+    boolean isInAcceleratedGroup(ParticipantId participant) {
+        var ranked = participants.stream()
+                .sorted(settings.rankingKey().order(participants))
+                .map(Participant::id)
+                .toList();
+        var starters = ranked.stream().filter(attendance::startsInRoundOne).toList();
+        if (starters.isEmpty()) {
+            return false;
+        }
+        var groupSize = 2 * ((starters.size() + 3) / 4);
+        var lastAccelerated = starters.get(Math.min(groupSize, starters.size()) - 1);
+        return ranked.indexOf(participant) <= ranked.indexOf(lastAccelerated);
+    }
+
+    /** The Standings after the last recorded round, by the settings' Tie-break List and Tie-break Edition. */
+    public Standings standings() {
+        return StandingsCalculator.standingsOf(this, rounds.size());
+    }
+
+    /** The Standings as they were after the given recorded round. */
+    public Standings standingsAfter(RoundNumber round) {
+        if (round.value() > rounds.size()) {
+            throw new InvalidTournamentException(Problem.of("Round " + round + " is not recorded yet"));
+        }
+        return StandingsCalculator.standingsOf(this, round.value());
+    }
+
     public RoundPairing pairNextRound() {
+        return pairNextRound(PairingProgress.NONE);
+    }
+
+    /** Pairs the next round, telling the listener how it advances; interrupt the thread to cancel. */
+    public RoundPairing pairNextRound(PairingProgress progress) {
         if (!settings.numberOfRounds().includes(nextRound())) {
             throw new InvalidTournamentException(Problem.of(
                     "The tournament has only " + settings.numberOfRounds().value() + " rounds"));
         }
-        return settings.pairingSystem().pairNextRound(this);
+        return settings.pairingSystem().pairNextRound(this, progress);
     }
 
     /**
@@ -186,7 +325,7 @@ public final class Tournament {
         }
         var recorded = new ArrayList<>(rounds);
         recorded.add(round);
-        return new Tournament(settings, participants, recorded, attendance);
+        return new Tournament(settings, participants, recorded, attendance, numberingRatings);
     }
 
     private boolean wasEverPaired(ParticipantId participant) {

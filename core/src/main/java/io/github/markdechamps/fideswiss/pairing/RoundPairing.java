@@ -47,6 +47,11 @@ public record RoundPairing(
         return Round.of(roundNumber, played, byes);
     }
 
+    /** The participant's part in this pairing, read off the trace (Explaining decisions). */
+    public ParticipantExplanation about(ParticipantId participant) {
+        return ParticipantExplanation.of(this, participant);
+    }
+
     /** The same boards, colours and PAB, whatever the board order or trace: the equality Oracle runs use. */
     public boolean samePairingAs(RoundPairing other) {
         return boardsAsSet().equals(other.boardsAsSet()) && pairingAllocatedBye.equals(other.pairingAllocatedBye);

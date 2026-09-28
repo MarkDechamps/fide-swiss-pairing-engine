@@ -2,8 +2,8 @@ package io.github.markdechamps.fideswiss.dutch;
 
 import io.github.markdechamps.fideswiss.history.RoundRecord;
 import io.github.markdechamps.fideswiss.tournament.Bye;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import io.github.markdechamps.fideswiss.tournament.Points;
-import io.github.markdechamps.fideswiss.tournament.Score;
 
 /**
  * C.04.3 (2026) 1.4.2–1.4.4: players with different scores who meet float, the higher one down; a PAB, or more
@@ -12,7 +12,8 @@ import io.github.markdechamps.fideswiss.tournament.Score;
 final class Dutch2026FloatRule implements FloatRule {
 
     @Override
-    public FloatDirection floatOf(RoundRecord record, Score scoreBefore, Score opponentScoreBefore, Points lossValue) {
+    public FloatDirection floatOf(
+            RoundRecord record, PairingScore scoreBefore, PairingScore opponentScoreBefore, Points lossValue) {
         return switch (record) {
             case RoundRecord.Game game -> floatBetween(scoreBefore, opponentScoreBefore);
             case RoundRecord.Forfeit forfeit -> downIfMoreThanALoss(forfeit.points(), lossValue);
@@ -23,7 +24,7 @@ final class Dutch2026FloatRule implements FloatRule {
         };
     }
 
-    private static FloatDirection floatBetween(Score own, Score opponent) {
+    private static FloatDirection floatBetween(PairingScore own, PairingScore opponent) {
         if (own.isHigherThan(opponent)) {
             return FloatDirection.DOWN;
         }

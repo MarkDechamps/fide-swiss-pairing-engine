@@ -8,8 +8,9 @@ import java.util.function.Supplier;
 
 /**
  * Record 192, the Encoded Type of Tournament (ETT26), for the systems the library pairs. A bare code takes the
- * 2026 rules, never the tournament date; {@code FIDE_DUTCH_2025} is an alias of {@code _2026}. {@code FIDE_LIM}
- * is provisional: ETT26 has no Lim code (TRF CLI surface).
+ * 2026 rules, never the tournament date; {@code FIDE_DUTCH_2025} is an alias of {@code _2026}, and
+ * {@code FIDE_DUTCH_2017} is the Dutch System of the pre-2026 edition. {@code FIDE_LIM} is provisional: ETT26 has no
+ * Lim code (TRF CLI surface). A {@code _BAKU} suffix adds acceleration and leaves the system alone.
  */
 final class PairingSystemCode {
 
@@ -17,6 +18,7 @@ final class PairingSystemCode {
             "FIDE_DUTCH", PairingSystems::dutch,
             "FIDE_DUTCH_2026", PairingSystems::dutch,
             "FIDE_DUTCH_2025", PairingSystems::dutch,
+            "FIDE_DUTCH_2017", PairingSystems::dutch,
             "FIDE_DUBOV", PairingSystems::dubov,
             "FIDE_DUBOV_2026", PairingSystems::dubov,
             "FIDE_LIM", PairingSystems::lim,
@@ -30,7 +32,7 @@ final class PairingSystemCode {
         if (code.isEmpty()) {
             return Optional.empty();
         }
-        var system = SYSTEMS.get(code);
+        var system = SYSTEMS.get(code.replaceFirst("_BAKU$", ""));
         if (system == null) {
             throw new InvalidTrfException("Unsupported pairing system in record 192: " + code);
         }

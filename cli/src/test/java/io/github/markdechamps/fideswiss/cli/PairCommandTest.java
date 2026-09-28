@@ -71,6 +71,32 @@ class PairCommandTest {
     }
 
     @Nested
+    class GivenAQuestionAboutAParticipant {
+
+        @Test
+        void explainsItOnStandardErrorWithoutChangingTheReply() throws IOException {
+            var input = copy("half-point-bye-in-round-2.trf");
+
+            var exit = run("pair", input.toString(), "--explain", "1", "--quiet");
+
+            assertThat(exit).isZero();
+            assertThat(stdout()).isEqualTo("2\n5 1\n3 4\n");
+            assertThat(stderr()).contains("1 is paired with 5", "[C.04.3 5.2");
+        }
+
+        @Test
+        void addsTheExplanationToTheTraceFileWhenThereIsOne() throws IOException {
+            var input = copy("half-point-bye-in-round-2.trf");
+            var trace = directory.resolve("trace.txt");
+
+            run("pair", input.toString(), "-l", trace.toString(), "--explain", "2");
+
+            assertThat(Files.readString(trace)).contains("2 is not paired: half point");
+            assertThat(stderr()).isEmpty();
+        }
+    }
+
+    @Nested
     class GivenAnInvalidRequest {
 
         @Test

@@ -1,9 +1,13 @@
 package io.github.markdechamps.fideswiss.cli;
 
 import io.github.markdechamps.fideswiss.pairing.NoLegalPairingException;
+import io.github.markdechamps.fideswiss.pairing.PairingProgress;
+import io.github.markdechamps.fideswiss.pairing.Progress;
 import io.github.markdechamps.fideswiss.tournament.InvalidSettingsException;
 import io.github.markdechamps.fideswiss.tournament.InvalidTournamentException;
+import io.github.markdechamps.fideswiss.tournament.ParticipantId;
 import io.github.markdechamps.fideswiss.tournament.Problem;
+import io.github.markdechamps.fideswiss.tournament.RoundNumber;
 import io.github.markdechamps.fideswiss.trf.InvalidTrfException;
 import io.github.markdechamps.fideswiss.trf.TrfReader;
 import io.github.markdechamps.fideswiss.trf.TrfTournament;
@@ -64,6 +68,7 @@ public final class Main {
             case Command.Pair pair -> pair(pair);
             case Command.Check check ->
                 new PairingsChecker(out).check(read(check.input(), check.overrides()), check.round());
+            case Command.Standings standings -> standings(standings);
             case Command.Version version -> print(Version.describe());
             case Command.Help help -> print(Help.TEXT);
         };
@@ -71,11 +76,38 @@ public final class Main {
 
     private int pair(Command.Pair command) {
         var tournament = read(command.input(), command.overrides()).tournament();
-        var pairing = tournament.pairNextRound();
-        command.trace().ifPresent(trace -> write(trace, pairing.trace().describe() + "\n"));
+        var progress =
+                command.quiet() ? PairingProgress.NONE : TerminalProgress.onStandardError(tournament.nextRound());
+        var pairing = tournament.pairNextRound(progress);
+        progress.advanced(new Progress(0, 0));
+        var explanations = command.explain().stream()
+                .map(id -> pairing.about(ParticipantId.of(id)).describe())
+                .toList();
+        command.trace()
+                .ifPresentOrElse(
+                        trace -> write(trace, withExplanations(pairing.trace().describe(), explanations)),
+                        () -> explanations.forEach(err::println));
         var reply = PairingReply.of(pairing);
         command.reply().ifPresentOrElse(replyFile -> write(replyFile, reply), () -> out.print(reply));
         return SUCCESS;
+    }
+
+    private static String withExplanations(String trace, List<String> explanations) {
+        var text = new StringBuilder(trace).append('\n');
+        explanations.forEach(
+                explanation -> text.append('\n').append(explanation).append('\n'));
+        return text.toString();
+    }
+
+    private int standings(Command.Standings command) {
+        var tournament = read(command.input(), command.overrides()).tournament();
+        var standings = command.after()
+                .map(round -> tournament.standingsAfter(RoundNumber.of(round)))
+                .orElseGet(tournament::standings);
+        return print(command.why()
+                .map(pair ->
+                        StandingsTable.why(standings, ParticipantId.of(pair.get(0)), ParticipantId.of(pair.get(1))))
+                .orElseGet(() -> StandingsTable.of(standings)));
     }
 
     private TrfTournament read(String input, SettingsOverrides overrides) {

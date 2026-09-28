@@ -1,6 +1,6 @@
 package io.github.markdechamps.fideswiss.dutch;
 
-import io.github.markdechamps.fideswiss.tournament.Score;
+import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import java.util.BitSet;
 import java.util.Optional;
 
@@ -17,22 +17,26 @@ final class CompletionCriterion {
     private final PlayerSet players;
     private final CompletionOracle oracle;
     private final AbsoluteCriteria absolute;
-    private final Optional<Score> lowestReachablePabScore;
+    private final Optional<PairingScore> lowestReachablePabScore;
 
     private CompletionCriterion(
             PlayerSet players,
             AbsoluteCriteria absolute,
             CompletionOracle oracle,
-            Optional<Score> lowestReachablePabScore) {
+            Optional<PairingScore> lowestReachablePabScore) {
         this.players = players;
         this.absolute = absolute;
         this.oracle = oracle;
         this.lowestReachablePabScore = lowestReachablePabScore;
     }
 
-    static CompletionCriterion forRound(PlayerSet players, AbsoluteCriteria absolute) {
+    /** {@code foldsPabScore}: the edition has [C5] (2026); 2017 has no PAB-score criterion, so nothing folds in. */
+    static CompletionCriterion forRound(PlayerSet players, AbsoluteCriteria absolute, boolean foldsPabScore) {
         var oracle = new CompletionOracle(players, absolute::mayMeet);
         var anyScore = new CompletionCriterion(players, absolute, oracle, Optional.empty());
+        if (!foldsPabScore) {
+            return anyScore;
+        }
         var everyone = players.maskOf(players.inPairingOrder());
         var lowest =
                 anyScore.lowestPossiblePairingAllocatedByeAssignee(everyone).map(Player::score);
