@@ -11,7 +11,6 @@ import io.github.markdechamps.fideswiss.tournament.ParticipantId;
 import io.github.markdechamps.fideswiss.tournament.Points;
 import io.github.markdechamps.fideswiss.tournament.Round;
 import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
-import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -73,7 +72,7 @@ public final class TrfWriter {
         lines.add("142 " + settings.numberOfRounds().value());
         lines.add("152 " + (settings.initialColour().colour() == Colour.WHITE ? "W" : "B"));
         scoringRecord(settings.scoring()).ifPresent(lines::add);
-        lines.add("192 " + systemCode(settings.swissRulesEdition()) + accelerationSuffix(settings.acceleration()));
+        lines.add("192 " + PairingSystemCode.of(settings) + accelerationSuffix(settings.acceleration()));
         if (!settings.tieBreakList().isEmpty()) {
             lines.add("212 " + tieBreakRecord(settings.tieBreakList()));
         }
@@ -83,15 +82,6 @@ public final class TrfWriter {
         }
         tournament.participants().forEach(participant -> lines.add(playerRecord(participant)));
         return String.join(LINE_END, lines) + LINE_END;
-    }
-
-    /**
-     * Only the Dutch System is implemented, so the code follows the Swiss Rules Edition alone. The 2026 rules get
-     * the bare code, which a reader takes as the latest edition (TRF CLI surface); bbpPairings v6 rejects
-     * {@code FIDE_DUTCH_2026}.
-     */
-    private static String systemCode(SwissRulesEdition edition) {
-        return edition == SwissRulesEdition.EDITION_2026 ? "FIDE_DUTCH" : "FIDE_DUTCH_2017";
     }
 
     /** Baku acceleration travels as the {@code _BAKU} suffix of the system code (Acceleration readings). */

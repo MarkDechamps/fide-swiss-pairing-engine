@@ -2,6 +2,7 @@ package io.github.markdechamps.fideswiss.trf;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.github.markdechamps.fideswiss.pairing.PairingSystems;
 import io.github.markdechamps.fideswiss.standings.TieBreakList;
 import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.BoardNumber;
@@ -18,6 +19,7 @@ import io.github.markdechamps.fideswiss.tournament.Rating;
 import io.github.markdechamps.fideswiss.tournament.RequestedBye;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
 import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
+import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
 import io.github.markdechamps.fideswiss.tournament.Title;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
@@ -27,6 +29,8 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 class TrfWriterTest {
 
@@ -117,6 +121,28 @@ class TrfWriterTest {
 
             assertThat(read.settings().acceleration()).isEqualTo(Acceleration.baku());
             assertThat(read.settings().tieBreakList()).isEqualTo(TieBreakList.parse("BH/M1, KS, TPN"));
+        }
+    }
+
+    @Nested
+    class GivenAnotherPairingSystem {
+
+        @ParameterizedTest
+        @CsvSource({"dubov, FIDE_DUBOV", "lim, FIDE_LIM", "dutch-2017, FIDE_DUTCH_2017"})
+        void writesItsCodeAndReadsItBack(String name, String code) {
+            var settings =
+                    switch (name) {
+                        case "dubov" -> settings().with(PairingSystems.dubov());
+                        case "lim" -> settings().with(PairingSystems.lim());
+                        default -> settings().with(SwissRulesEdition.PRE_2026);
+                    };
+            var tournament = played(settings, GameOutcome.DRAW, GameOutcome.WHITE_WINS);
+
+            var text = TrfWriter.write(tournament, TrfWriter.Options.named("Other system"));
+
+            assertThat(text).contains("\r\n192 " + code + "\r\n");
+            assertThat(TrfReader.read(text).settings().pairingSystem().name())
+                    .isEqualTo(tournament.settings().pairingSystem().name());
         }
     }
 

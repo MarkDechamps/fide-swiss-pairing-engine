@@ -2,6 +2,8 @@ package io.github.markdechamps.fideswiss.trf;
 
 import io.github.markdechamps.fideswiss.pairing.PairingSystem;
 import io.github.markdechamps.fideswiss.pairing.PairingSystems;
+import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
+import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -25,6 +27,25 @@ final class PairingSystemCode {
             "FIDE_LIM_2026", PairingSystems::lim);
 
     private PairingSystemCode() {}
+
+    /**
+     * The code a writer gives the settings' system, known by the Handbook number its name starts with (GHR 1.3): the
+     * bare code for the 2026 rules (bbpPairings v6 rejects {@code FIDE_DUTCH_2026}), {@code FIDE_DUTCH_2017} for the
+     * pre-2026 Dutch System. A system the Handbook does not define has no code.
+     */
+    static String of(TournamentSettings settings) {
+        var name = settings.pairingSystem().name();
+        if (name.startsWith("C.04.3 ")) {
+            return settings.swissRulesEdition() == SwissRulesEdition.PRE_2026 ? "FIDE_DUTCH_2017" : "FIDE_DUTCH";
+        }
+        if (name.startsWith("C.04.4.1 ")) {
+            return "FIDE_DUBOV";
+        }
+        if (name.startsWith("C.04.4.3 ")) {
+            return "FIDE_LIM";
+        }
+        throw new IllegalArgumentException("TRF26 has no 192 code for the pairing system " + name);
+    }
 
     /** The system a 192 value names; empty for a blank value; an error for any code the library cannot pair. */
     static Optional<PairingSystem> parse(String value) {
