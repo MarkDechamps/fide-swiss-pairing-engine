@@ -24,8 +24,9 @@ class SwissTeamCommandTest {
 
     @Test
     void repliesOneLineOfTeamNumbersPerMatchWithBoardOnesWhiteFirst() throws IOException {
-        // TRF CLI surface: the 310 team numbers, GHR 3.6 order on the pair's scores.
-        var exit = run("--swiss-team", copy("team-c6-graded.trf").toString(), "-p");
+        // TRF CLI surface: the 310 team numbers, GHR 3.6 order on the pair's scores (the file is a patched-Gacrux one).
+        var exit = run(
+                "--swiss-team", copy("team-c6-graded.trf").toString(), "-p", "--interpretation", "bracket-seating=tpn");
 
         assertThat(exit).isZero();
         assertThat(stdout()).isEqualTo("5\n2 1\n9 3\n10 4\n6 8\n5 7\n");
@@ -44,7 +45,7 @@ class SwissTeamCommandTest {
     @Test
     void checksATournamentPairedByTheOracleAsConsistent() throws IOException {
         // Every round and the final match points of a patched-Gacrux tournament (the regression corpus).
-        var exit = run("check", copy("team-gacrux.trf").toString());
+        var exit = run("check", copy("team-gacrux.trf").toString(), "--interpretation", "bracket-seating=tpn");
 
         assertThat(stdout()).contains("6 consistent, 0 not");
         assertThat(exit).isZero();
@@ -56,6 +57,27 @@ class SwissTeamCommandTest {
 
         assertThat(exit).isEqualTo(3);
         assertThat(stderr()).contains("team file");
+    }
+
+    @Test
+    void takesEveryReferenceAppReadingAndItsLiteralCounterpart() throws IOException {
+        // ADR 0009: each name=value of the four departures from the text is accepted.
+        for (var reading : new String[] {
+            "bracket-seating=score-then-tpn",
+            "bracket-seating=tpn",
+            "pab-value=win",
+            "pab-value=draw",
+            "pab-value=loss",
+            "baku-secondary-score=virtual-match-points",
+            "baku-secondary-score=real",
+            "edebt-board-count=higher",
+            "edebt-board-count=lower"
+        }) {
+            assertThat(run("pair", copy("team-c6-graded.trf").toString(), "--interpretation", reading))
+                    .as(reading)
+                    .isZero();
+            out.reset();
+        }
     }
 
     @Test

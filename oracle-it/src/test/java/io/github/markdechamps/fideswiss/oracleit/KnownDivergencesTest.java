@@ -28,7 +28,14 @@ class KnownDivergencesTest {
     }
 
     @Test
-    void gacruxWithVirtualPointsIsKd3() {
+    void plainGacruxWithVirtualPointsIsUnregistered() {
+        // ADR 0009: Gacrux is the reference app, so the default reading has no divergence to register.
+        assertThat(register.classify("Gacrux @ 6419149", "250  2.0  0.0   1   2    1    4\r\n"))
+                .isEmpty();
+    }
+
+    @Test
+    void literalGacruxWithVirtualPointsIsKd3() {
         assertThat(register.classify("Gacrux @ 6419149 (tpn-order)", "250  2.0  0.0   1   2    1    4\r\n"))
                 .contains("KD-3");
     }

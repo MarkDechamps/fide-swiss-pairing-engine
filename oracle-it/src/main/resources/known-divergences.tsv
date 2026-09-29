@@ -1,3 +1,5 @@
 # id	oracle label prefix	regex found in the oracle input
+# KD-1..3 are differences of the literal readings only (ADR 0009): plain Gacrux agrees with the defaults, so only the
+# tpn-order (literal) Gacrux program is listed for KD-3, and KD-1 and KD-2 are never a difference to register.
 KD-4	JaVaFo	(?m)^001 .* 0000 - H
-KD-3	Gacrux	(?m)^250 
+KD-3	Gacrux @ 6419149 (tpn-order)	(?m)^250 

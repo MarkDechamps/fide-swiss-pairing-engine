@@ -3,9 +3,12 @@ package io.github.markdechamps.fideswiss.pairing;
 import io.github.markdechamps.fideswiss.rules.BasicRules;
 import io.github.markdechamps.fideswiss.tournament.ColourPreferenceType;
 import io.github.markdechamps.fideswiss.tournament.CompetitionType;
+import io.github.markdechamps.fideswiss.tournament.EdebtBoardCount;
 import io.github.markdechamps.fideswiss.tournament.Interpretation;
 import io.github.markdechamps.fideswiss.tournament.InvalidSettingsException;
+import io.github.markdechamps.fideswiss.tournament.MatchScoring;
 import io.github.markdechamps.fideswiss.tournament.Points;
+import io.github.markdechamps.fideswiss.tournament.PrimaryScore;
 import io.github.markdechamps.fideswiss.tournament.Problem;
 import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
@@ -77,5 +80,20 @@ public interface PairingSystem {
     /** What a Pairing-Allocated Bye is worth when the tournament does not say: a win (C.04.1 Art. 3). */
     default Points pairingAllocatedByeValue(ScoringScheme scoring) {
         return scoring.win();
+    }
+
+    /**
+     * What a Pairing-Allocated Bye is worth in the score that is not the primary one, when the tournament does not
+     * say: the points of a drawn match (or, in match points, a drawn match's game points).
+     */
+    default Points secondaryPairingAllocatedByeValue(ScoringScheme scoring) {
+        return scoring.primaryScore() == PrimaryScore.MATCH_POINTS
+                ? scoring.drawnMatchGamePoints()
+                : scoring.matches().map(MatchScoring::draw).orElse(scoring.draw());
+    }
+
+    /** Team tie-breaks: the Board Count order of EDEBT and EDEBB (ADR 0009); systems without the reading use the default. */
+    default EdebtBoardCount edebtBoardCount() {
+        return EdebtBoardCount.higher();
     }
 }

@@ -3,6 +3,7 @@ package io.github.markdechamps.fideswiss.trf;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.markdechamps.fideswiss.pairing.RoundPairing;
+import io.github.markdechamps.fideswiss.tournament.BracketSeating;
 import io.github.markdechamps.fideswiss.tournament.CompetitionType;
 import io.github.markdechamps.fideswiss.tournament.Interpretation;
 import io.github.markdechamps.fideswiss.tournament.LastRoundZeroCdTypeB;
@@ -17,13 +18,23 @@ import org.junit.jupiter.api.Test;
 
 /**
  * The eight Gacrux probe cases (docs/research/gacrux-team-probe), each paired as Gacrux @ 6419149 with the
- * tpn-order patch pairs it; the non-default Interpretations as its alt.py counterfactual does (a Witness).
+ * tpn-order patch pairs it, so under the literal bracket seating ({@link BracketSeating#tpn()}); the other
+ * non-default Interpretations as its alt.py counterfactual does (a Witness). The default seating, unpatched Gacrux's,
+ * is checked on case 1.
  */
 class SwissTeamProbeCasesTest {
 
     @Test
+    void seatsByScoreThenTpnByDefaultAsUnpatchedGacruxDoes() {
+        // ADR 0009, KD-1.
+        var file = TrfReader.read(resource("case1-bracket-order.trf"));
+
+        assertThat(boardsOf(file.tournament().pairNextRound())).containsExactly("4-1", "3-2", "7-5", "6-8");
+    }
+
+    @Test
     void seatsTheSmallerTpnAsTopMember() {
-        // Ruling G1 (3.6.1): unpatched Gacrux gives 4-1, 3-2 here.
+        // Ruling G1 (3.6.1), the literal reading: unpatched Gacrux gives 4-1, 3-2 here.
         assertThat(boardsOf(pair("case1-bracket-order.trf"))).containsExactly("4-2", "3-1", "7-5", "6-8");
     }
 
@@ -97,7 +108,7 @@ class SwissTeamProbeCasesTest {
 
     private static RoundPairing pair(String name, Interpretation... interpretations) {
         var file = TrfReader.read(resource(name));
-        var settings = file.settings();
+        var settings = file.settings().with(BracketSeating.tpn());
         for (var interpretation : interpretations) {
             settings = settings.with(interpretation);
         }

@@ -3,7 +3,9 @@
 Every difference between an Oracle and the library is either fixed or registered here (Verification strategy).
 Each entry gives the scope, a minimised input, both outputs, the article, our reading and the ruling behind it.
 
-## KD-1 Swiss Team: Gacrux seats bracket members by score, then TPN
+Since ADR 0009 the engine's defaults follow the reference app, so KD-1, KD-2, KD-3 and Gacrux's EDEBT order are divergences **only with the FIDE-literal Interpretation** (`bracket-seating=tpn`, `pab-value=draw`, `baku-secondary-score=real`, `edebt-board-count=lower`). With the defaults, plain Gacrux agrees (706 of 706 rounds in 98 tournaments, 1,946 of 1,946 in 278, the defaults corpus, and the round-robin EDEBT fixture); the gate registers nothing for them.
+
+## KD-1 Swiss Team: Gacrux seats bracket members by score, then TPN (only with `bracket-seating=tpn`)
 
 - **Scope:** Swiss Team 2026 (C.04.6 3.6.1), Gacrux @ 6419149 unpatched.
 - **Input:** `trf/src/test/resources/swiss-team/probe/case1-bracket-order.trf`, round 2.
@@ -11,19 +13,21 @@ Each entry gives the scope, a minimised input, both outputs, the article, our re
 - **Article:** 3.6.1, "the team with the smaller TPN is the top member of the pair".
 - **Reading:** the top member is the smaller TPN whatever the score; Gacrux's `sort_nodes` orders by score first,
   against its own docstring. Ruling G1 of Swiss Team interpretation rulings calls it a Gacrux bug.
-- **Handling:** the Oracle always runs with the `tpn-order` patch (`update_bracket` over TPN-sorted nodes), in
-  `trf/src/test/resources/corpus/gacrux-team-drive.py`. Unpatched, 7.0% of Gacrux's corpus rounds differ.
+- **Handling:** the default is Gacrux's order (`bracket-seating=score-then-tpn`), gated against plain Gacrux. The literal reading
+  (`bracket-seating=tpn`) is gated against Gacrux with the `tpn-order` patch (`update_bracket` over TPN-sorted nodes), in
+  `GacruxProgram` and `trf/src/test/resources/corpus/gacrux-team-drive.py`. Unpatched, 7.0% of Gacrux's corpus rounds differ from it.
 
-## KD-2 Swiss Team: Gacrux's PAB is a win per board without a 162 `P`
+## KD-2 Swiss Team: Gacrux's PAB is a win per board without a 162 `P` (only with `pab-value=draw`)
 
 - **Scope:** Swiss Team 2026 (C.04.6 1.4), game points primary, a TRF whose `162` has no `P` value.
 - **Input:** any `FIDE_TEAM_*_GP*` file with a PAB and `162  W 1.0    D 0.5    L 0.0`.
 - **Gacrux:** the PAB team scores a win on every board (4 GP over four boards). **Library:** a drawn match
   (2 GP), as 1.4 says: "as many match points and game points as are rewarded for a draw".
 - **Reading:** 1.4 fixes the default; `162`'s `P` or a `320` record overrides it, and the library reads both.
-- **Handling:** the corpus states `P 0.5`.
+- **Handling:** the default is a win per board (`pab-value=win`), and a `P` in `162` selects the value; the literal corpus states `P 0.5`,
+  the defaults corpus states none.
 
-## KD-3 Swiss Team: Gacrux accelerates the secondary score by match points
+## KD-3 Swiss Team: Gacrux accelerates the secondary score by match points (only with `baku-secondary-score=real`)
 
 - **Scope:** Swiss Team 2026 with acceleration (C.04.7) and a secondary score for colours (4.2.2).
 - **Input:** a `FIDE_TEAM_TYPEB_MP_GP_BAKU` file with `250  2.0  0.0   1   2    1    4`: two teams of the
@@ -32,8 +36,17 @@ Each entry gives the scope, a minimised input, both outputs, the article, our re
   (`tiebreak.get_accelerated` reads `matchPoints` for every score but individual points). **Library:** the
   secondary score is the real game points; Virtual Points only enter the Pairing Score (C.04.7 1.5, Acceleration
   readings decision 1: the text names the secondary score, so it is not the Pairing Score).
-- **Handling:** the corpus accelerates only codes without a secondary score (`FIDE_TEAM_TYPEA_MP_BAKU`,
-  `FIDE_TEAM_TYPEB_MP_BAKU`).
+- **Handling:** the default is Gacrux's (`baku-secondary-score=virtual-match-points`); the literal gate and corpus accelerate only
+  codes without a secondary score (`FIDE_TEAM_TYPEA_MP_BAKU`, `FIDE_TEAM_TYPEB_MP_BAKU`), and the register companion lists only the
+  literal program `Gacrux @ 6419149 (tpn-order)`.
+
+## KD-5 Tie-break EDEBT: Gacrux ranks the higher Board Count first (only with `edebt-board-count=lower`)
+
+- **Scope:** C.07 13.3.2 with 12.1, EDEBT and EDEBB, two teams tied in every score.
+- **Input:** `trf/src/test/resources/team-tie-breaks/roundrobin.trf` with `212 MPvGP,EDEBT`.
+- **Gacrux:** `tiebreakchecker.py -p -s -t MPvGP EDEBT` ranks the teams 2, 1, 3, 4. **Library, literal:** 2, 3, 1, 4.
+- **Article:** 12.1, "the lower the sum, the higher the team ranks".
+- **Handling:** the default is Gacrux's (`edebt-board-count=higher`), fixed by `TeamTieBreaksTrfTest`; `lower` is the text.
 
 ## KD-4 Dutch 2017: JaVaFo 2.2 pairs differently when half-point byes are in play
 

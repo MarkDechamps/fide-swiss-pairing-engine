@@ -11,13 +11,17 @@ import io.github.markdechamps.fideswiss.topscoregroup.ContenderPair;
 import io.github.markdechamps.fideswiss.topscoregroup.TopScoregroupProcedure;
 import io.github.markdechamps.fideswiss.topscoregroup.TopScoregroupRound;
 import io.github.markdechamps.fideswiss.tournament.Acceleration;
+import io.github.markdechamps.fideswiss.tournament.BakuSecondaryScore;
 import io.github.markdechamps.fideswiss.tournament.BoardNumber;
+import io.github.markdechamps.fideswiss.tournament.BracketSeating;
 import io.github.markdechamps.fideswiss.tournament.ColourPreferenceType;
 import io.github.markdechamps.fideswiss.tournament.CompetitionType;
+import io.github.markdechamps.fideswiss.tournament.EdebtBoardCount;
 import io.github.markdechamps.fideswiss.tournament.FloatScore;
 import io.github.markdechamps.fideswiss.tournament.Interpretation;
 import io.github.markdechamps.fideswiss.tournament.LastRoundZeroCdTypeB;
 import io.github.markdechamps.fideswiss.tournament.MatchScoring;
+import io.github.markdechamps.fideswiss.tournament.PabValue;
 import io.github.markdechamps.fideswiss.tournament.Points;
 import io.github.markdechamps.fideswiss.tournament.PrimaryScore;
 import io.github.markdechamps.fideswiss.tournament.Problem;
@@ -38,36 +42,137 @@ import java.util.Optional;
  * bracket after bracket (the Top-Scoregroup Procedure), then the board-1 colours of every match (Article 4).
  *
  * @param colourPreferences Type A (the default), Type B or none (1.7)
- * @param upfloaterLookAhead the [C6] reading (ruling A6)
- * @param lastRoundZeroCd the Type B last-round reading (ruling A1)
- * @param floatScore the floater reading under acceleration (ruling A8)
+ * @param readings the Interpretation chosen for each reading, at its default unless {@link #with} changed it
  */
-public record SwissTeamSystem(
-        ColourPreferenceType colourPreferences,
-        UpfloaterLookAhead upfloaterLookAhead,
-        LastRoundZeroCdTypeB lastRoundZeroCd,
-        FloatScore floatScore)
-        implements PairingSystem {
+public record SwissTeamSystem(ColourPreferenceType colourPreferences, Readings readings) implements PairingSystem {
 
-    /** Type A colour preferences and every Interpretation at its default (ADR 0003). */
+    /**
+     * Every reading of the system, each at its default (ADR 0003, ADR 0009): the reference app's reading where the
+     * text is knowingly departed from, else the Oracle's.
+     *
+     * @param upfloaterLookAhead the [C6] reading (ruling A6)
+     * @param lastRoundZeroCd the Type B last-round reading (ruling A1)
+     * @param floatScore the floater reading under acceleration (ruling A8)
+     * @param bracketSeating who is the top member of a pair (3.6.1, KD-1)
+     * @param pabValue the game result of the PAB on every board (1.4, KD-2)
+     * @param bakuSecondaryScore the secondary score under Baku (4.2.2, KD-3)
+     * @param edebtBoardCount the Board Count order of EDEBT (KD-EDEBT)
+     */
+    public record Readings(
+            UpfloaterLookAhead upfloaterLookAhead,
+            LastRoundZeroCdTypeB lastRoundZeroCd,
+            FloatScore floatScore,
+            BracketSeating bracketSeating,
+            PabValue pabValue,
+            BakuSecondaryScore bakuSecondaryScore,
+            EdebtBoardCount edebtBoardCount) {
+
+        static Readings defaults() {
+            return new Readings(
+                    UpfloaterLookAhead.parityMinimum(),
+                    LastRoundZeroCdTypeB.strong(),
+                    FloatScore.pairing(),
+                    BracketSeating.scoreThenTpn(),
+                    PabValue.win(),
+                    BakuSecondaryScore.virtualMatchPoints(),
+                    EdebtBoardCount.higher());
+        }
+
+        Readings with(Interpretation interpretation) {
+            return switch (interpretation) {
+                case UpfloaterLookAhead reading ->
+                    new Readings(
+                            reading,
+                            lastRoundZeroCd,
+                            floatScore,
+                            bracketSeating,
+                            pabValue,
+                            bakuSecondaryScore,
+                            edebtBoardCount);
+                case LastRoundZeroCdTypeB reading ->
+                    new Readings(
+                            upfloaterLookAhead,
+                            reading,
+                            floatScore,
+                            bracketSeating,
+                            pabValue,
+                            bakuSecondaryScore,
+                            edebtBoardCount);
+                case FloatScore reading ->
+                    new Readings(
+                            upfloaterLookAhead,
+                            lastRoundZeroCd,
+                            reading,
+                            bracketSeating,
+                            pabValue,
+                            bakuSecondaryScore,
+                            edebtBoardCount);
+                case BracketSeating reading ->
+                    new Readings(
+                            upfloaterLookAhead,
+                            lastRoundZeroCd,
+                            floatScore,
+                            reading,
+                            pabValue,
+                            bakuSecondaryScore,
+                            edebtBoardCount);
+                case PabValue reading ->
+                    new Readings(
+                            upfloaterLookAhead,
+                            lastRoundZeroCd,
+                            floatScore,
+                            bracketSeating,
+                            reading,
+                            bakuSecondaryScore,
+                            edebtBoardCount);
+                case BakuSecondaryScore reading ->
+                    new Readings(
+                            upfloaterLookAhead,
+                            lastRoundZeroCd,
+                            floatScore,
+                            bracketSeating,
+                            pabValue,
+                            reading,
+                            edebtBoardCount);
+                case EdebtBoardCount reading ->
+                    new Readings(
+                            upfloaterLookAhead,
+                            lastRoundZeroCd,
+                            floatScore,
+                            bracketSeating,
+                            pabValue,
+                            bakuSecondaryScore,
+                            reading);
+            };
+        }
+    }
+
+    /** Type A colour preferences and every Interpretation at its default (ADR 0003, ADR 0009). */
     public static SwissTeamSystem of(ColourPreferenceType colourPreferences) {
-        return new SwissTeamSystem(
-                colourPreferences,
-                UpfloaterLookAhead.parityMinimum(),
-                LastRoundZeroCdTypeB.strong(),
-                FloatScore.pairing());
+        return new SwissTeamSystem(colourPreferences, Readings.defaults());
+    }
+
+    /** The Interpretation with the value of every reading the system has, at its default unless changed. */
+    @Override
+    public SwissTeamSystem with(Interpretation interpretation) {
+        return new SwissTeamSystem(colourPreferences, readings.with(interpretation));
+    }
+
+    public UpfloaterLookAhead upfloaterLookAhead() {
+        return readings.upfloaterLookAhead();
+    }
+
+    public LastRoundZeroCdTypeB lastRoundZeroCd() {
+        return readings.lastRoundZeroCd();
+    }
+
+    public FloatScore floatScore() {
+        return readings.floatScore();
     }
 
     @Override
-    public SwissTeamSystem with(Interpretation interpretation) {
-        return switch (interpretation) {
-            case UpfloaterLookAhead reading ->
-                new SwissTeamSystem(colourPreferences, reading, lastRoundZeroCd, floatScore);
-            case LastRoundZeroCdTypeB reading ->
-                new SwissTeamSystem(colourPreferences, upfloaterLookAhead, reading, floatScore);
-            case FloatScore reading ->
-                new SwissTeamSystem(colourPreferences, upfloaterLookAhead, lastRoundZeroCd, reading);
-        };
+    public EdebtBoardCount edebtBoardCount() {
+        return readings.edebtBoardCount();
     }
 
     @Override
@@ -77,7 +182,7 @@ public record SwissTeamSystem(
 
     @Override
     public SwissTeamSystem withTeamColourPreferences(ColourPreferenceType preferences) {
-        return new SwissTeamSystem(preferences, upfloaterLookAhead, lastRoundZeroCd, floatScore);
+        return new SwissTeamSystem(preferences, readings);
     }
 
     @Override
@@ -103,10 +208,25 @@ public record SwissTeamSystem(
         return problems;
     }
 
-    /** 1.4: as many points as a drawn match, in the primary score. */
+    /** 1.4: a drawn match's match points, and game points of the PAB's result on every board (KD-2). */
     @Override
     public Points pairingAllocatedByeValue(ScoringScheme scoring) {
-        return drawnMatch(scoring, scoring.primaryScore());
+        return scoring.primaryScore() == PrimaryScore.MATCH_POINTS ? drawnMatch(scoring) : gamePointsOfBye(scoring);
+    }
+
+    @Override
+    public Points secondaryPairingAllocatedByeValue(ScoringScheme scoring) {
+        return scoring.primaryScore() == PrimaryScore.MATCH_POINTS ? gamePointsOfBye(scoring) : drawnMatch(scoring);
+    }
+
+    private Points gamePointsOfBye(ScoringScheme scoring) {
+        var perBoard =
+                switch (readings.pabValue()) {
+                    case WIN -> scoring.win();
+                    case DRAW -> scoring.draw();
+                    case LOSS -> scoring.loss();
+                };
+        return perBoard.times(scoring.matches().map(MatchScoring::boards).orElse(1));
     }
 
     @Override
@@ -115,15 +235,14 @@ public record SwissTeamSystem(
         var round = tournament.nextRound();
         var floatCriteriaLapse = round.value() > settings.numberOfRounds().value() - 2;
         var preferences = new TeamColourPreferences(
-                colourPreferences, lastRoundZeroCd, settings.numberOfRounds().isLast(round));
+                colourPreferences, lastRoundZeroCd(), settings.numberOfRounds().isLast(round));
         var numbers = tournament.pairingNumbers();
-        var secondaryByeValue =
-                drawnMatch(settings.scoring(), settings.scoring().primaryScore().other());
-        var contenders = new TeamContenders(tournament, floatScore, secondaryByeValue).toBePaired(numbers);
+        var contenders = new TeamContenders(tournament, readings, secondaryPairingAllocatedByeValue(settings.scoring()))
+                .toBePaired(numbers);
         var criteria = SwissTeamCriteria.of(preferences, floatCriteriaLapse);
         var trace = new ArrayList<TraceStep>();
-        var pairing = TopScoregroupProcedure.pair(
-                        new TopScoregroupRound(contenders, floatCriteriaLapse, upfloaterLookAhead, criteria))
+        var pairing = TopScoregroupProcedure.pair(new TopScoregroupRound(
+                        contenders, floatCriteriaLapse, upfloaterLookAhead(), criteria, readings.bracketSeating()))
                 .orElseThrow(() -> noLegalPairing(trace));
         pairing.pairingAllocatedBye().ifPresent(team -> trace.add(new TraceStep.ByeDecision(team.id(), "C.04.6 3.4")));
         pairing.brackets().forEach(bracket -> trace.add(bracket.traceStep(criteria)));
@@ -164,10 +283,8 @@ public record SwissTeamSystem(
                 : pair.top().score();
     }
 
-    private static Points drawnMatch(ScoringScheme scoring, PrimaryScore score) {
-        return score == PrimaryScore.MATCH_POINTS
-                ? scoring.matches().map(MatchScoring::draw).orElse(scoring.draw())
-                : scoring.drawnMatchGamePoints();
+    private static Points drawnMatch(ScoringScheme scoring) {
+        return scoring.matches().map(MatchScoring::draw).orElse(scoring.draw());
     }
 
     private static SecondaryScore secondaryScore(TournamentSettings settings) {

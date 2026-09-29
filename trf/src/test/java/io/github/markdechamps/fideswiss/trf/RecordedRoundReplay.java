@@ -2,6 +2,7 @@ package io.github.markdechamps.fideswiss.trf;
 
 import io.github.markdechamps.fideswiss.pairing.RoundPairing;
 import io.github.markdechamps.fideswiss.tournament.Bye;
+import io.github.markdechamps.fideswiss.tournament.Interpretation;
 import io.github.markdechamps.fideswiss.tournament.Round;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
 import io.github.markdechamps.fideswiss.tournament.SwissPairingException;
@@ -24,6 +25,16 @@ final class RecordedRoundReplay {
     static List<String> differences(String name, String trf, SwissRulesEdition edition) {
         var file = TrfReader.read(trf);
         return differences(name, file.with(file.settings().with(edition)));
+    }
+
+    /** The same, pairing under the given Interpretations whatever the file's system reads. */
+    static List<String> differences(String name, String trf, Interpretation... interpretations) {
+        var file = TrfReader.read(trf);
+        var settings = file.settings();
+        for (var interpretation : interpretations) {
+            settings = settings.with(interpretation);
+        }
+        return differences(name, file.with(settings));
     }
 
     private static List<String> differences(String name, TrfTournament file) {

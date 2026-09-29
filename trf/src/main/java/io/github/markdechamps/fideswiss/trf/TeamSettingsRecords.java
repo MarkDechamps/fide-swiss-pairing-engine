@@ -4,6 +4,7 @@ import io.github.markdechamps.fideswiss.pairing.PairingSystems;
 import io.github.markdechamps.fideswiss.tournament.ColourPreferenceType;
 import io.github.markdechamps.fideswiss.tournament.MatchScoring;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
+import io.github.markdechamps.fideswiss.tournament.PabValue;
 import io.github.markdechamps.fideswiss.tournament.Points;
 import io.github.markdechamps.fideswiss.tournament.PrimaryScore;
 import io.github.markdechamps.fideswiss.tournament.Profiles;
@@ -56,9 +57,25 @@ final class TeamSettingsRecords {
                         .map(value -> value.times(boards)))
                 .map(scoring::withPairingAllocatedBye)
                 .orElse(scoring);
+        var system = PairingSystems.swissTeam(colourPreferences(code));
+        var pabValue = pabValue(perBoard, scoring);
         return Profiles.teamSwiss(rounds)
-                .with(PairingSystems.swissTeam(colourPreferences(code)))
+                .with(pabValue.map(system::with).orElse(system))
                 .with(scoring);
+    }
+
+    /** {@code 162}'s {@code P}: the game result of the PAB on a board, when it is a win, a draw or a loss. */
+    private static Optional<PabValue> pabValue(Points perBoard, ScoringScheme scoring) {
+        if (perBoard == null) {
+            return Optional.empty();
+        }
+        if (perBoard.equals(scoring.win())) {
+            return Optional.of(PabValue.WIN);
+        }
+        if (perBoard.equals(scoring.draw())) {
+            return Optional.of(PabValue.DRAW);
+        }
+        return perBoard.equals(scoring.loss()) ? Optional.of(PabValue.LOSS) : Optional.empty();
     }
 
     /**

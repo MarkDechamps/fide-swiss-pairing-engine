@@ -3,6 +3,7 @@ package io.github.markdechamps.fideswiss.swissteam;
 import io.github.markdechamps.fideswiss.history.RoundRecord;
 import io.github.markdechamps.fideswiss.history.TournamentHistory;
 import io.github.markdechamps.fideswiss.topscoregroup.Contender;
+import io.github.markdechamps.fideswiss.tournament.BakuSecondaryScore;
 import io.github.markdechamps.fideswiss.tournament.Bye;
 import io.github.markdechamps.fideswiss.tournament.Colour;
 import io.github.markdechamps.fideswiss.tournament.FloatScore;
@@ -28,13 +29,13 @@ final class TeamContenders {
 
     private final Tournament tournament;
     private final TournamentHistory history;
-    private final FloatScore floatScore;
+    private final SwissTeamSystem.Readings readings;
     private final Points secondaryPairingAllocatedByeValue;
 
-    TeamContenders(Tournament tournament, FloatScore floatScore, Points secondaryPairingAllocatedByeValue) {
+    TeamContenders(Tournament tournament, SwissTeamSystem.Readings readings, Points secondaryPairingAllocatedByeValue) {
         this.tournament = tournament;
         this.history = TournamentHistory.of(tournament);
-        this.floatScore = floatScore;
+        this.readings = readings;
         this.secondaryPairingAllocatedByeValue = secondaryPairingAllocatedByeValue;
     }
 
@@ -107,7 +108,7 @@ final class TeamContenders {
     }
 
     private Points floatScoreBefore(ParticipantId team, RoundNumber round) {
-        return floatScore == FloatScore.PAIRING
+        return readings.floatScore() == FloatScore.PAIRING
                 ? pairingScoreBefore(team, round)
                 : history.of(team).scoreBefore(round).points();
     }
@@ -116,8 +117,14 @@ final class TeamContenders {
         return history.of(team).scoreBefore(round).points().plus(tournament.virtualPointsOf(team, round));
     }
 
+    /**
+     * The real secondary score; under Baku it also holds the round's Virtual Points in match points, as Gacrux adds
+     * them (KD-3, ADR 0009).
+     */
     private Points secondaryScore(ParticipantId team) {
-        var total = Points.ZERO;
+        var total = readings.bakuSecondaryScore() == BakuSecondaryScore.VIRTUAL_MATCH_POINTS
+                ? tournament.virtualPointsOf(team, tournament.nextRound())
+                : Points.ZERO;
         for (var index = 0; index < tournament.rounds().size(); index++) {
             total = total.plus(secondaryPointsIn(team, index));
         }
