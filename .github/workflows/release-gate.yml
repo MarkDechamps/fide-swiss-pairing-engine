@@ -1,0 +1,89 @@
+name: Release gate
+
+# The 50,000-tournament gate of the FIDE endorsement process (Verification strategy), in both directions per
+# Oracle: the Oracles re-pair our tournaments (DutchOracleIT, SwissTeamOracleIT), our check runs on the Oracles' own
+# tournaments (OracleOwnTournamentsIT) and the Oracles' checkers run on ours (OracleCheckerIT). The corpus is split
+# into shards that run in parallel, each with its own seed range, so that no two shards play the same tournament.
+# Called by the Release workflow, and startable by hand to rehearse it.
+on:
+  workflow_call:
+    inputs:
+      tournaments:
+        description: 'Tournaments per test, over all shards'
+        type: number
+        default: 50000
+      shards:
+        description: 'Parallel shards'
+        type: number
+        default: 50
+  workflow_dispatch:
+    inputs:
+      tournaments:
+        description: 'Tournaments per test, over all shards'
+        type: number
+        default: 50000
+      shards:
+        description: 'Parallel shards'
+        type: number
+        default: 50
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      shards: ${{ steps.plan.outputs.shards }}
+      per-shard: ${{ steps.plan.outputs.per-shard }}
+    steps:
+      - id: plan
+        run: |
+          shards=${{ inputs.shards }}
+          total=${{ inputs.tournaments }}
+          echo "shards=$(seq -s, 0 $((shards - 1)) | sed 's/^/[/; s/$/]/')" >> "$GITHUB_OUTPUT"
+          echo "per-shard=$(( (total + shards - 1) / shards ))" >> "$GITHUB_OUTPUT"
+
+  oracle-gate:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - name: Build bbpPairings v6.0.0 and v5.0.1
+        run: |
+          for version in 6.0.0 5.0.1; do
+            curl -fsSL "https://github.com/BieremaBoyzProgramming/bbpPairings/archive/refs/tags/v${version}.tar.gz" | tar -xz
+            make -C "bbpPairings-${version}"
+          done
+      - name: Fetch JaVaFo 2.2
+        run: curl -fsSL -A "Mozilla/5.0" -o javafo.jar https://www.rrweb.org/javafo/current/javafo.jar
+      - name: Fetch Gacrux @ 6419149 and its Python environment
+        run: |
+          git clone https://github.com/OttoMilvang/TieBreakServer.git TieBreakServer
+          git -C TieBreakServer checkout 6419149ede24fa76639a956b1a52ccac0ded730d
+          python3 -m venv gacrux-venv
+          gacrux-venv/bin/pip install networkx
+      - name: Oracle gates, both directions
+        env:
+          FIDESWISS_ORACLE_BBP6: ${{ github.workspace }}/bbpPairings-6.0.0/build/bbpPairings.exe
+          FIDESWISS_ORACLE_BBP5: ${{ github.workspace }}/bbpPairings-5.0.1/build/bbpPairings.exe
+          FIDESWISS_ORACLE_JAVAFO: ${{ github.workspace }}/javafo.jar
+          FIDESWISS_ORACLE_GACRUX: ${{ github.workspace }}/TieBreakServer
+          FIDESWISS_ORACLE_GACRUX_PYTHON: ${{ github.workspace }}/gacrux-venv/bin/python
+        run: >-
+          ./mvnw -B verify -pl oracle-it -am -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false
+          -Dfideswiss.oracle.tournaments=${{ needs.plan.outputs.per-shard }}
+          -Dfideswiss.oracle.seed=$((20260929 + ${{ matrix.shard }} * 1000000))
+      - name: Keep the inputs of every difference
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-failures-${{ matrix.shard }}
+          path: oracle-it/target/oracle-failures/

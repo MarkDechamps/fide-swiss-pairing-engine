@@ -764,7 +764,17 @@ FIDESWISS_ORACLE_BBP6=$HOME/oracles/bbpPairings.exe \
 
 **Acceleration.** The Dutch gates accelerate `fideswiss.oracle.baku` percent of their tournaments by Baku (default 20; the nightly job also runs 100). JaVaFo and bbpPairings accelerate only from fictitious points, so the dialect writes each player's Virtual Points as `XXA` records (JaVaFo manual, "Accelerated rounds"). The summary line ends with the number of accelerated tournaments. Locally, 50 of 50 Baku tournaments: bbpPairings v6.0.0 and v5.0.1 agree in 396 of 396 rounds each; JaVaFo in 367 of 396, the other 29 registered as KD-4.
 
-Not covered yet: our `check` on the oracle's own generated tournaments, and the 50,000-tournament release gate's both-direction run.
+**Both directions.** Two more gates run per program that has a checker and a generator (bbpPairings v6.0.0 and v5.0.1, JaVaFo 2.2; Gacrux has neither):
+
+| Gate | What it does |
+|---|---|
+| `OracleOwnTournamentsIT` | the program's own random tournament generator (`-g <config> -o <file>`, with `-s <seed>` for bbpPairings; JaVaFo takes no seed) plays `fideswiss.oracle.tournaments` tournaments of 14..60 players and 5..11 rounds; our `check` (`Tournament.check`, as `fide-swiss check` runs it, and the declared points) must find every round legal and the system's own pairing. A JaVaFo tournament that fails is kept as generated |
+| `OracleCheckerIT` | the tournaments our generator plays, with every event of the corpus and Baku, are written whole in the program's dialect and given to its checker (`<file> -c`); every round must be accepted |
+| `OracleControlsIT` | positive controls: a bbpPairings tournament with one round re-paired by hand is refused by both Oracle checkers and by ours |
+
+Both programs' `-c` exit 0 even when a round differs (they print the two pairings), so a file counts as accepted only when the exit code is 0 and the output is nothing but the `name: Round #n` lines. Locally, 50 tournaments each: our check finds 403 of 403 (seed 20260929) and 411 of 411 (seed 777) rounds legal and consistent for each of bbpPairings v6.0.0, v5.0.1 and JaVaFo; each checker accepts 50 of 50 of our tournaments (15 and 8 accelerated). Note that JaVaFo's checker does **not** see KD-4: it accepts our pairing of the round where its own `-p` differs, so the register lists no divergence for the checker direction.
+
+**Release gate (50,000 tournaments).** The size is `-Dfideswiss.oracle.tournaments=50000`; the default stays 100 for local runs. The `Release gate` workflow (`.github/workflows/release-gate.yml`, called by `Release` before anything is built or published, and startable by hand with its `tournaments` and `shards` inputs, default 50,000 and 50) builds the Oracles and runs every gate above in shards of the total, each on its own seed range; the inputs of every difference are kept as artifacts. Do not run it locally.
 
 ### 10.1 Gacrux and the Swiss Team System
 

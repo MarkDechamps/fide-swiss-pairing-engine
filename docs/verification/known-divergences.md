@@ -55,3 +55,6 @@ Each entry gives the scope, a minimised input, both outputs, the article, our re
   bye, so the JaVaFo gate plays requested byes like the bbpPairings gates and reports these rounds apart ("registered") instead of failing on them; a
   difference in an input without an `H` bye still fails. 26 of 320 rounds in 40 tournaments (seed 20260929) are registered. Open item of the
   Verification strategy: ask the JaVaFo maintainer with this input, or drop JaVaFo as a 2017 Oracle.
+- **Checker direction:** JaVaFo's `-c` accepts our own pairing of that round (50 of 50 tournaments, 24 rounds where `-p` differs, seed 777), so the divergence
+  shows only when JaVaFo pairs a round with requested half-point byes pending; in check mode the round's `H` results are already recorded. It agrees with the
+  hypothesis above. The checker direction therefore cannot exercise KD-4, and JaVaFo's checker is the weaker of the two Oracle checkers on this point.
