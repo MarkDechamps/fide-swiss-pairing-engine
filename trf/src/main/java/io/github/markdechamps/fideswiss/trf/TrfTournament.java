@@ -17,6 +17,7 @@ import io.github.markdechamps.fideswiss.tournament.RankingKey;
 import io.github.markdechamps.fideswiss.tournament.RequestedBye;
 import io.github.markdechamps.fideswiss.tournament.Round;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
+import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
 import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
@@ -25,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * A TRF read into the library's model: the settings its records declare over the baseline profile, the
@@ -32,6 +34,8 @@ import java.util.Optional;
  * marked absent for the round to be paired.
  */
 public final class TrfTournament {
+
+    private static final Pattern SCORING_PAIR = Pattern.compile("([WDLAPX])\\s*(\\d+(?:\\.\\d+)?)");
 
     private final TournamentSettings settings;
     private final List<Participant> participants;
@@ -75,12 +79,17 @@ public final class TrfTournament {
         var absences = lastColumnOnlyMarksAbsences ? absenceMarks(players, columns) : Map.<ParticipantId, Bye>of();
         var participants = players.stream().map(PlayerRecord::participant).toList();
         var numberOfRounds = declaredNumberOfRounds(records).orElse(Math.max(columns, 1));
-        var profile = Profiles.individualSwiss(NumberOfRounds.of(numberOfRounds))
+        var profile = Profiles.individualSwiss(NumberOfRounds.of(numberOfRounds));
+        var withSystem = firstValue(records, "192")
+                .flatMap(PairingSystemCode::parse)
+                .map(profile::with)
+                .orElse(profile)
                 .with(RankingKey.asListed())
                 .with(initialColour(records, players))
+                .with(scoring(records))
                 .with(swissRulesEdition(records))
                 .with(AccelerationRecords.read(records, numberOfRounds));
-        var settings = declaredTieBreaks(records).map(profile::with).orElse(profile);
+        var settings = declaredTieBreaks(records).map(withSystem::with).orElse(withSystem);
         return new TrfTournament(
                 settings,
                 participants,
@@ -154,11 +163,8 @@ public final class TrfTournament {
 
     /** A {@code _BAKU} suffix adds acceleration (read by AccelerationRecords) and leaves the edition alone. */
     private static SwissRulesEdition editionOf(String code) {
-        return switch (code.toUpperCase().replaceFirst("_BAKU$", "")) {
-            case "FIDE_DUTCH_2017" -> SwissRulesEdition.PRE_2026;
-            case "FIDE_DUTCH", "FIDE_DUTCH_2025", "FIDE_DUTCH_2026" -> SwissRulesEdition.EDITION_2026;
-            default -> throw new InvalidTrfException("Unsupported 192 code " + code);
-        };
+        var system = code.toUpperCase().replaceFirst("_BAKU$", "");
+        return system.equals("FIDE_DUTCH_2017") ? SwissRulesEdition.PRE_2026 : SwissRulesEdition.EDITION_2026;
     }
 
     /** The same file under other settings, such as the command line's overrides. */
@@ -313,6 +319,29 @@ public final class TrfTournament {
             case 'H' -> Bye.HALF_POINT;
             default -> Bye.ZERO_POINT;
         };
+    }
+
+    /**
+     * {@code 162}: pairs of a symbol and its points; {@code W} win, {@code D} draw, {@code L} loss, {@code P} the
+     * PAB. Values not given keep their defaults.
+     */
+    private static ScoringScheme scoring(Map<String, List<String>> records) {
+        var scoring = ScoringScheme.standard();
+        for (var value : records.getOrDefault("162", List.of())) {
+            var matcher = SCORING_PAIR.matcher(value);
+            while (matcher.find()) {
+                var points = Points.of(matcher.group(2));
+                scoring = switch (matcher.group(1).charAt(0)) {
+                    case 'W' ->
+                        new ScoringScheme(points, scoring.draw(), scoring.loss(), scoring.pairingAllocatedBye());
+                    case 'D' -> new ScoringScheme(scoring.win(), points, scoring.loss(), scoring.pairingAllocatedBye());
+                    case 'L' -> new ScoringScheme(scoring.win(), scoring.draw(), points, scoring.pairingAllocatedBye());
+                    case 'P' -> scoring.withPairingAllocatedBye(points);
+                    default -> scoring;
+                };
+            }
+        }
+        return scoring;
     }
 
     private static Optional<Integer> declaredNumberOfRounds(Map<String, List<String>> records) {

@@ -1,5 +1,7 @@
 package io.github.markdechamps.fideswiss.cli;
 
+import io.github.markdechamps.fideswiss.pairing.PairingSystem;
+import io.github.markdechamps.fideswiss.pairing.PairingSystems;
 import io.github.markdechamps.fideswiss.standings.TieBreakEdition;
 import io.github.markdechamps.fideswiss.standings.TieBreakList;
 import io.github.markdechamps.fideswiss.tournament.FloatScore;
@@ -12,8 +14,9 @@ import io.github.markdechamps.fideswiss.tournament.UpfloaterLookAhead;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * The two grammars of TRF CLI surface: a subcommand name first gives the canonical one ({@code pair in.trf -o
@@ -21,7 +24,11 @@ import java.util.Set;
  */
 final class CommandLineParser {
 
-    private static final Set<String> SYSTEMS = Set.of("dutch", "swiss-team");
+    static final Map<String, Supplier<PairingSystem>> SYSTEMS = Map.of(
+            "dutch", PairingSystems::dutch,
+            "dubov", PairingSystems::dubov,
+            "lim", PairingSystems::lim,
+            "swiss-team", PairingSystems::swissTeam);
 
     private CommandLineParser() {}
 
@@ -46,6 +53,14 @@ final class CommandLineParser {
             case "-check" -> {
                 queue.removeFirst();
                 yield new Command.Check(required(queue.pollFirst()), Optional.empty(), SettingsOverrides.NONE);
+            }
+            case "generate" -> {
+                queue.removeFirst();
+                yield GenerateArguments.canonical(queue);
+            }
+            case "-g" -> {
+                queue.removeFirst();
+                yield GenerateArguments.compatible(queue);
             }
             case "version", "-r" -> new Command.Version();
             case "help", "--help", "-h" -> new Command.Help();
@@ -207,17 +222,12 @@ final class CommandLineParser {
 
     private static Optional<SettingsOverrides> settingsFlag(
             String argument, Deque<String> queue, SettingsOverrides overrides) {
-        if (argument.startsWith("--") && SYSTEMS.contains(argument.substring(2))) {
-            return Optional.of(overrides.withSystem(argument.substring(2)));
+        if (argument.startsWith("--") && SYSTEMS.containsKey(argument.substring(2))) {
+            return Optional.of(overrides.withSystem(system(argument.substring(2))));
         }
         return switch (argument) {
-            case "--system" -> {
-                var system = value(queue, argument);
-                if (!SYSTEMS.contains(system)) {
-                    throw new UsageException("unsupported pairing system " + system);
-                }
-                yield Optional.of(overrides.withSystem(system));
-            }
+            case "--system" -> Optional.of(overrides.withSystem(system(value(queue, argument))));
+            case "--maxi-tournament" -> Optional.of(overrides.asMaxiTournament());
             case "--rounds" -> Optional.of(overrides.withRounds(NumberOfRounds.of(number(value(queue, argument)))));
             case "--tiebreaks" -> Optional.of(overrides.withTieBreaks(TieBreakList.parse(value(queue, argument))));
             case "--tiebreak-edition" ->
@@ -242,7 +252,15 @@ final class CommandLineParser {
         };
     }
 
-    private static SwissRulesEdition edition(String value) {
+    static PairingSystem system(String name) {
+        var system = SYSTEMS.get(name);
+        if (system == null) {
+            throw new UsageException("unsupported pairing system " + name);
+        }
+        return system.get();
+    }
+
+    static SwissRulesEdition edition(String value) {
         return switch (value) {
             case "2026" -> SwissRulesEdition.EDITION_2026;
             case "pre-2026" -> SwissRulesEdition.PRE_2026;
@@ -250,7 +268,7 @@ final class CommandLineParser {
         };
     }
 
-    private static TieBreakEdition tieBreakEdition(String value) {
+    static TieBreakEdition tieBreakEdition(String value) {
         return switch (value) {
             case "2026-03" -> TieBreakEdition.EDITION_2026_03;
             case "2024-08" -> TieBreakEdition.EDITION_2024_08;
@@ -266,7 +284,7 @@ final class CommandLineParser {
         };
     }
 
-    private static int number(String value) {
+    static int number(String value) {
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
@@ -274,7 +292,7 @@ final class CommandLineParser {
         }
     }
 
-    private static String value(Deque<String> queue, String flag) {
+    static String value(Deque<String> queue, String flag) {
         if (queue.isEmpty()) {
             throw new UsageException(flag + " needs a value");
         }
@@ -282,7 +300,7 @@ final class CommandLineParser {
     }
 
     /** The next argument, unless it is a flag or there is none. */
-    private static Optional<String> optionalValue(Deque<String> queue) {
+    static Optional<String> optionalValue(Deque<String> queue) {
         var next = queue.peekFirst();
         if (next == null || (next.startsWith("-") && !next.equals("-"))) {
             return Optional.empty();

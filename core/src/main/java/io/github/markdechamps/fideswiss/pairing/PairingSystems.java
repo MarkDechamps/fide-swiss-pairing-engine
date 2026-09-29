@@ -1,9 +1,14 @@
 package io.github.markdechamps.fideswiss.pairing;
 
+import io.github.markdechamps.fideswiss.dubov.DubovSystem;
 import io.github.markdechamps.fideswiss.dutch.DutchSystem;
+import io.github.markdechamps.fideswiss.lim.LimSystem;
 import io.github.markdechamps.fideswiss.swissteam.SwissTeamSystem;
 import io.github.markdechamps.fideswiss.tournament.ColourPreferenceType;
+import io.github.markdechamps.fideswiss.tournament.InvalidSettingsException;
+import io.github.markdechamps.fideswiss.tournament.Problem;
 import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
+import java.util.List;
 
 /** The FIDE Pairing Systems. */
 public final class PairingSystems {
@@ -31,5 +36,29 @@ public final class PairingSystems {
     /** The Swiss Team Pairing System with the competition's colour preferences (1.7). */
     public static PairingSystem swissTeam(ColourPreferenceType colourPreferences) {
         return SwissTeamSystem.of(colourPreferences);
+    }
+
+    /** The Dubov System (C.04.4.1, 2026). */
+    public static PairingSystem dubov() {
+        return new DubovSystem();
+    }
+
+    /** The Lim System (C.04.4.3, 2026), not declared a Maxi-tournament. */
+    public static PairingSystem lim() {
+        return lim(MaxiTournament.NOT_DECLARED);
+    }
+
+    /** The same Lim System declared a Maxi-tournament; only Lim knows the setting (C.04.4.3 3.2.3, 3.8, 5.7). */
+    public static PairingSystem asMaxiTournament(PairingSystem system) {
+        if (!(system instanceof LimSystem)) {
+            throw new InvalidSettingsException(List.of(Problem.citing(
+                    "C.04.4.3 3.2.3", "only the Lim System has a Maxi-tournament setting, not " + system.name())));
+        }
+        return lim(MaxiTournament.DECLARED);
+    }
+
+    /** The Lim System (C.04.4.3, 2026), declared a Maxi-tournament or not by the organiser. */
+    public static PairingSystem lim(MaxiTournament maxiTournament) {
+        return new LimSystem(maxiTournament);
     }
 }
