@@ -87,17 +87,13 @@ final class TeamTrfWriter {
      */
     private String scoringRecord() {
         var scoring = tournament.settings().scoring();
-        var perBoard = tournament.settings().pairingAllocatedByeValue();
-        var pab = scoring.matches().orElseThrow().primary() == PrimaryScore.GAME_POINTS
-                ? perBoard.toBigDecimal().divide(java.math.BigDecimal.valueOf(boards), 4, RoundingMode.HALF_UP)
-                : scoring.draw().toBigDecimal();
         var line = new StringBuilder("162");
         var column = 6;
         var values = new String[] {
             "W" + String.format("%4s", decimal(scoring.win())),
             "D" + String.format("%4s", decimal(scoring.draw())),
             "L" + String.format("%4s", decimal(scoring.loss())),
-            "P" + String.format("%4s", pabPerBoard(pab))
+            "P" + String.format("%4s", pabPerBoard())
         };
         for (var value : values) {
             TrfWriter.put(line, column, value);
@@ -106,8 +102,17 @@ final class TeamTrfWriter {
         return line.toString();
     }
 
-    private static String pabPerBoard(java.math.BigDecimal value) {
-        return value.setScale(1, RoundingMode.HALF_UP).toPlainString();
+    /** The PAB's game points per board: its primary value spread over the boards under game points, else a draw. */
+    private String pabPerBoard() {
+        var scoring = tournament.settings().scoring();
+        var perBoard = scoring.matches().orElseThrow().primary() == PrimaryScore.GAME_POINTS
+                ? tournament
+                        .settings()
+                        .pairingAllocatedByeValue()
+                        .toBigDecimal()
+                        .divide(java.math.BigDecimal.valueOf(boards), 4, RoundingMode.HALF_UP)
+                : scoring.draw().toBigDecimal();
+        return perBoard.setScale(1, RoundingMode.HALF_UP).toPlainString();
     }
 
     /** {@code 362}: match points of a win, draw and loss; {@code 320} the PAB's when the scoring states it. */
@@ -217,11 +222,17 @@ final class TeamTrfWriter {
         return outcome.games().get(board - 1);
     }
 
+    /** A member's points of a round: the game, or a bye's per-board points (the PAB's are the {@code 162} {@code P}). */
     private Points gamePointsOf(Round round, ParticipantId team, int board) {
         var scoring = tournament.settings().scoring();
         return round.boardOf(team)
                 .map(match -> scoring.pointsFor(gameOf(match, board).resultOf(match.colourOf(team))))
-                .orElse(Points.ZERO);
+                .orElseGet(() -> switch (round.byeOf(team).orElse(Bye.ZERO_POINT)) {
+                    case PAIRING_ALLOCATED -> Points.of(pabPerBoard());
+                    case FULL_POINT -> scoring.win();
+                    case HALF_POINT -> scoring.draw();
+                    case ZERO_POINT, WITHDRAWN, NOT_YET_ENTERED -> Points.ZERO;
+                });
     }
 
     /** The team's match points or game points over the recorded rounds, byes included (C.04.6 1.4). */

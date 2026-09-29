@@ -1,5 +1,6 @@
 package io.github.markdechamps.fideswiss.oracleit;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
@@ -15,7 +16,12 @@ public enum OraclePrograms {
     /** bbpPairings v5.0.1, an Oracle of the Dutch System 2017 (the pre-2026 Swiss Rules Edition). */
     BBP_V5("bbpPairings v5.0.1", "bbp5", OracleDialect.BBP, List.of("--dutch")),
     /** JaVaFo 2.2, an Oracle of the Dutch System 2017; a {@code .jar} is run with {@code java -jar}. */
-    JAVAFO("JaVaFo 2.2", "javafo", OracleDialect.JAVAFO, List.of());
+    JAVAFO("JaVaFo 2.2", "javafo", OracleDialect.JAVAFO, List.of()),
+    /**
+     * Gacrux (TieBreakServer) @ 6419149 with the {@code tpn-order} patch (Ruling G1), the Oracle of the Swiss Team System
+     * 2026; the path is its clone, and Python with {@code networkx} is {@code python3} or {@code fideswiss.oracle.gacrux.python}.
+     */
+    GACRUX("Gacrux @ 6419149 (tpn-order)", "gacrux", OracleDialect.GACRUX, List.of());
 
     private final String label;
     private final String key;
@@ -53,8 +59,19 @@ public enum OraclePrograms {
     }
 
     private PairingOracle program(String path) {
+        if (dialect == OracleDialect.GACRUX) {
+            return new GacruxProgram(label, Path.of(path), python());
+        }
         var command = path.endsWith(".jar") ? List.of(java(), "-jar", path) : List.of(path);
         return new ExternalPairingProgram(label, command, flags, dialect);
+    }
+
+    /** The Python that has Gacrux's requirements: {@code -Dfideswiss.oracle.gacrux.python} or {@code FIDESWISS_ORACLE_GACRUX_PYTHON}. */
+    private static String python() {
+        return Optional.ofNullable(System.getProperty("fideswiss.oracle.gacrux.python"))
+                .or(() -> Optional.ofNullable(System.getenv("FIDESWISS_ORACLE_GACRUX_PYTHON")))
+                .filter(value -> !value.isBlank())
+                .orElse("python3");
     }
 
     private static String java() {

@@ -82,13 +82,14 @@ public record GeneratorSettings(
 
     /**
      * The defaults of a team event (the Swiss Team System or the Olympiad Pairing Rules): 8 to 40 teams over 5 to 11
-     * rounds, two to six boards, and forfeits and byes rarer than in an individual event, since every match is decided
+     * rounds, two to six boards, teams all rated with distinct strengths, and forfeits and byes rarer than in an individual event, since every match is decided
      * over several boards. The rates follow the Gacrux driver's (2% of boards, 2% of matches).
      */
     public static GeneratorSettings ofTeams(TournamentSettings tournament) {
         return of(tournament)
                 .withPlayers(Range.of(8, 40))
                 .withBoards(Range.of(2, 6))
+                .withUnratedPercentage(Range.of(0))
                 .withRounds(Range.of(5, 11))
                 .withForfeitRate(Range.of(30, 300))
                 .withHalfPointByeRate(Range.of(100, 3225))

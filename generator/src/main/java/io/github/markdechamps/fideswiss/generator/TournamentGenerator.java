@@ -223,6 +223,12 @@ public final class TournamentGenerator {
                 strengthsDrawn.add(random.nextInt(parameters.lowestRating(), parameters.highestRating() + 1));
             }
             strengthsDrawn.sort((a, b) -> Integer.compare(b, a));
+            if (isTeamEvent()) {
+                // A team's strength is what ranks it (TPN 1 is the strongest): no two teams share one.
+                for (var index = 1; index < strengthsDrawn.size(); index++) {
+                    strengthsDrawn.set(index, Math.min(strengthsDrawn.get(index), strengthsDrawn.get(index - 1) - 1));
+                }
+            }
             var unrated = chosenIndexes(random, strengthsDrawn.size(), parameters.unrated());
             var rated = new ArrayList<Integer>();
             var hidden = new ArrayList<Integer>();
