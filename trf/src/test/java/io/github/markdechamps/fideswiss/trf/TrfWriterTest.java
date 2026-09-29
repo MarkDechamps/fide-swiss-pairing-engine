@@ -128,11 +128,12 @@ class TrfWriterTest {
     class GivenAnotherPairingSystem {
 
         @ParameterizedTest
-        @CsvSource({"dubov, FIDE_DUBOV", "lim, FIDE_LIM", "dutch-2017, FIDE_DUTCH_2017"})
+        @CsvSource({"dubov, FIDE_DUBOV", "burstein, FIDE_BURSTEIN", "lim, FIDE_LIM", "dutch-2017, FIDE_DUTCH_2017"})
         void writesItsCodeAndReadsItBack(String name, String code) {
             var settings =
                     switch (name) {
                         case "dubov" -> settings().with(PairingSystems.dubov());
+                        case "burstein" -> settings().with(PairingSystems.burstein());
                         case "lim" -> settings().with(PairingSystems.lim());
                         default -> settings().with(SwissRulesEdition.PRE_2026);
                     };

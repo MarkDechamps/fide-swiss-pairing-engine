@@ -27,6 +27,7 @@ final class CommandLineParser {
     static final Map<String, Supplier<PairingSystem>> SYSTEMS = Map.of(
             "dutch", PairingSystems::dutch,
             "dubov", PairingSystems::dubov,
+            "burstein", PairingSystems::burstein,
             "lim", PairingSystems::lim,
             "swiss-team", PairingSystems::swissTeam);
 

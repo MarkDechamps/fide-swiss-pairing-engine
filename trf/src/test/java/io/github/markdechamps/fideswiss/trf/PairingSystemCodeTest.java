@@ -20,6 +20,9 @@ class PairingSystemCodeTest {
         "FIDE_DUTCH_2025, C.04.3 Dutch System 2026",
         "FIDE_DUBOV, C.04.4.1 Dubov System 2026",
         "FIDE_DUBOV_2026, C.04.4.1 Dubov System 2026",
+        "FIDE_BURSTEIN, C.04.4.2 Burstein System 2026",
+        "FIDE_BURSTEIN_2026, C.04.4.2 Burstein System 2026",
+        "FIDE_BURSTEIN_BAKU, C.04.4.2 Burstein System 2026",
         "FIDE_LIM, C.04.4.3 Lim System 2026",
         "FIDE_LIM_2026, C.04.4.3 Lim System 2026",
         "FIDE_DUTCH_BAKU, C.04.3 Dutch System 2026",
@@ -32,7 +35,7 @@ class PairingSystemCodeTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"CUSTOM_SWISS", "FIDE_BURSTEIN", "FIDE_BURSTEIN_BAKU", "NONSENSE"})
+    @ValueSource(strings = {"CUSTOM_SWISS", "FIDE_BURSTEIN_2025", "NONSENSE"})
     void rejectsACodeItCannotPair(String code) {
         assertThatThrownBy(() -> TrfReader.read("012 Test\r192 " + code + "\r" + PLAYERS))
                 .isInstanceOf(InvalidTrfException.class)
