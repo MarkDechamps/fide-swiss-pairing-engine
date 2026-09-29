@@ -30,42 +30,75 @@ public final class OracleGate {
         }
     }
 
-    /** The outcome of one run: how many rounds were compared, how many agreed, and each tournament's first difference. */
-    public record Report(String oracle, int tournaments, int rounds, int agreements, List<Difference> differences) {
+    /** A difference the register of Known Divergences recognises, under its {@code id} (KD-n). */
+    public record Registered(String id, Difference difference) {}
+
+    /**
+     * The outcome of one run: how many rounds were compared and agreed, the rounds that differ without being
+     * registered (each tournament's first; these fail the gate) and the registered ones (all of them).
+     */
+    public record Report(
+            String oracle,
+            int tournaments,
+            int rounds,
+            int agreements,
+            List<Difference> differences,
+            List<Registered> registered) {
 
         public String summary() {
             return oracle + ": " + agreements + " of " + rounds + " rounds agree in " + tournaments + " tournaments, "
-                    + differences.size() + " with a difference";
+                    + differences.size() + " with an unregistered difference, " + registered.size()
+                    + " registered rounds" + registeredCounts();
+        }
+
+        private String registeredCounts() {
+            var counts = new java.util.TreeMap<String, Integer>();
+            registered.forEach(entry -> counts.merge(entry.id(), 1, Integer::sum));
+            return counts.isEmpty() ? "" : " " + counts;
         }
     }
 
     private final PairingOracle oracle;
     private final SwissRulesEdition edition;
+    private final KnownDivergences register;
 
     public OracleGate(PairingOracle oracle, SwissRulesEdition edition) {
+        this(oracle, edition, KnownDivergences.register());
+    }
+
+    public OracleGate(PairingOracle oracle, SwissRulesEdition edition, KnownDivergences register) {
         this.oracle = oracle;
         this.edition = edition;
+        this.register = register;
     }
 
     public Report compare(List<GeneratedTournament.Completed> tournaments) {
         var differences = new ArrayList<Difference>();
+        var registered = new ArrayList<Registered>();
         var rounds = 0;
         var agreements = 0;
         for (var completed : tournaments) {
             var outcome = compare(completed);
             rounds += outcome.compared();
             agreements += outcome.agreed();
-            outcome.difference().ifPresent(differences::add);
+            differences.addAll(outcome.unregistered());
+            registered.addAll(outcome.registered());
         }
-        return new Report(oracle.name(), tournaments.size(), rounds, agreements, differences);
+        return new Report(oracle.name(), tournaments.size(), rounds, agreements, differences, registered);
     }
 
-    private record Outcome(int compared, int agreed, Optional<Difference> difference) {}
+    private record Outcome(int compared, int agreed, List<Difference> unregistered, List<Registered> registered) {}
 
+    /**
+     * Each round is paired by the Oracle from our history, so a registered difference does not spoil the rounds
+     * after it; the first unregistered one ends the tournament.
+     */
     private Outcome compare(GeneratedTournament.Completed completed) {
         var name = "seed-" + completed.seed();
         var file = read(completed.tournament());
+        var registered = new ArrayList<Registered>();
         var compared = 0;
+        var agreed = 0;
         for (var index = 0; index < file.recordedRounds().size(); index++) {
             var round = RoundNumber.of(index + 1);
             var before = file.tournamentBefore(round);
@@ -73,14 +106,18 @@ public final class OracleGate {
             compared++;
             var ours = ours(before);
             var theirs = oracle.pair(input);
-            if (!agree(ours, theirs)) {
-                return new Outcome(
-                        compared,
-                        compared - 1,
-                        Optional.of(new Difference(name, round, describe(ours), describe(theirs), input)));
+            if (agree(ours, theirs)) {
+                agreed++;
+                continue;
             }
+            var difference = new Difference(name, round, describe(ours), describe(theirs), input);
+            var id = register.classify(oracle.name(), input);
+            if (id.isEmpty()) {
+                return new Outcome(compared, agreed, List.of(difference), registered);
+            }
+            registered.add(new Registered(id.get(), difference));
         }
-        return new Outcome(compared, compared, Optional.empty());
+        return new Outcome(compared, agreed, List.of(), registered);
     }
 
     private TrfTournament read(Tournament tournament) {

@@ -35,8 +35,6 @@ class DutchOracleIT {
     private static final CorpusSeed CORPUS = CorpusSeed.of(Long.getLong("fideswiss.oracle.seed", 20260929L));
     private static final int TOURNAMENTS = Integer.getInteger("fideswiss.oracle.tournaments", 100);
     private static final String ALL_EVENTS = "forfeits,byes,withdrawals,late-entries";
-    /** JaVaFo 2.2 pairs differently when half-point byes are in play: Known Divergence KD-4. */
-    private static final String JAVAFO_EVENTS = "forfeits,withdrawals,late-entries";
 
     private static final Range NEVER = Range.of(1_000_000, 1_000_000);
     private static final Path FAILURES = Path.of("target", "oracle-failures");
@@ -53,7 +51,7 @@ class DutchOracleIT {
 
     @Test
     void jaVaFoPairsDutch2017AsWeDo() throws IOException {
-        gate(OraclePrograms.JAVAFO, SwissRulesEdition.PRE_2026, JAVAFO_EVENTS);
+        gate(OraclePrograms.JAVAFO, SwissRulesEdition.PRE_2026, ALL_EVENTS);
     }
 
     private static void gate(OraclePrograms program, SwissRulesEdition edition, String defaultEvents)
