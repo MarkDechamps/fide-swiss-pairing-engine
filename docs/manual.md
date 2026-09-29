@@ -739,7 +739,7 @@ For every gate, the Random Tournament Generator plays a corpus of Dutch tourname
 |---|---|---|
 | `bbpPairingsV6PairsDutch2026AsWeDo` | bbpPairings v6.0.0 | Dutch 2026 |
 | `bbpPairingsV5PairsDutch2017AsWeDo` | bbpPairings v5.0.1 | Dutch 2017 (pre-2026 edition) |
-| `jaVaFoPairsDutch2017AsWeDo` | JaVaFo 2.2 | Dutch 2017, without requested byes (Known Divergence KD-4) |
+| `jaVaFoPairsDutch2017AsWeDo` | JaVaFo 2.2 | Dutch 2017; rounds that differ only through KD-4 (half-point byes) are registered, not failed |
 | `SwissTeamOracleIT.gacruxPairsSwissTeam2026AsWeDo` | Gacrux (TieBreakServer) @ 6419149 with the `tpn-order` patch | Swiss Team 2026, team tournaments of every colour preference type and score format, with forfeits and requested byes (10.1) |
 
 Point each gate to its program with a system property or an environment variable. A gate whose program is not configured is skipped, and the skip message names both.
@@ -760,11 +760,15 @@ FIDESWISS_ORACLE_BBP6=$HOME/oracles/bbpPairings.exe \
   -Dfideswiss.oracle.tournaments=500 -Dfideswiss.oracle.seed=42
 ```
 
-Not covered yet: our `check` on the oracle's own generated tournaments, the 50,000-tournament release gate's both-direction run, and reading the Known Divergence register automatically.
+**Known Divergences.** The gates read the register's machine-readable companion, `oracle-it/src/main/resources/known-divergences.tsv` (tab-separated: id, the start of the Oracle's name, a regular expression its input matches). A differing round the register recognises is counted apart and printed as `registered rounds {KD-4=29}`; it does not fail the gate, and the rounds after it are still compared (each round is paired from our history, so they are independent). Any other difference fails the gate and ends its tournament, as before. Currently KD-4 (JaVaFo, an `H` bye in the input) and KD-3 (Gacrux, `250` records; the Gacrux gate also leaves those tournaments out). Add a line to the file with each new register entry.
+
+**Acceleration.** The Dutch gates accelerate `fideswiss.oracle.baku` percent of their tournaments by Baku (default 20; the nightly job also runs 100). JaVaFo and bbpPairings accelerate only from fictitious points, so the dialect writes each player's Virtual Points as `XXA` records (JaVaFo manual, "Accelerated rounds"). The summary line ends with the number of accelerated tournaments. Locally, 50 of 50 Baku tournaments: bbpPairings v6.0.0 and v5.0.1 agree in 396 of 396 rounds each; JaVaFo in 367 of 396, the other 29 registered as KD-4.
+
+Not covered yet: our `check` on the oracle's own generated tournaments, and the 50,000-tournament release gate's both-direction run.
 
 ### 10.1 Gacrux and the Swiss Team System
 
-The Gacrux gate plays team tournaments (7.7) with `--swiss-team`'s defaults narrowed to 6..24 teams, 4..11 rounds and 2..6 boards, a drawn format for each (`--random-team-format`), Baku at random, forfeits and requested half- and zero-point byes (`fideswiss.oracle.events` defaults to `forfeits,byes` here). It runs Gacrux as `python -c <driver> <clone> <file> <round>` in the clone's `gacrux` directory; the driver is ours and only imports Gacrux's own modules (nothing of Gacrux is in this repository). It applies **Ruling G1** in front of Gacrux's bracket seating, `update_bracket` over the nodes sorted by TPN (C.04.6 3.6.1; Known Divergence KD-1), which is what "patched" means. Gacrux must be at commit 6419149 (v1.10.62), and its Python needs `networkx`:
+The Gacrux gate plays team tournaments (7.7) with `--swiss-team`'s defaults narrowed to 6..24 teams, 4..11 rounds and 2..6 boards, a drawn format for each (`--random-team-format`), Baku at random, forfeits and requested half- and zero-point byes (`fideswiss.oracle.events` defaults to `forfeits,byes` here; add `withdrawals` and `late-entries` to play team withdrawals and late entries, as the nightly job does: 939 of 939 rounds agree in 136 tournaments, no new divergence). It runs Gacrux as `python -c <driver> <clone> <file> <round>` in the clone's `gacrux` directory; the driver is ours and only imports Gacrux's own modules (nothing of Gacrux is in this repository). It applies **Ruling G1** in front of Gacrux's bracket seating, `update_bracket` over the nodes sorted by TPN (C.04.6 3.6.1; Known Divergence KD-1), which is what "patched" means. Gacrux must be at commit 6419149 (v1.10.62), and its Python needs `networkx`:
 
 ```sh
 git clone <TieBreakServer> ~/oracles/TieBreakServer && git -C ~/oracles/TieBreakServer checkout 6419149

@@ -8,6 +8,8 @@ Every change that can alter a pairing, a standing or a check verdict is listed u
 
 ### Added
 
+- Oracle gates read the Known Divergence register (`oracle-it/src/main/resources/known-divergences.tsv`): only unregistered differences fail, registered ones are counted and reported apart; the JaVaFo gate now plays requested byes. KD-4 (JaVaFo and half-point byes) is analysed in `docs/verification/known-divergences.md`.
+- Oracle gates for accelerated (Baku) Dutch tournaments: the JaVaFo/bbpPairings dialect writes `XXA` records; `fideswiss.oracle.baku` sets the accelerated share. The Gacrux gate can play team withdrawals and late entries (`fideswiss.oracle.events`), and the nightly workflow runs Gacrux (pinned at 6419149) and both extra runs.
 - The immutable `Tournament` snapshot: participants, recorded rounds, requested byes, withdrawals, late entries (GHR 2.4) and corrections (GHR 4.3), with the `individualSwiss` and `acceleratedOpen` profiles.
 - The Dutch System (C.04.3, 2026) with the Basic and General Handling Rules (C.04.1/C.04.2, 2026): the literal bracket procedure of Articles 3–4 with an exact optimum finder, colour allocation (Article 5), board order (GHR 3.6) and a pairing trace.
 - The Dubov System (C.04.4.1, 2026): brackets by score, upfloaters by the cheapest perfect matching, the 3.2.4 shifters and transpositions, colour allocation (Article 5); a test-scope Literal Enumerator checks it.
