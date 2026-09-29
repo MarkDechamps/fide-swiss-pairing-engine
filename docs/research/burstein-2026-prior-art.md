@@ -4,7 +4,7 @@ Purpose: for each ambiguous point in the README section "Readings of the Burstei
 
 ## Sources and how far they can be trusted
 
-- **FIDE text.** C.04.4.2 (2026), as fetched 2026-09-23: `/home/mark/swiss-burstein/prototypes/burstein-algorithm/C040402202602.txt`. Cited by line.
+- **FIDE text.** C.04.4.2 (2026), as fetched 2026-09-23 (FIDE Handbook, file C040402202602). Cited by line.
 - **bbpPairings** commit 8f9e3c5, `src/swisssystems/burstein.cpp` and `common.cpp`. Its README calls the Burstein part "a flawed implementation of a previous version" (README.txt:15-18), not endorsed. It is the **old text**: Index = Sonneborn-Berger, then Buchholz, then Median; unplayed games count as draws for opponents. So it can only speak on points where the old and new text overlap. It has no source for the 2026 edition.
 - **chesspairing** (Go) commit ba9d4f6, `pairing/burstein/*.go`. AI-assisted; it covers Burstein loosely. Its own docs say there is no look-ahead and no float criteria (`docs/content/en/docs/pairing-systems/burstein.md:10,125-126`). It does not implement [C6] or [C7] at all, so it is a weak witness.
 - **Not checked** (closed source or not reachable offline): Vega, Swiss-Manager, and any Systems of Pairings and Programs Commission (SPP) commentary. No local copy of an SPP note on Burstein exists in the repo or the prototype. Treat "no commentary found" as "not looked at online", not as proof none exists.
