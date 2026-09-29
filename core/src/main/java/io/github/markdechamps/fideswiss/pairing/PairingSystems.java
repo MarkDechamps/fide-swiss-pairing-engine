@@ -1,5 +1,6 @@
 package io.github.markdechamps.fideswiss.pairing;
 
+import io.github.markdechamps.fideswiss.burstein.BursteinSystem;
 import io.github.markdechamps.fideswiss.dubov.DubovSystem;
 import io.github.markdechamps.fideswiss.dutch.DutchSystem;
 import io.github.markdechamps.fideswiss.lim.LimSystem;
@@ -41,6 +42,11 @@ public final class PairingSystems {
     /** The Dubov System (C.04.4.1, 2026). */
     public static PairingSystem dubov() {
         return new DubovSystem();
+    }
+
+    /** The Burstein System (C.04.4.2, 2026), its seeding rounds paired by the Dutch System 2026 (1.6). */
+    public static PairingSystem burstein() {
+        return new BursteinSystem();
     }
 
     /** The Lim System (C.04.4.3, 2026), not declared a Maxi-tournament. */

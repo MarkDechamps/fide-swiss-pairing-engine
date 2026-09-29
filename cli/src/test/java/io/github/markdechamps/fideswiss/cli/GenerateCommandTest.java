@@ -93,6 +93,7 @@ class GenerateCommandTest {
         void playsTheSystemGiven() throws IOException {
             assertThat(generated("--system", "dubov")).contains("\r\n192 FIDE_DUBOV\r\n");
             assertThat(generated("--lim", "--maxi-tournament")).contains("\r\n192 FIDE_LIM\r\n");
+            assertThat(generated("--burstein")).contains("\r\n192 FIDE_BURSTEIN\r\n");
         }
 
         @Test

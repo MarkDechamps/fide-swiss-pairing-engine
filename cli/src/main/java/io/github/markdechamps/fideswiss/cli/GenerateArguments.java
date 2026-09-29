@@ -59,7 +59,7 @@ final class GenerateArguments {
         return new Command.Generate(seed, count, output, baseline, configuration, model, overrides);
     }
 
-    /** JaVaFo/bbp: {@code [--dutch|--dubov|--lim] -g [<cfg>|<seed>] -o <out> [-s <seed>]}; one tournament. */
+    /** JaVaFo/bbp: {@code [--dutch|--dubov|--burstein|--lim] -g [<cfg>|<seed>] -o <out> [-s <seed>]}; one tournament. */
     static Command compatible(Deque<String> queue) {
         Optional<Long> seed = Optional.empty();
         Optional<String> configuration = Optional.empty();

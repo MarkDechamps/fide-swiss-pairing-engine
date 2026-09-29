@@ -22,11 +22,12 @@ class InvariantRunTest {
     private static final CorpusSeed CORPUS = CorpusSeed.of(Long.getLong("fideswiss.invariant.seed", 20260925L));
     private static final int TOURNAMENTS = Integer.getInteger("fideswiss.invariant.tournaments", 200);
 
-    /** Every system with the editions it has a text for: Dubov and Lim exist only in 2026. */
+    /** Every system with the editions it has a text for: Dubov, Burstein and Lim exist only in 2026. */
     enum PlayedSystem {
         DUTCH_2026(PairingSystems.dutch(), SwissRulesEdition.EDITION_2026),
         DUTCH_2017(PairingSystems.dutch(), SwissRulesEdition.PRE_2026),
         DUBOV_2026(PairingSystems.dubov(), SwissRulesEdition.EDITION_2026),
+        BURSTEIN_2026(PairingSystems.burstein(), SwissRulesEdition.EDITION_2026),
         LIM_2026(PairingSystems.lim(), SwissRulesEdition.EDITION_2026);
 
         private final PairingSystem system;

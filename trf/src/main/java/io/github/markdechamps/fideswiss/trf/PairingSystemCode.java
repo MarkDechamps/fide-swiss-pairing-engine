@@ -23,6 +23,8 @@ final class PairingSystemCode {
             "FIDE_DUTCH_2017", PairingSystems::dutch,
             "FIDE_DUBOV", PairingSystems::dubov,
             "FIDE_DUBOV_2026", PairingSystems::dubov,
+            "FIDE_BURSTEIN", PairingSystems::burstein,
+            "FIDE_BURSTEIN_2026", PairingSystems::burstein,
             "FIDE_LIM", PairingSystems::lim,
             "FIDE_LIM_2026", PairingSystems::lim);
 
@@ -40,6 +42,9 @@ final class PairingSystemCode {
         }
         if (name.startsWith("C.04.4.1 ")) {
             return "FIDE_DUBOV";
+        }
+        if (name.startsWith("C.04.4.2 ")) {
+            return "FIDE_BURSTEIN";
         }
         if (name.startsWith("C.04.4.3 ")) {
             return "FIDE_LIM";
