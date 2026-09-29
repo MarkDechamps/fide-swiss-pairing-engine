@@ -2,9 +2,13 @@ package io.github.markdechamps.fideswiss.cli;
 
 import io.github.markdechamps.fideswiss.standings.TieBreakEdition;
 import io.github.markdechamps.fideswiss.standings.TieBreakList;
+import io.github.markdechamps.fideswiss.tournament.FloatScore;
 import io.github.markdechamps.fideswiss.tournament.InitialColour;
+import io.github.markdechamps.fideswiss.tournament.Interpretation;
+import io.github.markdechamps.fideswiss.tournament.LastRoundZeroCdTypeB;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
+import io.github.markdechamps.fideswiss.tournament.UpfloaterLookAhead;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -17,7 +21,7 @@ import java.util.Set;
  */
 final class CommandLineParser {
 
-    private static final Set<String> SYSTEMS = Set.of("dutch");
+    private static final Set<String> SYSTEMS = Set.of("dutch", "swiss-team");
 
     private CommandLineParser() {}
 
@@ -204,7 +208,7 @@ final class CommandLineParser {
     private static Optional<SettingsOverrides> settingsFlag(
             String argument, Deque<String> queue, SettingsOverrides overrides) {
         if (argument.startsWith("--") && SYSTEMS.contains(argument.substring(2))) {
-            return Optional.of(overrides);
+            return Optional.of(overrides.withSystem(argument.substring(2)));
         }
         return switch (argument) {
             case "--system" -> {
@@ -212,7 +216,7 @@ final class CommandLineParser {
                 if (!SYSTEMS.contains(system)) {
                     throw new UsageException("unsupported pairing system " + system);
                 }
-                yield Optional.of(overrides);
+                yield Optional.of(overrides.withSystem(system));
             }
             case "--rounds" -> Optional.of(overrides.withRounds(NumberOfRounds.of(number(value(queue, argument)))));
             case "--tiebreaks" -> Optional.of(overrides.withTieBreaks(TieBreakList.parse(value(queue, argument))));
@@ -220,7 +224,21 @@ final class CommandLineParser {
                 Optional.of(overrides.withTieBreakEdition(tieBreakEdition(value(queue, argument))));
             case "--initial-colour" -> Optional.of(overrides.withInitialColour(colour(value(queue, argument))));
             case "--edition" -> Optional.of(overrides.withEdition(edition(value(queue, argument))));
+            case "--interpretation" -> Optional.of(overrides.with(interpretation(value(queue, argument))));
             default -> Optional.empty();
+        };
+    }
+
+    /** {@code <name>=<value>}: one reading of ADR 0003, in the kebab-case of TRF CLI surface. */
+    private static Interpretation interpretation(String value) {
+        return switch (value) {
+            case "upfloater-look-ahead=parity-minimum" -> UpfloaterLookAhead.parityMinimum();
+            case "upfloater-look-ahead=graded" -> UpfloaterLookAhead.graded();
+            case "last-round-zero-cd-type-b=strong" -> LastRoundZeroCdTypeB.strong();
+            case "last-round-zero-cd-type-b=none" -> LastRoundZeroCdTypeB.none();
+            case "float-score=pairing" -> FloatScore.pairing();
+            case "float-score=real" -> FloatScore.real();
+            default -> throw new UsageException("unknown --interpretation " + value);
         };
     }
 
