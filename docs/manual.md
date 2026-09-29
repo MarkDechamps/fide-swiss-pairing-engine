@@ -33,7 +33,7 @@ The project is **pre-alpha**. Every system below is `experimental`: it pairs rou
 | C.04.5 | Double-Swiss System | 2026 | experimental; no Oracle exists, checked against a plain enumeration of the text |
 | C.04.6 | Swiss Team Pairing System | 2026 | experimental; matches a patched Gacrux on a 40-tournament regression corpus |
 | C.04.7 | Acceleration methods (Baku, explicit virtual points) | 2026 | implemented for Dutch, Dubov, Burstein, Lim and Double-Swiss |
-| C.07 | Tie-Breaks | 2026-03 and 2024-08 editions | implemented for individual tournaments; team tie-breaks **planned** |
+| C.07 | Tie-Breaks | 2026-03 and 2024-08 editions | implemented for individual and team tournaments |
 
 The Oracle results are the ones stated in `README.md` at the time of writing; the README table is the maintained record.
 
@@ -386,7 +386,7 @@ Pairs teams for a team event. The PAB is decided first, then the top scoregroup 
 - Primary score: match points or game points; a second score for colours. Set by the `192` suffixes `_MP`/`_GP`, the match scoring by `362`, the game scoring by `162`, the boards by `352`, and the PAB by `320`.
 - Colour preference type (C.04.6 1.7): `TYPE_A` (simple preferences only; the default), `TYPE_B` (strong and mild preferences) or none. It is chosen by the `_TYPEA` / `_TYPEB` suffix of `192`.
 - Baku acceleration is refused when game points are the primary score (`[C.04.7 1.4.4]`), and the system needs match scoring (`[C.04.6 1.2] The Swiss Team System needs match scoring (TRF 362)`).
-- Team tie-breaks are **planned**; a team file has an empty tie-break list today.
+- A team file has an empty tie-break list until it declares one (`202`/`212`) or `--tiebreaks` gives one: the team tie-breaks are in section 6.4.
 - The 2026 edition only.
 
 **Interpretations.** Where the C.04.6 text literally allows two readings, the library follows the reading of its Oracle by default and lets you choose the other with `--interpretation <name>=<value>` (repeatable). Changing a default is a major-version change (ADR 0003, ADR 0008).
@@ -467,14 +467,15 @@ Implemented individual tie-breaks (C.07 art. 5):
 | `APRO`, `APPO` | average performance rating of opponents, average perfect performance of opponents |
 | `RTNG` | the participant's own rating (2026-03 only) |
 
-Modifiers, after a slash: `/C1`, `/C2` (Cut-1, Cut-2: drop the lowest 1 or 2 values), `/M1`, `/M2` (Median-1, Median-2: drop the highest and lowest 1 or 2), only on `BH`, `FB`, `SB`, `PS`, `ARO`; `/P` (forfeits count as games against the scheduled opponent, on `BH`, `FB`, `SB`, `DE`); `/F` (`AOB` only); `/L+n` or `/L-n` (`KS` only: moves the Koya limit by n half points). Examples: `BH/C1`, `SB/M1/P`, `KS/L+2`, `AOB/F`.
+Modifiers, after a slash: `/C1`, `/C2` (Cut-1, Cut-2: drop the lowest 1 or 2 values), `/M1`, `/M2` (Median-1, Median-2: drop the highest and lowest 1 or 2), only on `BH`, `FB`, `SB`, `PS`, `ARO`; `/P` (forfeits count as games against the scheduled opponent, on `BH`, `FB`, `SB`, `DE`); `/F` (`AOB` and `SSSC`); `/L+n` or `/L-n` (`KS` only: moves the Koya limit by n half points). Examples: `BH/C1`, `SB/M1/P`, `KS/L+2`, `AOB/F`.
 
 Rejected with exit 3 (all problems in the list are reported together, each as `error: [C.07 5] ...`):
 
 - `unknown tie-break <code>`;
-- `<code> is a team tie-break, which is not implemented yet` (the team tie-breaks `MPVGP`, `ESB`, `EMMSB`, `EGMSB`, `EDE`, `SSSC`, `BC`, `TBR`, `BBE` and the rest are **planned**), or a team-score entry such as `MP:BH`;
+- `<code> needs a team competition (match scoring, TRF 362)` for a team tie-break, or a `:MP`/`:GP` entry, in a file without match scoring (reported when the standings are computed);
+- `ESB is a family (C.07 13.2): name EMMSB, EMGSB, EGMSB or EGGSB`, `<code> takes no team score (:MP or :GP, C.07 13)`, `<code> counts matches or games won: only :MP applies (C.07 7.1)`, `<code> takes Cut-1 and Cut-2 only (C.07 14.1.2)`;
 - `<code> is self-defined (C.07 4.1) and has no definition here` for `OTHER_...`;
-- `<code> takes no Cut or Median modifier (C.07 14)`, `/F applies only to AOB (C.07 8.2)`, `/L applies only to KS (C.07 14.5)`.
+- `<code> takes no Cut or Median modifier (C.07 14)`, `/F applies only to AOB and SSSC (C.07 8.2, 13.4)`, `/L applies only to KS (C.07 14.5)`, `/K applies only to SSSC (C.07 13.4.2)`.
 
 ### 6.2 Ranks and shared ranks
 
@@ -487,6 +488,44 @@ Documented readings of the C.07 text (Art. 16 adjusted scores and the Dummy Oppo
 Columns: `rank`, `id`, `name`, `score`, one column per tie-break in list order, `decided by`. `decided by` is only filled when a row has the same score as the row above; it names the tie-break that put the row below (with both values, for example `BH/C1 4 > 3.5`), or `shared` for a tie the list cannot break. With `--after <r>` the round r standings are shown; `r` must be a recorded round (`Round <r> is not recorded yet`).
 
 `--why <a> <b>` gives the full evidence for the pair: the deciding tie-break, then for each participant the value with its C.07 article and every per-round contribution, for example `round 1 9 2 cut (C.07 16.3; /C1 (C.07 14) low cut)`, meaning that in round 1 the opponent was 9 with value 2 and it was cut by the Cut-1 modifier.
+
+### 6.4 Team tie-breaks and team standings
+
+In a team competition (a file with `310` records, or any file with match scoring) the *score* is the primary score of `192` (match points, MP, or game points, GP), and the *secondary score* is the other one (C.07 11.1). `fide-swiss standings team.trf` ranks the teams by the primary score and then by the list of `202`/`212` or `--tiebreaks`, exactly as for players; the table's `id` and `name` are the team's. Example:
+
+```
+$ fide-swiss standings team.trf --tiebreaks "MPvGP, EDET"
+rank  id  name    score  MPvGP  EDET  decided by
+1     2   Team 2  3      6.5    1
+2     3   Team 3  3      6      2     MPvGP 6.5 > 6
+3     1   Team 1  3      6      1     EDET 2 > 1
+4     4   Team 4  3      5.5    1     MPvGP 6 > 5.5
+```
+
+Team score on the individual tie-breaks. `:MP` or `:GP` after `WIN`, `WON`, `PS`, `BH`, `AOB`, `FB`, `KS` computes it in that score whatever the primary score is (`BH:GP/C1`, `PS:MP`, `FB:GP/P`). Without it the primary score is used. `WIN` and `WON` count won matches and take `:MP` only.
+
+Tie-breaks used only for teams (C.07 art. 12 and 13):
+
+| Code | Article | Meaning | Higher is better |
+|---|---|---|---|
+| `MPvGP` | 13.1 | the team's total in the score that does not decide the competition: GP when MP decide, MP when GP decide | yes |
+| `EMMSB` | 13.2.1 | Extended Sonneborn-Berger: sum over opponents of opponent's total MP × MP scored against it | yes |
+| `EMGSB` | 13.2.2 | opponent's total MP × GP scored | yes |
+| `EGMSB` | 13.2.3 | opponent's total GP × MP scored | yes |
+| `EGGSB` | 13.2.4 | opponent's total GP × GP scored | yes |
+| `EDE` | 13.3 | Extended Direct Encounter: Direct Encounter on the primary score, then, if it separates nobody, on the secondary score; restarts on every new subset of tied teams | yes |
+| `EDEBT` | 13.3.2 | EDE, then, for exactly two teams still tied in MP and GP, `BC`, then `TBR` | yes |
+| `EDEBB` | 13.3.2 | EDE, then `BC`, then `BBE` | yes |
+| `EDET` | 13.3.2 | EDE, then `TBR` | yes |
+| `EDEB` | 13.3.2 | EDE, then `BBE` | yes |
+| `SSSC` | 13.4 | secondary score + Schedule Strength (the Buchholz on the primary score divided by the normalising factor) | yes |
+| `BC` | 12.1 | Board Count: sum of board number × game points on that board, over all matches; usable only among teams with equal game points | no: the lower the better |
+| `TBR` | 12.2 | Top Board Results: game points on board 1, then board 2, and so on | yes |
+| `BBE` | 12.3 | Bottom Board Elimination: game points on all boards but the bottom one, then without the two bottom boards, and so on | yes |
+
+Modifiers: `/C1`, `/C2` on the four ESB codes (the product of the opponent with the lowest total in the score of the opponent's factor is left out, 14.1.2); `/P` on ESB, EDE\*, SSSC and `BH`/`FB` (forfeits as played); `/Kx` on `SSSC` redefines the normalising factor (`SSSC/K4`); `/F` on `SSSC` uses Fore Buchholz. A bare `ESB` is refused. `SSSC`'s default factor is (rounds × the primary score of a win) divided by (the secondary score of a win in one match), truncated: with 9 rounds and 4 boards it is 18 / 4 = 4 in match points and 36 / 2 = 18 in game points.
+
+Forfeits, byes and boards. For `BC`, `TBR` and `BBE` a forfeited game is a standard win or loss, and a pairing-allocated bye gives every board a win's points (art. 12 preamble). Art. 16 governs the ESB codes like `SB`. A team file's `212` or `202` carries the codes in TEC syntax, for example `212 PTS,MPvGP,EDET,EMGSB/C1/P,SSSC`.
 
 ## 7. The tournament generator
 
