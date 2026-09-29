@@ -49,6 +49,10 @@ public record ScoringScheme(
         return new ScoringScheme(win, draw, loss, Optional.of(value), matches);
     }
 
+    public ScoringScheme withoutPairingAllocatedBye() {
+        return new ScoringScheme(win, draw, loss, Optional.empty(), matches);
+    }
+
     public ScoringScheme with(MatchScoring scoring) {
         return new ScoringScheme(win, draw, loss, pairingAllocatedBye, Optional.of(scoring));
     }

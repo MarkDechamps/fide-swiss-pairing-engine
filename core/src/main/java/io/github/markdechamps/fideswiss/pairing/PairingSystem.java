@@ -3,7 +3,6 @@ package io.github.markdechamps.fideswiss.pairing;
 import io.github.markdechamps.fideswiss.rules.BasicRules;
 import io.github.markdechamps.fideswiss.tournament.ColourPreferenceType;
 import io.github.markdechamps.fideswiss.tournament.CompetitionType;
-import io.github.markdechamps.fideswiss.tournament.EdebtBoardCount;
 import io.github.markdechamps.fideswiss.tournament.Interpretation;
 import io.github.markdechamps.fideswiss.tournament.InvalidSettingsException;
 import io.github.markdechamps.fideswiss.tournament.MatchScoring;
@@ -90,10 +89,5 @@ public interface PairingSystem {
         return scoring.primaryScore() == PrimaryScore.MATCH_POINTS
                 ? scoring.drawnMatchGamePoints()
                 : scoring.matches().map(MatchScoring::draw).orElse(scoring.draw());
-    }
-
-    /** Team tie-breaks: the Board Count order of EDEBT and EDEBB (ADR 0009); systems without the reading use the default. */
-    default EdebtBoardCount edebtBoardCount() {
-        return EdebtBoardCount.higher();
     }
 }

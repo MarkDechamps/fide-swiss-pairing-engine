@@ -37,10 +37,7 @@ public final class StandingsCalculator {
     public static Standings standingsOf(Tournament tournament, int rounds) {
         var settings = tournament.settings();
         var tieBreaks = TieBreaks.of(
-                settings.tieBreakList(),
-                settings.tieBreakEdition(),
-                settings.scoring(),
-                settings.pairingSystem().edebtBoardCount());
+                settings.tieBreakList(), settings.tieBreakEdition(), settings.scoring(), settings.edebtBoardCount());
         var context = TieBreakContext.of(tournament, rounds, UnplayedRoundPolicy.of(settings.tieBreakEdition()));
         return new StandingsCalculator(context, tieBreaks).standings(tournament, rounds);
     }

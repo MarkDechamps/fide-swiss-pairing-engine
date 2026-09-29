@@ -18,7 +18,8 @@ public record TournamentSettings(
         Acceleration acceleration,
         NumberOfRounds numberOfRounds,
         TieBreakList tieBreakList,
-        TieBreakEdition tieBreakEdition) {
+        TieBreakEdition tieBreakEdition,
+        EdebtBoardCount edebtBoardCount) {
 
     public TournamentSettings {
         Objects.requireNonNull(pairingSystem, "pairingSystem");
@@ -30,6 +31,7 @@ public record TournamentSettings(
         Objects.requireNonNull(numberOfRounds, "numberOfRounds");
         Objects.requireNonNull(tieBreakList, "tieBreakList");
         Objects.requireNonNull(tieBreakEdition, "tieBreakEdition");
+        Objects.requireNonNull(edebtBoardCount, "edebtBoardCount");
     }
 
     public TournamentSettings with(PairingSystem system) {
@@ -42,7 +44,8 @@ public record TournamentSettings(
                 acceleration,
                 numberOfRounds,
                 tieBreakList,
-                tieBreakEdition);
+                tieBreakEdition,
+                edebtBoardCount);
     }
 
     public TournamentSettings with(SwissRulesEdition edition) {
@@ -55,7 +58,8 @@ public record TournamentSettings(
                 acceleration,
                 numberOfRounds,
                 tieBreakList,
-                tieBreakEdition);
+                tieBreakEdition,
+                edebtBoardCount);
     }
 
     public TournamentSettings with(ScoringScheme scheme) {
@@ -68,7 +72,8 @@ public record TournamentSettings(
                 acceleration,
                 numberOfRounds,
                 tieBreakList,
-                tieBreakEdition);
+                tieBreakEdition,
+                edebtBoardCount);
     }
 
     public TournamentSettings with(RankingKey key) {
@@ -81,7 +86,8 @@ public record TournamentSettings(
                 acceleration,
                 numberOfRounds,
                 tieBreakList,
-                tieBreakEdition);
+                tieBreakEdition,
+                edebtBoardCount);
     }
 
     public TournamentSettings with(InitialColour colour) {
@@ -94,7 +100,8 @@ public record TournamentSettings(
                 acceleration,
                 numberOfRounds,
                 tieBreakList,
-                tieBreakEdition);
+                tieBreakEdition,
+                edebtBoardCount);
     }
 
     public TournamentSettings with(Acceleration method) {
@@ -107,7 +114,8 @@ public record TournamentSettings(
                 method,
                 numberOfRounds,
                 tieBreakList,
-                tieBreakEdition);
+                tieBreakEdition,
+                edebtBoardCount);
     }
 
     public TournamentSettings with(NumberOfRounds rounds) {
@@ -120,7 +128,8 @@ public record TournamentSettings(
                 acceleration,
                 rounds,
                 tieBreakList,
-                tieBreakEdition);
+                tieBreakEdition,
+                edebtBoardCount);
     }
 
     public TournamentSettings with(TieBreakList list) {
@@ -133,7 +142,8 @@ public record TournamentSettings(
                 acceleration,
                 numberOfRounds,
                 list,
-                tieBreakEdition);
+                tieBreakEdition,
+                edebtBoardCount);
     }
 
     public TournamentSettings with(TieBreakEdition edition) {
@@ -146,12 +156,43 @@ public record TournamentSettings(
                 acceleration,
                 numberOfRounds,
                 tieBreakList,
-                edition);
+                edition,
+                edebtBoardCount);
     }
 
-    /** One reading of an ambiguous article of the Pairing System (ADR 0003). */
+    /** The Board Count order of EDEBT and EDEBB (ADR 0009): a tie-break reading, whatever the team system. */
+    public TournamentSettings with(EdebtBoardCount order) {
+        return new TournamentSettings(
+                pairingSystem,
+                swissRulesEdition,
+                scoring,
+                rankingKey,
+                initialColour,
+                acceleration,
+                numberOfRounds,
+                tieBreakList,
+                tieBreakEdition,
+                order);
+    }
+
+    /**
+     * One reading of an ambiguous article (ADR 0003): a tie-break reading is a standings setting, any other belongs
+     * to the Pairing System. Under game points, choosing the PAB's value replaces a value the file stated, which
+     * would else leave the reading without effect.
+     */
     public TournamentSettings with(Interpretation interpretation) {
-        return with(pairingSystem.with(interpretation));
+        return switch (interpretation) {
+            case EdebtBoardCount order -> with(order);
+            case PabValue reading -> withPabValue(reading);
+            default -> with(pairingSystem.with(interpretation));
+        };
+    }
+
+    private TournamentSettings withPabValue(PabValue reading) {
+        var chosen = with(pairingSystem.with(reading));
+        return scoring.primaryScore() == PrimaryScore.GAME_POINTS
+                ? chosen.with(scoring.withoutPairingAllocatedBye())
+                : chosen;
     }
 
     /** The value of every PAB of this event: the scheme's, or else the one the Pairing System defines. */

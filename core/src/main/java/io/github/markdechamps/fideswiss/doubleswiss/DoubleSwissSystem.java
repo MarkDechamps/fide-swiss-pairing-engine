@@ -64,6 +64,11 @@ public record DoubleSwissSystem(UpfloaterLookAhead upfloaterLookAhead, FloatScor
                 List.of(Problem.citing("C.04.5", "The Double-Swiss System has no Swiss Team reading " + reading)));
     }
 
+    /** A tie-break reading is a standings setting: {@code TournamentSettings} takes it, never a pairing system. */
+    private static IllegalArgumentException standingsReading(Interpretation reading) {
+        return new IllegalArgumentException(reading + " is a standings setting");
+    }
+
     @Override
     public DoubleSwissSystem with(Interpretation interpretation) {
         return switch (interpretation) {
@@ -75,7 +80,7 @@ public record DoubleSwissSystem(UpfloaterLookAhead upfloaterLookAhead, FloatScor
             case BracketSeating reading -> noSuchReading(reading);
             case PabValue reading -> noSuchReading(reading);
             case BakuSecondaryScore reading -> noSuchReading(reading);
-            case EdebtBoardCount reading -> noSuchReading(reading);
+            case EdebtBoardCount reading -> throw standingsReading(reading);
         };
     }
 

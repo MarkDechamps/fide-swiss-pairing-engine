@@ -23,7 +23,8 @@ public final class Profiles {
                 Acceleration.none(),
                 rounds,
                 TieBreakList.parse("BH/C1, BH, SB, DE"),
-                TieBreakEdition.EDITION_2026_03);
+                TieBreakEdition.EDITION_2026_03,
+                EdebtBoardCount.higher());
     }
 
     /** As {@link #individualSwiss}, with Baku acceleration (C.04.7). */

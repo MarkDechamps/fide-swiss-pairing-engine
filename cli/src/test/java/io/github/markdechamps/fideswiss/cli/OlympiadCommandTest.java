@@ -23,6 +23,16 @@ class OlympiadCommandTest {
     private final ByteArrayOutputStream err = new ByteArrayOutputStream();
 
     @Test
+    void takesTheEdebtBoardCountReadingBecauseItIsATieBreakReading() throws IOException {
+        // ADR 0009: the tie-break reading is chosen for any team file, the Olympiad's included.
+        var exit =
+                run("pair", copy("olympiad-six-teams.trf").toString(), "--interpretation", "edebt-board-count=lower");
+
+        assertThat(exit).isZero();
+        assertThat(stdout()).isEqualTo("3\n2 1\n4 3\n6 5\n");
+    }
+
+    @Test
     void pairsAFileWhose192IsFideOlympiadByTheOlympiadPairingRules() throws IOException {
         // The hand-worked round 2 of the TRF test: 2-1, 4-3, 6-5 in the order of 11.1.
         var exit = run("pair", copy("olympiad-six-teams.trf").toString());

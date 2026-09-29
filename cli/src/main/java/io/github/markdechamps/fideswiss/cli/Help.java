@@ -37,7 +37,7 @@ final class Help {
                                            file with 310 records is a team file, paired by the Swiss Team System
                                            unless its 192 is FIDE_OLYMPIAD (the Olympiad Pairing Rules, D.02);
                                            double-swiss reads two TRF rounds per match (ADR 0007)
-              --interpretation <name>=<value>  a Swiss Team or Double-Swiss reading (ADR 0003), repeatable:
+              --interpretation <name>=<value>  a Swiss Team or Double-Swiss reading (ADR 0003), or edebt-board-count for any team file, repeatable:
                   upfloater-look-ahead=parity-minimum|graded, last-round-zero-cd-type-b=strong|none,
                   float-score=pairing|real
               --maxi-tournament            declare a Lim tournament a Maxi-tournament

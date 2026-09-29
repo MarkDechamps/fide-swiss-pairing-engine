@@ -56,7 +56,6 @@ public record SwissTeamSystem(ColourPreferenceType colourPreferences, Readings r
      * @param bracketSeating who is the top member of a pair (3.6.1, KD-1)
      * @param pabValue the game result of the PAB on every board (1.4, KD-2)
      * @param bakuSecondaryScore the secondary score under Baku (4.2.2, KD-3)
-     * @param edebtBoardCount the Board Count order of EDEBT (KD-EDEBT)
      */
     public record Readings(
             UpfloaterLookAhead upfloaterLookAhead,
@@ -64,8 +63,7 @@ public record SwissTeamSystem(ColourPreferenceType colourPreferences, Readings r
             FloatScore floatScore,
             BracketSeating bracketSeating,
             PabValue pabValue,
-            BakuSecondaryScore bakuSecondaryScore,
-            EdebtBoardCount edebtBoardCount) {
+            BakuSecondaryScore bakuSecondaryScore) {
 
         static Readings defaults() {
             return new Readings(
@@ -74,48 +72,21 @@ public record SwissTeamSystem(ColourPreferenceType colourPreferences, Readings r
                     FloatScore.pairing(),
                     BracketSeating.scoreThenTpn(),
                     PabValue.win(),
-                    BakuSecondaryScore.virtualMatchPoints(),
-                    EdebtBoardCount.higher());
+                    BakuSecondaryScore.virtualMatchPoints());
         }
 
         Readings with(Interpretation interpretation) {
             return switch (interpretation) {
                 case UpfloaterLookAhead reading ->
-                    new Readings(
-                            reading,
-                            lastRoundZeroCd,
-                            floatScore,
-                            bracketSeating,
-                            pabValue,
-                            bakuSecondaryScore,
-                            edebtBoardCount);
+                    new Readings(reading, lastRoundZeroCd, floatScore, bracketSeating, pabValue, bakuSecondaryScore);
                 case LastRoundZeroCdTypeB reading ->
-                    new Readings(
-                            upfloaterLookAhead,
-                            reading,
-                            floatScore,
-                            bracketSeating,
-                            pabValue,
-                            bakuSecondaryScore,
-                            edebtBoardCount);
+                    new Readings(upfloaterLookAhead, reading, floatScore, bracketSeating, pabValue, bakuSecondaryScore);
                 case FloatScore reading ->
                     new Readings(
-                            upfloaterLookAhead,
-                            lastRoundZeroCd,
-                            reading,
-                            bracketSeating,
-                            pabValue,
-                            bakuSecondaryScore,
-                            edebtBoardCount);
+                            upfloaterLookAhead, lastRoundZeroCd, reading, bracketSeating, pabValue, bakuSecondaryScore);
                 case BracketSeating reading ->
                     new Readings(
-                            upfloaterLookAhead,
-                            lastRoundZeroCd,
-                            floatScore,
-                            reading,
-                            pabValue,
-                            bakuSecondaryScore,
-                            edebtBoardCount);
+                            upfloaterLookAhead, lastRoundZeroCd, floatScore, reading, pabValue, bakuSecondaryScore);
                 case PabValue reading ->
                     new Readings(
                             upfloaterLookAhead,
@@ -123,26 +94,10 @@ public record SwissTeamSystem(ColourPreferenceType colourPreferences, Readings r
                             floatScore,
                             bracketSeating,
                             reading,
-                            bakuSecondaryScore,
-                            edebtBoardCount);
+                            bakuSecondaryScore);
                 case BakuSecondaryScore reading ->
-                    new Readings(
-                            upfloaterLookAhead,
-                            lastRoundZeroCd,
-                            floatScore,
-                            bracketSeating,
-                            pabValue,
-                            reading,
-                            edebtBoardCount);
-                case EdebtBoardCount reading ->
-                    new Readings(
-                            upfloaterLookAhead,
-                            lastRoundZeroCd,
-                            floatScore,
-                            bracketSeating,
-                            pabValue,
-                            bakuSecondaryScore,
-                            reading);
+                    new Readings(upfloaterLookAhead, lastRoundZeroCd, floatScore, bracketSeating, pabValue, reading);
+                case EdebtBoardCount reading -> throw new IllegalArgumentException(reading + " is a standings setting");
             };
         }
     }
@@ -168,11 +123,6 @@ public record SwissTeamSystem(ColourPreferenceType colourPreferences, Readings r
 
     public FloatScore floatScore() {
         return readings.floatScore();
-    }
-
-    @Override
-    public EdebtBoardCount edebtBoardCount() {
-        return readings.edebtBoardCount();
     }
 
     @Override
