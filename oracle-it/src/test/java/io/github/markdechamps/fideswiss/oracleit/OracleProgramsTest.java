@@ -28,7 +28,8 @@ class OracleProgramsTest {
     void theEnvironmentVariableIsUsedWhenNoPropertyIsSet() {
         var environment = Map.of("FIDESWISS_ORACLE_BBP5", "/opt/bbp5");
 
-        assertThat(OraclePrograms.BBP_V5.locate(key -> null, environment::get, path -> true)).isPresent();
+        assertThat(OraclePrograms.BBP_V5.locate(key -> null, environment::get, path -> true))
+                .isPresent();
     }
 
     @Test

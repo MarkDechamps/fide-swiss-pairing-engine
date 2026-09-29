@@ -120,7 +120,7 @@ public final class ExternalPairingProgram implements PairingOracle, OracleChecke
                 }
                 var result = execute(arguments);
                 if (result.exitCode() != 0) {
-                    throw new IllegalStateException(name + " could not generate a tournament: " + result.output());
+                    throw new GenerationFailed(name + " could not generate a tournament: " + result.output());
                 }
                 return Files.readString(output, StandardCharsets.UTF_8);
             } finally {

@@ -35,7 +35,8 @@ public final class OracleTournamentCheck {
             int rounds,
             int consistent,
             List<Inconsistency> inconsistencies,
-            List<Registered> registered) {
+            List<Registered> registered,
+            int skipped) {
 
         public String summary() {
             var counts = new TreeMap<String, Integer>();
@@ -43,7 +44,8 @@ public final class OracleTournamentCheck {
             return oracle + " tournaments checked by us: " + consistent + " of " + rounds
                     + " rounds legal and consistent in "
                     + tournaments + " tournaments, " + inconsistencies.size() + " tournaments with an unregistered"
-                    + " inconsistency, " + registered.size() + " registered" + (counts.isEmpty() ? "" : " " + counts);
+                    + " inconsistency, " + registered.size() + " registered" + (counts.isEmpty() ? "" : " " + counts)
+                    + ", " + skipped + " skipped (the generator could not finish them)";
         }
     }
 
@@ -56,6 +58,11 @@ public final class OracleTournamentCheck {
     }
 
     public Report check(String oracle, List<Generated> tournaments) {
+        return check(oracle, tournaments, 0);
+    }
+
+    /** As {@link #check(String, List)}, reporting the {@code skipped} tournaments the generator could not finish. */
+    public Report check(String oracle, List<Generated> tournaments, int skipped) {
         var rounds = 0;
         var consistent = 0;
         var failures = new ArrayList<Inconsistency>();
@@ -73,7 +80,7 @@ public final class OracleTournamentCheck {
                 }
             }
         }
-        return new Report(oracle, tournaments.size(), rounds, consistent, failures, registered);
+        return new Report(oracle, tournaments.size(), rounds, consistent, failures, registered, skipped);
     }
 
     private record Outcome(int rounds, int consistent, List<Inconsistency> found) {}
