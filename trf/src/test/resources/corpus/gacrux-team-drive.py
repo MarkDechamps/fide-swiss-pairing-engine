@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-Plays random Swiss Team (C.04.6) tournaments with Gacrux @ 6419149 as the pairing engine, patched with
-tpn-order (bracket seats by TPN only, C.04.6 3.6.1; ruling G1), and writes each as a TRF26 file whose every
-round is Gacrux's pairing.
+Plays random Swiss Team (C.04.6) tournaments with Gacrux @ 6419149 as the pairing engine and writes each as a
+TRF26 file whose every round is Gacrux's pairing. By default Gacrux is patched with tpn-order (bracket seats by TPN
+only, C.04.6 3.6.1; ruling G1), the 162 states P 0.5 and Baku comes only without a secondary score: the corpus of
+the literal readings. With DEFAULTS=1 Gacrux is plain and none of those are avoided (162 has no P, Baku with a
+secondary score is played): the corpus of the engine's defaults, the reference app's readings (ADR 0009).
 
-Usage: GACRUX=<TieBreakServer clone> python3 gacrux-team-drive.py OUT_DIR COUNT SEED
+Usage: [DEFAULTS=1] GACRUX=<TieBreakServer clone> python3 gacrux-team-drive.py OUT_DIR COUNT SEED
        (the script re-runs itself as `--pair FILE ROUND` inside Gacrux's Python to pair one round)
 """
 import math
@@ -13,9 +15,12 @@ import random
 import subprocess
 import sys
 
+DEFAULTS = os.environ.get("DEFAULTS") == "1"
 TYPES = ["FIDE_TEAM_TYPEA_MP_GP", "FIDE_TEAM_TYPEB_MP_GP", "FIDE_TEAM_TYPEA_MP", "FIDE_TEAM_TYPEB_MP",
          "FIDE_TEAM_MP_GP", "FIDE_TEAM_TYPEA_GP_MP", "FIDE_TEAM_TYPEB_GP", "FIDE_TEAM",
          "FIDE_TEAM_TYPEA_MP_BAKU", "FIDE_TEAM_TYPEB_MP_BAKU"]
+if DEFAULTS:
+    TYPES += ["FIDE_TEAM_TYPEA_MP_GP_BAKU", "FIDE_TEAM_TYPEB_MP_GP_BAKU"]
 # Baku only without a secondary score: Gacrux adds the match-point Virtual Points to the game points it uses
 # for 4.2.2 (Known Divergence KD-3). 162 states P: without it Gacrux gives the PAB a win per board (KD-2).
 
@@ -24,9 +29,10 @@ def pair_one_round(path, rnd):
     import runpy
     sys.path.insert(0, os.path.join(os.environ["GACRUX"], "gacrux"))
     import crosstablefideteam as ctf
-    original = ctf.crosstable_fideteam.update_bracket
-    ctf.crosstable_fideteam.update_bracket = (
-        lambda self, sl, nodes, edges: original(self, sl, sorted(nodes, key=lambda n: n["tpn"]), edges))
+    if not DEFAULTS:
+        original = ctf.crosstable_fideteam.update_bracket
+        ctf.crosstable_fideteam.update_bracket = (
+            lambda self, sl, nodes, edges: original(self, sl, sorted(nodes, key=lambda n: n["tpn"]), edges))
     sys.argv = ["pairingchecker.py", "-i", path, "-p", "-n", str(rnd), "-dT"]
     os.chdir(os.path.join(os.environ["GACRUX"], "gacrux"))
     runpy.run_path("pairingchecker.py", run_name="__main__")
@@ -46,7 +52,7 @@ def rank(team, kind, mp, gp):
 def write(path, name, teams, boards, rounds, kind, top, pattern, history, mp, gp):
     lines = ["012 " + name, "062 %d" % (teams * boards), "072 %d" % (teams * boards), "082 %d" % teams,
              "142 %d" % rounds, "152 %s" % top, "192 " + kind,
-             "162  W 1.0    D 0.5    L 0.0    P 0.5", "362 TW 2.0   TD 1.0   TL 0.0", "352 " + pattern]
+             "162  W 1.0    D 0.5    L 0.0" + ("" if DEFAULTS else "    P 0.5"), "362 TW 2.0   TD 1.0   TL 0.0", "352 " + pattern]
     if kind.endswith("_BAKU"):
         lines += baku_records(teams, rounds)
     for t in range(1, teams + 1):
@@ -113,7 +119,7 @@ def play_round(pairs, pab, teams, boards, pattern, rng, mp, gp):
         for board in range(1, boards + 1):
             rnd[pab][board] = "0000 - U"
         mp[pab] += 1.0
-        gp[pab] += boards / 2.0
+        gp[pab] += boards * (1.0 if DEFAULTS else 0.5)
     return rnd
 
 
