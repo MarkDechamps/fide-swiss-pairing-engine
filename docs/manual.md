@@ -565,7 +565,7 @@ fide-swiss -g [<cfg>|<seed>] -o <out.trf> [-s <seed>] [--dutch|--dubov|--burstei
 - `--seed <n>` is the corpus seed (unsigned 64 bit). Without it a fresh seed is drawn and printed on standard error as `seed <n>`. Tournament k of a corpus has its own seed derived from the corpus seed and k, and it is the one written in `012` and the manifest, so a single tournament can be reproduced alone.
 - `--count <k>`: the number of tournaments (default 1).
 - `-g` is the JaVaFo/bbpPairings form: one tournament, with the argument after `-g` being a configuration file or, when it is all digits, a seed; `-s <seed>` also gives the seed; a system flag may follow.
-- The Dutch, Dubov, Burstein, Lim and Double-Swiss systems generate individual tournaments; the generator does not write team files.
+- The Dutch, Dubov, Burstein, Lim and Double-Swiss systems generate individual tournaments; the generator does not write team files, so `--swiss-team` and `--olympiad` are refused (`the generator does not generate team tournaments yet (<name>)`).
 
 ### 7.2 Precedence
 

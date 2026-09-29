@@ -161,6 +161,15 @@ class GenerateCommandTest {
         }
 
         @Test
+        void refusesATeamSystem() {
+            var exit = run(
+                    "generate", "--olympiad", "-o", directory.resolve("x.trf").toString());
+
+            assertThat(exit).isEqualTo(3);
+            assertThat(err.toString(java.nio.charset.StandardCharsets.UTF_8)).contains("team tournaments");
+        }
+
+        @Test
         void refusesAProfileWhoseSystemIsNotImplemented() {
             var exit = run(
                     "generate",
