@@ -5,6 +5,7 @@ import io.github.markdechamps.fideswiss.doubleswiss.DoubleSwissSystem;
 import io.github.markdechamps.fideswiss.dubov.DubovSystem;
 import io.github.markdechamps.fideswiss.dutch.DutchSystem;
 import io.github.markdechamps.fideswiss.lim.LimSystem;
+import io.github.markdechamps.fideswiss.olympiad.OlympiadSystem;
 import io.github.markdechamps.fideswiss.swissteam.SwissTeamSystem;
 import io.github.markdechamps.fideswiss.tournament.ColourPreferenceType;
 import io.github.markdechamps.fideswiss.tournament.InvalidSettingsException;
@@ -72,5 +73,10 @@ public final class PairingSystems {
     /** The Lim System (C.04.4.3, 2026), declared a Maxi-tournament or not by the organiser. */
     public static PairingSystem lim(MaxiTournament maxiTournament) {
         return new LimSystem(maxiTournament);
+    }
+
+    /** The Olympiad Pairing Rules (D.02, effective from 1 January 2022), a team Swiss with its own edition. */
+    public static PairingSystem olympiad() {
+        return new OlympiadSystem();
     }
 }
