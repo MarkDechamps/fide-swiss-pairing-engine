@@ -12,24 +12,30 @@ import java.util.concurrent.TimeUnit;
 /**
  * Gacrux (FIDE's TieBreakServer, MIT) as the Oracle of the Swiss Team System (C.04.6), run as a Python child process
  * on a clone of its repository: {@code python -c <driver> <clone> <in.trf> <round>}. The driver is ours; it only
- * imports Gacrux's own modules, and puts Ruling G1 in front of its bracket seating: within a bracket the top member of
- * a pair is the team with the smaller TPN, whatever its score (C.04.6 3.6.1; Known Divergence KD-1). Gacrux prints the
- * pairing as a count line then {@code white black} lines with 0 for the PAB, and leaves teams unpaired (a 0 opposite
- * a second team) when the round cannot be completed, which is a refusal. Nothing of Gacrux is linked or copied here.
+ * imports Gacrux's own modules. Unpatched, Gacrux is the reference app the engine agrees with by default (ADR 0009).
+ * With {@code tpnOrder} the driver puts Ruling G1 in front of its bracket seating, so that within a bracket the top
+ * member of a pair is the team with the smaller TPN whatever its score (C.04.6 3.6.1; Known Divergence KD-1), which
+ * is the literal reading of the text ({@code bracket-seating=tpn}). Gacrux prints the pairing as a count line then
+ * {@code white black} lines with 0 for the PAB, and leaves teams unpaired (a 0 opposite a second team) when the round
+ * cannot be completed, which is a refusal. Nothing of Gacrux is linked or copied here.
  */
 public final class GacruxProgram implements PairingOracle {
 
     private static final long TIMEOUT_SECONDS = 120;
 
-    /** Runs {@code pairingchecker.py -p -n ROUND -dT} with {@code update_bracket} over the nodes in TPN order. */
-    private static final String DRIVER = """
-            import os, runpy, sys
-            clone, trf, number = sys.argv[1:4]
-            sys.path.insert(0, os.path.join(clone, "gacrux"))
+    private static final String PATCH = """
             import crosstablefideteam as ctf
             original = ctf.crosstable_fideteam.update_bracket
             ctf.crosstable_fideteam.update_bracket = (
                 lambda self, sl, nodes, edges: original(self, sl, sorted(nodes, key=lambda n: n["tpn"]), edges))
+            """;
+
+    /** Runs {@code pairingchecker.py -p -n ROUND -dT}, with {@code update_bracket} over the nodes in TPN order if patched. */
+    private static final String DRIVER = """
+            import os, runpy, sys
+            clone, trf, number = sys.argv[1:4]
+            sys.path.insert(0, os.path.join(clone, "gacrux"))
+            %s
             sys.argv = ["pairingchecker.py", "-i", trf, "-p", "-n", number, "-dT"]
             os.chdir(os.path.join(clone, "gacrux"))
             runpy.run_path("pairingchecker.py", run_name="__main__")
@@ -38,8 +44,10 @@ public final class GacruxProgram implements PairingOracle {
     private final String name;
     private final Path clone;
     private final String python;
+    private final boolean tpnOrder;
 
-    public GacruxProgram(String name, Path clone, String python) {
+    public GacruxProgram(String name, Path clone, String python, boolean tpnOrder) {
+        this.tpnOrder = tpnOrder;
         this.name = name;
         this.clone = clone;
         this.python = python;
@@ -77,7 +85,7 @@ public final class GacruxProgram implements PairingOracle {
         var line = new ArrayList<String>();
         line.add(python);
         line.add("-c");
-        line.add(DRIVER);
+        line.add(DRIVER.formatted(tpnOrder ? PATCH.strip() : "pass"));
         line.add(clone.toAbsolutePath().toString());
         line.add(input.toAbsolutePath().toString());
         line.add(String.valueOf(round));

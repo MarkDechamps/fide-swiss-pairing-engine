@@ -2,6 +2,7 @@ package io.github.markdechamps.fideswiss.oracleit;
 
 import io.github.markdechamps.fideswiss.generator.GeneratedTournament;
 import io.github.markdechamps.fideswiss.pairing.RoundPairing;
+import io.github.markdechamps.fideswiss.tournament.Interpretation;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
 import io.github.markdechamps.fideswiss.tournament.SwissPairingException;
 import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
@@ -61,15 +62,26 @@ public final class OracleGate {
     private final PairingOracle oracle;
     private final SwissRulesEdition edition;
     private final KnownDivergences register;
+    private final List<Interpretation> interpretations;
 
     public OracleGate(PairingOracle oracle, SwissRulesEdition edition) {
         this(oracle, edition, KnownDivergences.register());
     }
 
-    public OracleGate(PairingOracle oracle, SwissRulesEdition edition, KnownDivergences register) {
+    /** Our side paired under the given Interpretations, each applied to every tournament (the literal readings). */
+    public OracleGate(
+            PairingOracle oracle,
+            SwissRulesEdition edition,
+            KnownDivergences register,
+            List<Interpretation> interpretations) {
+        this.interpretations = List.copyOf(interpretations);
         this.oracle = oracle;
         this.edition = edition;
         this.register = register;
+    }
+
+    public OracleGate(PairingOracle oracle, SwissRulesEdition edition, KnownDivergences register) {
+        this(oracle, edition, register, List.of());
     }
 
     public Report compare(List<GeneratedTournament.Completed> tournaments) {
@@ -122,7 +134,11 @@ public final class OracleGate {
 
     private TrfTournament read(Tournament tournament) {
         var file = TrfReader.read(TrfWriter.write(tournament, TrfWriter.Options.named("oracle gate")));
-        return file.with(file.settings().with(edition));
+        var settings = file.settings().with(edition);
+        for (var interpretation : interpretations) {
+            settings = settings.with(interpretation);
+        }
+        return file.with(settings);
     }
 
     private static Optional<OraclePairing> ours(Tournament before) {

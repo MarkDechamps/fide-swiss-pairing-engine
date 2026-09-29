@@ -18,10 +18,16 @@ public enum OraclePrograms {
     /** JaVaFo 2.2, an Oracle of the Dutch System 2017; a {@code .jar} is run with {@code java -jar}. */
     JAVAFO("JaVaFo 2.2", "javafo", OracleDialect.JAVAFO, List.of()),
     /**
-     * Gacrux (TieBreakServer) @ 6419149 with the {@code tpn-order} patch (Ruling G1), the Oracle of the Swiss Team System
-     * 2026; the path is its clone, and Python with {@code networkx} is {@code python3} or {@code fideswiss.oracle.gacrux.python}.
+     * Gacrux (TieBreakServer) @ 6419149 unpatched, the Oracle of the Swiss Team System 2026 and the reference app its
+     * defaults follow (ADR 0009); the path is its clone, and Python with {@code networkx} is {@code python3} or
+     * {@code fideswiss.oracle.gacrux.python}.
      */
-    GACRUX("Gacrux @ 6419149 (tpn-order)", "gacrux", OracleDialect.GACRUX, List.of());
+    GACRUX("Gacrux @ 6419149", "gacrux", OracleDialect.GACRUX, List.of()),
+    /**
+     * The same clone with the {@code tpn-order} patch (Ruling G1), the Oracle of the literal reading of C.04.6 3.6.1
+     * ({@code bracket-seating=tpn}); it has the configuration of {@link #GACRUX}.
+     */
+    GACRUX_TPN_ORDER("Gacrux @ 6419149 (tpn-order)", "gacrux", OracleDialect.GACRUX, List.of());
 
     private final String label;
     private final String key;
@@ -60,7 +66,7 @@ public enum OraclePrograms {
 
     private PairingOracle program(String path) {
         if (dialect == OracleDialect.GACRUX) {
-            return new GacruxProgram(label, Path.of(path), python());
+            return new GacruxProgram(label, Path.of(path), python(), this == GACRUX_TPN_ORDER);
         }
         return external(path);
     }
