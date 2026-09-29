@@ -12,6 +12,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.github.markdechamps.fideswiss.pairing.PairingSystems;
+import io.github.markdechamps.fideswiss.pairing.ProposedPairing;
+import io.github.markdechamps.fideswiss.pairing.Violation;
 import io.github.markdechamps.fideswiss.topscoregroup.Contender;
 import io.github.markdechamps.fideswiss.topscoregroup.ContenderPair;
 import io.github.markdechamps.fideswiss.tournament.Acceleration;
@@ -35,6 +37,7 @@ import io.github.markdechamps.fideswiss.tournament.TournamentMother;
 import io.github.markdechamps.fideswiss.tournament.UpfloaterLookAhead;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -88,6 +91,27 @@ class DoubleSwissSystemTest {
         assertThat(one.met()).containsExactly(DoubleSwissPlayerMother.id(3));
         assertThat(one.colours()).isEmpty();
         assertThat(one.matchesPlayed()).isEqualTo(1);
+    }
+
+    @Test
+    void reportsARematchAfterAMatchOfOneForfeitedGameEach() {
+        // C.04.5 Preface and 1.6 count that match as a meeting, so C.04.1 Art. 2 forbids pairing 1 and 3 again.
+        var tournament = players(4, 5)
+                .withRound(Round.of(
+                        RoundNumber.FIRST,
+                        List.of(
+                                match(1, 1, 3, WHITE_WINS_BY_FORFEIT, BLACK_WINS_BY_FORFEIT),
+                                match(2, 2, 4, DRAW, DRAW)),
+                        Map.of()));
+        var rematch = ProposedPairing.of(
+                List.of(
+                        new ProposedPairing.ProposedBoard(TournamentMother.id(1), TournamentMother.id(3)),
+                        new ProposedPairing.ProposedBoard(TournamentMother.id(2), TournamentMother.id(4))),
+                Optional.empty());
+
+        var violations = tournament.check(rematch).violations();
+
+        assertThat(violations).extracting(Violation::article).contains("C.04.1 Art. 2");
     }
 
     @Test
