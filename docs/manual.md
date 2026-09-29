@@ -762,6 +762,8 @@ Point each gate to its program with a system property or an environment variable
 
 Corpus settings, all system properties: `fideswiss.oracle.tournaments` (default 100), `fideswiss.oracle.seed` (default 20260929; the nightly job rotates it) and `fideswiss.oracle.events`, a comma list of what besides plain results is played (`forfeits`, `byes`, `withdrawals`, `late-entries`). The printed summary reads, for example, `bbpPairings v6.0.0: 822 of 822 rounds agree in 100 tournaments, 0 with a difference`.
 
+**Nightly job** (`.github/workflows/nightly.yml`, 03:00 UTC): 1,000 tournaments per Oracle gate, 500 fully Baku-accelerated Dutch tournaments, 200 team tournaments with withdrawals and late entries and 100 under the FIDE-literal Swiss Team readings, plus 5,000 invariant-checked tournaments per system. Each job stops after 4 hours. Mutation testing runs on Sundays only (and on a manual run). The full 50,000-tournament run belongs to the release gate below.
+
 ```sh
 FIDESWISS_ORACLE_BBP6=$HOME/oracles/bbpPairings.exe \
   ./mvnw verify -pl oracle-it -am -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false \

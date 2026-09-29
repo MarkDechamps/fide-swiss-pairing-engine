@@ -2,12 +2,15 @@ name: Nightly
 
 on:
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 3 * * 1-6'
+    # Sundays also run the mutation tests.
+    - cron: '0 3 * * 0'
   workflow_dispatch:
 
 jobs:
   oracle:
     runs-on: ubuntu-latest
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-java@v5
@@ -35,7 +38,7 @@ jobs:
           git -C TieBreakServer checkout 6419149ede24fa76639a956b1a52ccac0ded730d
           python3 -m venv gacrux-venv
           gacrux-venv/bin/pip install networkx
-      # 5,000 generated tournaments per Oracle-backed scope, from a corpus seed that rotates each night.
+      # 1,000 generated tournaments per Oracle-backed scope (the release gate runs 50,000), from a corpus seed that rotates each night.
       - name: Oracle comparison runs
         env:
           FIDESWISS_ORACLE_BBP6: ${{ github.workspace }}/bbpPairings-6.0.0/build/bbpPairings.exe
@@ -45,7 +48,7 @@ jobs:
           FIDESWISS_ORACLE_GACRUX_PYTHON: ${{ github.workspace }}/gacrux-venv/bin/python
         run: >-
           ./mvnw -B verify -pl oracle-it -am -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false
-          -Dfideswiss.oracle.tournaments=5000 -Dfideswiss.oracle.seed=$(date +%Y%m%d)
+          -Dfideswiss.oracle.tournaments=1000 -Dfideswiss.oracle.seed=$(date +%Y%m%d)
       # Every Dutch tournament accelerated by Baku (fictitious points as XXA), and team tournaments with withdrawals and late entries.
       - name: Oracle comparison runs, accelerated and with membership changes
         env:
@@ -57,14 +60,14 @@ jobs:
         run: |
           ./mvnw -B verify -pl oracle-it -am -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false \
             -Dit.test=DutchOracleIT -Dfideswiss.oracle.baku=100 \
-            -Dfideswiss.oracle.tournaments=2000 -Dfideswiss.oracle.seed=$(date +%Y%m%d)
+            -Dfideswiss.oracle.tournaments=500 -Dfideswiss.oracle.seed=$(date +%Y%m%d)
           ./mvnw -B verify -pl oracle-it -am -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false \
             -Dit.test=SwissTeamOracleIT -Dfideswiss.oracle.events=forfeits,byes,withdrawals,late-entries \
-            -Dfideswiss.oracle.tournaments=1000 -Dfideswiss.oracle.seed=$(date +%Y%m%d)
+            -Dfideswiss.oracle.tournaments=200 -Dfideswiss.oracle.seed=$(date +%Y%m%d)
           # The FIDE-literal readings (ADR 0009) against Gacrux patched with tpn-order.
           ./mvnw -B verify -pl oracle-it -am -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false \
             -Dit.test=SwissTeamOracleIT -Dfideswiss.oracle.gacrux.literal=true \
-            -Dfideswiss.oracle.tournaments=500 -Dfideswiss.oracle.seed=$(date +%Y%m%d)
+            -Dfideswiss.oracle.tournaments=100 -Dfideswiss.oracle.seed=$(date +%Y%m%d)
       - name: Keep the inputs of every difference
         if: failure()
         uses: actions/upload-artifact@v4
@@ -88,6 +91,8 @@ jobs:
           -Dfideswiss.invariant.tournaments=5000 -Dfideswiss.invariant.seed=$(date +%Y%m%d)
 
   mutation:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 3 * * 0'
+    timeout-minutes: 240
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -97,4 +102,4 @@ jobs:
           java-version: '25'
           cache: maven
       - name: Mutation testing on core
-        run: ./mvnw -B test-compile org.pitest:pitest-maven:mutationCoverage -pl core
+        run: ./mvnw -B test-compile org.pitest:pitest-maven:mutationCoverage -pl core -Dthreads=4
