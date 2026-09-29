@@ -3,6 +3,9 @@ package io.github.markdechamps.fideswiss.trf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
+import io.github.markdechamps.fideswiss.tournament.Profiles;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -44,6 +47,13 @@ class PairingSystemCodeTest {
         assertThatThrownBy(() -> TrfReader.read("012 Test\r192 " + code + "\r" + PLAYERS))
                 .isInstanceOf(InvalidTrfException.class)
                 .hasMessageContaining(code);
+    }
+
+    @Test
+    void writesTheProvisionalOlympiadCode() {
+        // ETT26 has no Olympiad code; FIDE_OLYMPIAD is the library's (TRF CLI surface).
+        assertThat(PairingSystemCode.of(Profiles.olympiad(NumberOfRounds.of(11))))
+                .isEqualTo("FIDE_OLYMPIAD");
     }
 
     @ParameterizedTest
