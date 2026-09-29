@@ -331,3 +331,85 @@ Any other `192` code for a team file gives `Unsupported 192 code <code> for a te
 ### 4.4 What is written
 
 The `generate` command writes TRF26 files with: `012` (the name `RTG <version> seed <n>`), `142`, `152`, `162` (only when different from the standard scoring), `192` (with `_BAKU` when Baku is on), `212` (`PTS` followed by the tie-break list, when the list is not empty) and one `001` record per participant. The writer reads back to the same rounds and settings. The writer can also emit `XXR` and `XXC` for JaVaFo. It does not write team files.
+
+## 5. Pairing systems
+
+Every system pairs one round from the tournament as recorded, and returns the boards in General Handling Rules 3.6 order, the pairing-allocated bye (PAB) if the number of players is odd, and a trace. All systems share the Basic Rules (C.04.1) and General Handling Rules (C.04.2): no two players meet twice, at most one PAB per player (and none for a player who already had a PAB or won by forfeit), absolute colour limits, requested byes and withdrawals, and the rule that only participants already taken into account for a pairing hold a pairing number (ADR 0006).
+
+Select a system with the `192` record or the `--system` flag (section 3.1). The default is the Dutch System 2026.
+
+### 5.1 Dutch System (C.04.3)
+
+The classic system. Players are grouped in scoregroups; each scoregroup is a bracket that is split into two halves (highest against the middle of the group) and paired by the order of the rules, while the quality criteria (C1 onwards: pairing completion, PAB, absolute colour, minimum downfloaters and their scores, colour preferences, repeated floats) decide which of the candidate pairings is best. The library finds the exact optimum. Colours are then allocated by Article 5.
+
+- Editions: `2026` (default) and `pre-2026` (the 2017 text with its own last-bracket procedure, A.9), chosen with `--edition` or `FIDE_DUTCH_2017`.
+- Acceleration: Baku or explicit virtual points.
+- Verified against bbpPairings (v6.0.0 for 2026, v5.0.1 for 2017). Documented readings: README, "Readings of the Dutch 2026 text" and "Readings of the Dutch 2017 text"; ADR 0006.
+
+### 5.2 Dubov System (C.04.4.1)
+
+Aims to give each player the opponents best balanced by their opponents' average rating (ARO). Within a bracket some players upfloat, players are split into two subgroups by colour seeking, and pairs are chosen by a cheapest perfect matching with the criteria [C8]-[C10] (upfloaters, their scores) applied in the text's order. Shifters and transpositions follow 3.2.4.
+
+- Edition: 2026 only. `--edition pre-2026` is rejected (`[GHR 1.3]`).
+- Acceleration: supported (uses the Pairing Score).
+- No Oracle exists. It is checked against a plain enumeration of the text. Documented readings: README, "Readings of the Dubov 2026 text" (upfloated, [C9], 4.4.1 typo, shifters, ARO rounding, 3.1.4, MaxT, acceleration).
+
+### 5.3 Burstein System (C.04.4.2)
+
+The first rounds ("seeding rounds", 1.6) are paired exactly as the Dutch System 2026 would. Afterwards, players are ranked by the Opposition Evaluation Index (Buchholz, then Sonneborn-Berger, with the unplayed-round rules of 1.7.2) and each bracket is paired by one cheapest perfect matching holding [C5]-[C8] above the order of Article 4.
+
+- Edition: 2026 only.
+- Acceleration: supported.
+- No Oracle (bbpPairings pairs the older text). Documented readings: README, "Readings of the Burstein 2026 text" (seeding rounds, [C6]/[C7], [C8], unplayed rounds, board order, the duplicated line of the 4.3 note).
+- Note: `fide-swiss version` does not list this system yet; the code pairs it.
+
+### 5.4 Lim System (C.04.4.3)
+
+A procedure rather than an optimisation: every choice is "the first in this order". Scoregroups are handled from the top, the Median Scoregroup last; floaters are picked by the rules of 3.9, incoming floaters are paired first, and when a bracket cannot be completed earlier pairings are taken back ("cracking", 2.6). Round 1 follows Article 7.
+
+- Edition: 2026 only.
+- **Maxi-tournament**: an organiser declaration, never inferred from the size of the field. Declared with `--maxi-tournament` (there is no TRF record for it; the flag also applies with `check` and `standings`). In a Maxi-tournament, floater choices by colour (3.2.3) and colour exchanges (3.8, 5.7) are only allowed between players rated within 100 points. `--maxi-tournament` on any other system fails with `[C.04.4.3 3.2.3] only the Lim System has a Maxi-tournament setting`.
+- Acceleration: supported; the Median Scoregroup keeps its value while other reads use the Pairing Score.
+- No Oracle. Documented readings: README, "Readings of the Lim 2026 text".
+
+### 5.5 Swiss Team Pairing System (C.04.6)
+
+Pairs teams for a team event. The PAB is decided first, then the top scoregroup with its upfloaters (the Top-Scoregroup Procedure), bracket after bracket; finally the colour of board 1 of every match is allocated (Article 4). A file is a team file when it has `310` records, and the `192` value then has the form described in 4.3.
+
+- Primary score: match points or game points; a second score for colours. Set by the `192` suffixes `_MP`/`_GP`, the match scoring by `362`, the game scoring by `162`, the boards by `352`, and the PAB by `320`.
+- Colour preference type (C.04.6 1.7): `TYPE_A` (simple preferences only; the default), `TYPE_B` (strong and mild preferences) or none. It is chosen by the `_TYPEA` / `_TYPEB` suffix of `192`.
+- Baku acceleration is refused when game points are the primary score (`[C.04.7 1.4.4]`), and the system needs match scoring (`[C.04.6 1.2] The Swiss Team System needs match scoring (TRF 362)`).
+- Team tie-breaks are **planned**; a team file has an empty tie-break list today.
+- The 2026 edition only.
+
+**Interpretations.** Where the C.04.6 text literally allows two readings, the library follows the reading of its Oracle by default and lets you choose the other with `--interpretation <name>=<value>` (repeatable). Changing a default is a major-version change (ADR 0003, ADR 0008).
+
+| Name | Values (default first) | Ruling | What it decides |
+|---|---|---|---|
+| `upfloater-look-ahead` | `parity-minimum`, `graded` | A6 | [C6]: whether the following scoregroup must reach its parity minimum of upfloaters (pass or fail), or needs as few as it can (graded). |
+| `last-round-zero-cd-type-b` | `strong`, `none` | A1 | Type B: whether a team with colour difference 0 that had the same colour in its last two matches has a strong preference when the last round is paired, or none. |
+| `float-score` | `pairing`, `real` | A8 | Under acceleration: whether a floater of the previous round is judged on the Pairing Scores of that round or on the real scores. |
+
+An unknown name or value is `error: unknown --interpretation <text>`. Giving an interpretation to a system that has none fails with `The pairing system has no Interpretation <name>`. Known divergences from the Oracle are registered in `docs/verification/known-divergences.md`.
+
+### 5.6 Double-Swiss (C.04.5): planned
+
+Not built. ADR 0007 records the intended TRF encoding (a match is two TRF rounds); the profiles `double-swiss`, `team-swiss` and `olympiad` of the generator are refused with `the <name> profile's system is not implemented yet`.
+
+### 5.7 Acceleration (C.04.7)
+
+Acceleration adds Virtual Points to a participant's score for pairing only. The result is the Pairing Score, which is the score wherever the pairing text says score (floats, PAB, board order included); standings never see it.
+
+- `Baku`: `192` suffix `_BAKU`, or `--acceleration baku` for the generator. The Accelerated Group is the top 2 x ceil(N/4) of the round-1 list, and a Late Entry ranked above its last participant joins it. In the first ceil(R/2) rounds, the first half of that group gets the points of a win as virtual points, the rest half of it. Baku needs a win worth two draws and a loss worth nothing (`[C.04.7 1.1]`).
+- Explicit: `250` (TRF26) or `XXA` (JaVaFo) records give virtual points per participant and round. They override `_BAKU`.
+
+### 5.8 Colours and other settings at a glance
+
+| Setting | Source | Values |
+|---|---|---|
+| Initial colour | `152`, `XXC`, `--initial-colour` | `white`, `black` |
+| Scoring scheme | `162` (and `362` for teams) | any points for win, draw, loss, PAB; standard 1 / 0.5 / 0 |
+| Number of rounds | `142`, `XXR`, `--rounds` | integer |
+| Swiss Rules Edition | `192`, `--edition` | `2026`, `pre-2026` (Dutch only) |
+| Ranking of participants | file order | listed order of the `001` records |
+| Tie-break list and edition | `202`/`212`, `--tiebreaks`, `--tiebreak-edition` | section 6 |
