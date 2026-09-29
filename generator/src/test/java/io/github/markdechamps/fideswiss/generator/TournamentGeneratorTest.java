@@ -11,7 +11,10 @@ import io.github.markdechamps.fideswiss.standings.TieBreakEdition;
 import io.github.markdechamps.fideswiss.standings.TieBreakList;
 import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.Bye;
+import io.github.markdechamps.fideswiss.tournament.ColourPreferenceType;
+import io.github.markdechamps.fideswiss.tournament.MatchOutcome;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
+import io.github.markdechamps.fideswiss.tournament.PrimaryScore;
 import io.github.markdechamps.fideswiss.tournament.Problem;
 import io.github.markdechamps.fideswiss.tournament.Profiles;
 import io.github.markdechamps.fideswiss.tournament.Rating;
@@ -20,6 +23,7 @@ import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -239,6 +243,76 @@ class TournamentGeneratorTest {
                 assertThat(skipped.round().value()).isEqualTo(1);
                 assertThat(skipped.reason()).contains("no pairing");
             });
+        }
+    }
+
+    @Nested
+    class GivenATeamSystem {
+
+        private final GeneratorSettings teams = GeneratorSettings.ofTeams(Profiles.teamSwiss(NumberOfRounds.of(9)))
+                .withPlayers(Range.of(10, 14))
+                .withRounds(Range.of(5))
+                .withBoards(Range.of(3, 5));
+
+        @Test
+        void playsMatchesOfTheDrawnNumberOfBoardsBetweenNamedTeams() {
+            var tournament = completed(teams, 3);
+
+            var boards = tournament.settings().scoring().matches().orElseThrow().boards();
+            assertThat(boards).isBetween(3, 5);
+            assertThat(tournament.participants())
+                    .hasSizeBetween(10, 14)
+                    .allSatisfy(team -> assertThat(team.name().value()).startsWith("Team "));
+            assertThat(tournament.rounds()).hasSize(5);
+            tournament.rounds().stream()
+                    .flatMap(round -> round.boards().stream())
+                    .forEach(match ->
+                            assertThat(((MatchOutcome) match.outcome()).games()).hasSize(boards));
+        }
+
+        @Test
+        void recordsTheBoardsWithTheParameters() {
+            var generated = TournamentGenerator.of(teams).generate(TournamentSeed.of(3));
+
+            assertThat(((GeneratedTournament.Completed) generated).parameters().boards())
+                    .isBetween(3, 5);
+        }
+
+        @Test
+        void drawsTheTeamTieBreaksOfArticlesTwelveAndThirteen() {
+            var drawn = IntStream.range(0, 40)
+                    .mapToObj(
+                            seed -> completed(teams.withRandomTieBreaks(), seed).settings())
+                    .flatMap(settings -> settings.tieBreakList().codes().stream())
+                    .map(TieBreakCode::acronym)
+                    .toList();
+
+            assertThat(drawn).contains("MPVGP", "EDE").anyMatch(code -> code.startsWith("EM"));
+        }
+
+        @Test
+        void drawsTheFormatOfASwissTeamEventButNotOfTheOlympiad() {
+            var varied = IntStream.range(0, 30)
+                    .mapToObj(seed ->
+                            completed(teams.withRandomTeamFormat(), seed).settings())
+                    .toList();
+            var olympiad = completed(
+                    GeneratorSettings.ofTeams(Profiles.olympiad(NumberOfRounds.of(9)))
+                            .withPlayers(Range.of(10))
+                            .withRounds(Range.of(4))
+                            .withRandomTeamFormat(),
+                    1);
+
+            assertThat(varied)
+                    .extracting(settings -> settings.scoring().primaryScore())
+                    .contains(PrimaryScore.MATCH_POINTS, PrimaryScore.GAME_POINTS);
+            assertThat(varied)
+                    .extracting(settings -> settings.pairingSystem().teamColourPreferences())
+                    .contains(
+                            Optional.of(ColourPreferenceType.TYPE_A),
+                            Optional.of(ColourPreferenceType.TYPE_B),
+                            Optional.of(ColourPreferenceType.NONE));
+            assertThat(olympiad.settings().scoring().primaryScore()).isEqualTo(PrimaryScore.MATCH_POINTS);
         }
     }
 

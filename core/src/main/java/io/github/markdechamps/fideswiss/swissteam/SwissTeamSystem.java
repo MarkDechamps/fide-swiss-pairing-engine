@@ -76,6 +76,11 @@ public record SwissTeamSystem(
     }
 
     @Override
+    public SwissTeamSystem withTeamColourPreferences(ColourPreferenceType preferences) {
+        return new SwissTeamSystem(preferences, upfloaterLookAhead, lastRoundZeroCd, floatScore);
+    }
+
+    @Override
     public CompetitionType competitionType() {
         return CompetitionType.TEAM;
     }

@@ -29,7 +29,8 @@ final class Manifest {
             "late entries",
             "scoring",
             "acceleration",
-            "tiebreaks");
+            "tiebreaks",
+            "boards");
 
     private final List<String> lines = new ArrayList<>(List.of(String.join("\t", COLUMNS)));
 
@@ -63,7 +64,8 @@ final class Manifest {
                         String.valueOf(parameters.lateEntries()),
                         scoring(parameters.scoring()),
                         acceleration(parameters.acceleration()),
-                        parameters.tieBreaks().toString())));
+                        parameters.tieBreaks().toString(),
+                        String.valueOf(parameters.boards()))));
     }
 
     String text() {

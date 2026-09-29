@@ -43,7 +43,9 @@ class GenerateCommandTest {
             var manifest = Files.readAllLines(directory.resolve("t%d.trf.manifest.tsv"));
             assertThat(manifest).hasSize(4);
             assertThat(manifest.getFirst()).startsWith("index\tseed\tstatus\tplayers\trounds\t");
-            assertThat(manifest.get(1).split("\t")).hasSize(17).contains("ok", "1/0.5/0", "none", "BH/C1, BH, SB, DE");
+            assertThat(manifest.get(1).split("\t"))
+                    .hasSize(18)
+                    .contains("ok", "1/0.5/0", "none", "BH/C1, BH, SB, DE", "0");
         }
 
         @Test
@@ -161,24 +163,76 @@ class GenerateCommandTest {
         }
 
         @Test
-        void refusesATeamSystem() {
-            var exit = run(
-                    "generate", "--olympiad", "-o", directory.resolve("x.trf").toString());
+        void generatesSwissTeamTournamentsThatReadBackAndPairAgain() throws IOException {
+            var pattern = directory.resolve("t%d.trf").toString();
 
-            assertThat(exit).isEqualTo(3);
-            assertThat(err.toString(java.nio.charset.StandardCharsets.UTF_8)).contains("team tournaments");
+            var exit = run(
+                    "generate",
+                    "--swiss-team",
+                    "--seed",
+                    "4",
+                    "--count",
+                    "2",
+                    "--players",
+                    "10..12",
+                    "--rounds",
+                    "5",
+                    "--boards",
+                    "3",
+                    "--tiebreaks",
+                    "random",
+                    "--random-team-format",
+                    "-o",
+                    pattern);
+
+            assertThat(exit).isZero();
+            for (var index = 0; index < 2; index++) {
+                var text = Files.readString(directory.resolve("t" + index + ".trf"));
+                assertThat(text)
+                        .contains("\r\n310 ")
+                        .contains("\r\n352 WBW\r\n")
+                        .contains("\r\n192 FIDE_TEAM");
+                var file = TrfReader.read(text);
+                assertThat(file.recordedRounds()).hasSize(5);
+                assertThat(file.participants()).hasSizeBetween(10, 12);
+                assertThat(file.settings().pairingSystem().competitionType())
+                        .isEqualTo(io.github.markdechamps.fideswiss.tournament.CompetitionType.TEAM);
+            }
+            var manifest = Files.readAllLines(directory.resolve("t%d.trf.manifest.tsv"));
+            assertThat(manifest.getFirst()).endsWith("\tboards");
+            assertThat(manifest.get(1)).endsWith("\t3");
         }
 
         @Test
-        void refusesAProfileWhoseSystemIsNotImplemented() {
-            var exit = run(
-                    "generate",
-                    "--profile",
-                    "olympiad",
-                    "-o",
-                    directory.resolve("x.trf").toString());
+        void generatesOlympiadTournamentsOfFourBoards() throws IOException {
+            var out = directory.resolve("olympiad.trf");
 
-            assertThat(exit).isEqualTo(3);
+            var exit = run(
+                    "generate", "--olympiad", "--seed", "6", "--players", "10", "--rounds", "5", "-o", out.toString());
+
+            assertThat(exit).isZero();
+            var text = Files.readString(out);
+            assertThat(text).contains("\r\n192 FIDE_OLYMPIAD\r\n").contains("\r\n352 WBWB\r\n");
+            assertThat(TrfReader.read(text).recordedRounds()).hasSize(5);
+        }
+
+        @Test
+        void startsFromTheTeamProfiles() throws IOException {
+            var out = directory.resolve("profile.trf");
+
+            var exit = run("generate", "--profile", "olympiad", "--seed", "2", "--rounds", "4", "-o", out.toString());
+
+            assertThat(exit).isZero();
+            assertThat(Files.readString(out)).contains("192 FIDE_OLYMPIAD");
+        }
+
+        @Test
+        void aTeamSystemAfterOtherFlagsKeepsThem() throws IOException {
+            var out = directory.resolve("later.trf");
+
+            run("generate", "--players", "9", "--rounds", "4", "--seed", "2", "--swiss-team", "-o", out.toString());
+
+            assertThat(TrfReader.read(Files.readString(out)).participants()).hasSize(9);
         }
 
         private String generated(String... flags) throws IOException {

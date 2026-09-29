@@ -46,6 +46,12 @@ public interface PairingSystem {
         return Optional.empty();
     }
 
+    /** The same system with other colour preferences (C.04.6 1.7); only the Swiss Team System has them. */
+    default PairingSystem withTeamColourPreferences(ColourPreferenceType preferences) {
+        throw new InvalidSettingsException(
+                List.of(Problem.of("The pairing system has no colour preference type " + preferences)));
+    }
+
     /**
      * How many games each pairing plays in succession between the same two participants: two for the Double-Swiss
      * System (C.04.5 Preface), one otherwise. A team match plays its boards side by side, so it counts one.

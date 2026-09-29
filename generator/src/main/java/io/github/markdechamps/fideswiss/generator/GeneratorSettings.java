@@ -28,6 +28,8 @@ public record GeneratorSettings(
         Chance bakuAcceleration,
         Chance nonStandardScoring,
         Chance drawnTieBreaks,
+        Range boards,
+        Chance variedTeamFormat,
         Optional<List<Participant>> field,
         ResultModel resultModel) {
 
@@ -48,6 +50,8 @@ public record GeneratorSettings(
         Objects.requireNonNull(bakuAcceleration, "bakuAcceleration");
         Objects.requireNonNull(nonStandardScoring, "nonStandardScoring");
         Objects.requireNonNull(drawnTieBreaks, "drawnTieBreaks");
+        Objects.requireNonNull(boards, "boards");
+        Objects.requireNonNull(variedTeamFormat, "variedTeamFormat");
         Objects.requireNonNull(field, "field");
         Objects.requireNonNull(resultModel, "resultModel");
     }
@@ -70,13 +74,37 @@ public record GeneratorSettings(
                 Chance.never(),
                 Chance.never(),
                 Chance.never(),
+                Range.of(4),
+                Chance.never(),
                 Optional.empty(),
                 new MilvangModel());
+    }
+
+    /**
+     * The defaults of a team event (the Swiss Team System or the Olympiad Pairing Rules): 8 to 40 teams over 5 to 11
+     * rounds, two to six boards, and forfeits and byes rarer than in an individual event, since every match is decided
+     * over several boards. The rates follow the Gacrux driver's (2% of boards, 2% of matches).
+     */
+    public static GeneratorSettings ofTeams(TournamentSettings tournament) {
+        return of(tournament)
+                .withPlayers(Range.of(8, 40))
+                .withBoards(Range.of(2, 6))
+                .withRounds(Range.of(5, 11))
+                .withForfeitRate(Range.of(30, 300))
+                .withHalfPointByeRate(Range.of(100, 3225))
+                .withZeroPointByeRate(Range.of(100, 3225))
+                .withWithdrawalPercentage(Range.of(0))
+                .withLateEntryPercentage(Range.of(0));
     }
 
     /** {@code --acceleration random}: Baku for 20% of the tournaments. */
     public GeneratorSettings withRandomAcceleration() {
         return withBakuAcceleration(Chance.percent(20));
+    }
+
+    /** {@code --random-team-format}: every Swiss Team tournament draws its match scoring and colour preferences. */
+    public GeneratorSettings withRandomTeamFormat() {
+        return withVariedTeamFormat(Chance.always());
     }
 
     /** {@code --random-scoring}: a non-standard scoring for 10% of the tournaments. */
@@ -107,6 +135,8 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 field,
                 resultModel);
     }
@@ -129,6 +159,8 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 field,
                 resultModel);
     }
@@ -151,6 +183,8 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 field,
                 resultModel);
     }
@@ -173,6 +207,8 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 field,
                 resultModel);
     }
@@ -195,6 +231,8 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 field,
                 resultModel);
     }
@@ -217,6 +255,8 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 field,
                 resultModel);
     }
@@ -239,6 +279,8 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 field,
                 resultModel);
     }
@@ -261,6 +303,8 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 field,
                 resultModel);
     }
@@ -283,6 +327,8 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 field,
                 resultModel);
     }
@@ -305,6 +351,8 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 field,
                 resultModel);
     }
@@ -327,6 +375,8 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 field,
                 resultModel);
     }
@@ -350,6 +400,8 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 field,
                 resultModel);
     }
@@ -373,6 +425,8 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 field,
                 resultModel);
     }
@@ -396,6 +450,8 @@ public record GeneratorSettings(
                 chance,
                 nonStandardScoring,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 field,
                 resultModel);
     }
@@ -419,6 +475,8 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 chance,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 field,
                 resultModel);
     }
@@ -441,6 +499,58 @@ public record GeneratorSettings(
                 lateEntryPercentage,
                 bakuAcceleration,
                 nonStandardScoring,
+                chance,
+                boards,
+                variedTeamFormat,
+                field,
+                resultModel);
+    }
+
+    /** The boards of a team match, drawn per tournament (TRF 352); individual systems ignore it. */
+    public GeneratorSettings withBoards(Range range) {
+        return new GeneratorSettings(
+                tournament,
+                players,
+                rounds,
+                highestRating,
+                lowestRating,
+                unratedPercentage,
+                forfeitRate,
+                halfPointByeRate,
+                zeroPointByeRate,
+                fullPointByeRate,
+                withdrawalPercentage,
+                retirementRate,
+                lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
+                range,
+                variedTeamFormat,
+                field,
+                resultModel);
+    }
+
+    /** The share of Swiss Team tournaments with a drawn match scoring, primary score and colour preference type. */
+    public GeneratorSettings withVariedTeamFormat(Chance chance) {
+        return new GeneratorSettings(
+                tournament,
+                players,
+                rounds,
+                highestRating,
+                lowestRating,
+                unratedPercentage,
+                forfeitRate,
+                halfPointByeRate,
+                zeroPointByeRate,
+                fullPointByeRate,
+                withdrawalPercentage,
+                retirementRate,
+                lateEntryPercentage,
+                bakuAcceleration,
+                nonStandardScoring,
+                drawnTieBreaks,
+                boards,
                 chance,
                 field,
                 resultModel);
@@ -465,6 +575,8 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 Optional.of(List.copyOf(participants)),
                 resultModel);
     }
@@ -487,6 +599,8 @@ public record GeneratorSettings(
                 bakuAcceleration,
                 nonStandardScoring,
                 drawnTieBreaks,
+                boards,
+                variedTeamFormat,
                 field,
                 model);
     }
