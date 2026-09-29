@@ -16,7 +16,7 @@ jobs:
           java-version: '25'
           cache: maven
       # Pinned Oracles, fetched and built here and run as separate processes; nothing of them is committed
-      # (Verification strategy). Gacrux for the Swiss Team System is not wired yet.
+      # (Verification strategy).
       - name: Build bbpPairings v6.0.0 and v5.0.1
         run: |
           for version in 6.0.0 5.0.1; do
@@ -26,15 +26,40 @@ jobs:
       # JaVaFo refuses plain curl (HTTP 999); its licence has no redistribution grant, so it is used here only.
       - name: Fetch JaVaFo 2.2
         run: curl -fsSL -A "Mozilla/5.0" -o javafo.jar https://www.rrweb.org/javafo/current/javafo.jar
+      # Gacrux (FIDE's TieBreakServer), the Swiss Team System Oracle, pinned to the commit its Known Divergences
+      # were measured on; its Python needs networkx only.
+      - name: Fetch Gacrux @ 6419149 and its Python environment
+        run: |
+          git clone https://github.com/OttoMilvang/TieBreakServer.git TieBreakServer
+          git -C TieBreakServer checkout 6419149ede24fa76639a956b1a52ccac0ded730d
+          python3 -m venv gacrux-venv
+          gacrux-venv/bin/pip install networkx
       # 5,000 generated tournaments per Oracle-backed scope, from a corpus seed that rotates each night.
       - name: Oracle comparison runs
         env:
           FIDESWISS_ORACLE_BBP6: ${{ github.workspace }}/bbpPairings-6.0.0/build/bbpPairings.exe
           FIDESWISS_ORACLE_BBP5: ${{ github.workspace }}/bbpPairings-5.0.1/build/bbpPairings.exe
           FIDESWISS_ORACLE_JAVAFO: ${{ github.workspace }}/javafo.jar
+          FIDESWISS_ORACLE_GACRUX: ${{ github.workspace }}/TieBreakServer
+          FIDESWISS_ORACLE_GACRUX_PYTHON: ${{ github.workspace }}/gacrux-venv/bin/python
         run: >-
           ./mvnw -B verify -pl oracle-it -am -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false
           -Dfideswiss.oracle.tournaments=5000 -Dfideswiss.oracle.seed=$(date +%Y%m%d)
+      # Every Dutch tournament accelerated by Baku (fictitious points as XXA), and team tournaments with withdrawals and late entries.
+      - name: Oracle comparison runs, accelerated and with membership changes
+        env:
+          FIDESWISS_ORACLE_BBP6: ${{ github.workspace }}/bbpPairings-6.0.0/build/bbpPairings.exe
+          FIDESWISS_ORACLE_BBP5: ${{ github.workspace }}/bbpPairings-5.0.1/build/bbpPairings.exe
+          FIDESWISS_ORACLE_JAVAFO: ${{ github.workspace }}/javafo.jar
+          FIDESWISS_ORACLE_GACRUX: ${{ github.workspace }}/TieBreakServer
+          FIDESWISS_ORACLE_GACRUX_PYTHON: ${{ github.workspace }}/gacrux-venv/bin/python
+        run: |
+          ./mvnw -B verify -pl oracle-it -am -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false \
+            -Dit.test=DutchOracleIT -Dfideswiss.oracle.baku=100 \
+            -Dfideswiss.oracle.tournaments=2000 -Dfideswiss.oracle.seed=$(date +%Y%m%d)
+          ./mvnw -B verify -pl oracle-it -am -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false \
+            -Dit.test=SwissTeamOracleIT -Dfideswiss.oracle.events=forfeits,byes,withdrawals,late-entries \
+            -Dfideswiss.oracle.tournaments=1000 -Dfideswiss.oracle.seed=$(date +%Y%m%d)
       - name: Keep the inputs of every difference
         if: failure()
         uses: actions/upload-artifact@v4

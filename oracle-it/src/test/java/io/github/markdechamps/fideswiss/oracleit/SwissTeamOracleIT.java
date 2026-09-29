@@ -56,7 +56,7 @@ class SwissTeamOracleIT {
         assertThat(report.differences()).as(report.summary()).isEmpty();
     }
 
-    /** {@code fideswiss.oracle.events} (a comma list) overrides the events played. */
+    /** {@code fideswiss.oracle.events} (a comma list, also {@code withdrawals} and {@code late-entries}, off by default) overrides the events played. */
     private static Set<String> events() {
         return Set.of(System.getProperty("fideswiss.oracle.events", ALL_EVENTS).split(","));
     }
@@ -69,6 +69,8 @@ class SwissTeamOracleIT {
                 .withForfeitRate(events.contains("forfeits") ? Range.of(30, 200) : NEVER)
                 .withHalfPointByeRate(events.contains("byes") ? Range.of(40, 400) : NEVER)
                 .withZeroPointByeRate(events.contains("byes") ? Range.of(40, 400) : NEVER)
+                .withWithdrawalPercentage(events.contains("withdrawals") ? Range.of(5, 20) : Range.of(0, 0))
+                .withLateEntryPercentage(events.contains("late-entries") ? Range.of(5, 20) : Range.of(0, 0))
                 .withRandomTeamFormat()
                 .withRandomAcceleration();
         var completed = new ArrayList<GeneratedTournament.Completed>();

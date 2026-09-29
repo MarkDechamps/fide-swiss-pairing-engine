@@ -41,9 +41,17 @@ Each entry gives the scope, a minimised input, both outputs, the article, our re
 - **Input:** `docs/verification/inputs/kd-4-javafo-half-point-byes.trf` (our own generated input, minimised by size only), round 3, with
   half-point byes (`H`) in the history and in the round to pair.
 - **JaVaFo:** `16-8, 17-6, 18-10, 5-15, 7-14, 9-2`. **bbpPairings v5.0.1 and library:** `5-8, 6-2, 7-10, 9-16, 17-14, 18-15`.
-- **Reading:** not analysed yet. JaVaFo is closed source; corpora with only forfeits, withdrawals and late entries alone all agree
-  (320 of 320 rounds each), and only corpora with requested byes differ. The cause may be a TRF16 dialect detail of pending byes
-  or a reading of how a bye counts in the history; bbpPairings v5.0.1, the other 2017 Oracle, agrees with the library on every such input.
-- **Handling:** the JaVaFo gate of `oracle-it` plays no requested byes by default (`fideswiss.oracle.events`, see the manual, section 10),
-  so the nightly run never hides a new difference behind this one. Open item of the Verification strategy: explain it or drop JaVaFo as a
-  2017 Oracle.
+- **Reading (analysed; the cause is narrowed, not proven):** JaVaFo is closed source, so this is from black-box experiments on the input (16 variants, each with
+  the points column recomputed so that bbpPairings accepts it). Round 3 has 16 present players, the 1.0 bracket has 10 members (8 residents and the
+  moved-down 2 and 5, who have met) and can be paired completely. bbpPairings and the library do so and float one player, 7, to the 0.0 bracket. JaVaFo pairs
+  only four boards in it and floats two players, 14 and 18, so it does not maximise the pairs of the bracket (C.04.3 2017, completion criteria; C.04.1
+  1.4.3 for who counts as a floater). The divergence needs half-point byes (`H`) in the history **and** requested ones in the round to pair: with every `H`
+  changed to `Z` (zero-point) JaVaFo agrees in all 16 variants, and with a single `H` changed it still differs. Which combination of `H` and `Z` differs is not
+  monotonic (`4:H 13:H,H 15:Z` differs; `4:Z 13:H,H 15:Z` agrees), so it is not an effect of the score of any one player. Best hypothesis: JaVaFo counts a
+  requested half-point bye of the round to pair together with earlier ones (for the downfloat of C.04.1 1.4.3, "without playing in a round, scores more
+  points than those rewarded for a loss") and lets that outweigh completion in the bracket. Our reading of 1.4.3 (an `H` gives a downfloat in its own
+  round only, as bbpPairings v5.0.1 also reads it) stands; nothing in the text supports leaving a paired bracket incomplete. The engine is not changed.
+- **Handling:** the register companion (`oracle-it/src/main/resources/known-divergences.tsv`) recognises a JaVaFo difference whose input has an `H`
+  bye, so the JaVaFo gate plays requested byes like the bbpPairings gates and reports these rounds apart ("registered") instead of failing on them; a
+  difference in an input without an `H` bye still fails. 26 of 320 rounds in 40 tournaments (seed 20260929) are registered. Open item of the
+  Verification strategy: ask the JaVaFo maintainer with this input, or drop JaVaFo as a 2017 Oracle.
