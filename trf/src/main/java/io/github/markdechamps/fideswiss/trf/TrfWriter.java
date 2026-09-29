@@ -5,6 +5,7 @@ import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.Board;
 import io.github.markdechamps.fideswiss.tournament.Bye;
 import io.github.markdechamps.fideswiss.tournament.Colour;
+import io.github.markdechamps.fideswiss.tournament.CompetitionType;
 import io.github.markdechamps.fideswiss.tournament.GameResult;
 import io.github.markdechamps.fideswiss.tournament.MatchOutcome;
 import io.github.markdechamps.fideswiss.tournament.Participant;
@@ -64,6 +65,9 @@ public final class TrfWriter {
     }
 
     public static String write(Tournament tournament, Options options) {
+        if (tournament.settings().pairingSystem().competitionType() == CompetitionType.TEAM) {
+            return TeamTrfWriter.write(tournament, options);
+        }
         return new TrfWriter(tournament).text(options);
     }
 
@@ -87,12 +91,12 @@ public final class TrfWriter {
     }
 
     /** Baku acceleration travels as the {@code _BAKU} suffix of the system code (Acceleration readings). */
-    private static String accelerationSuffix(Acceleration acceleration) {
+    static String accelerationSuffix(Acceleration acceleration) {
         return acceleration instanceof Acceleration.Baku ? "_BAKU" : "";
     }
 
     /** {@code 212}: the Tie-break List after {@code PTS}, the score, comma-separated as TRF26 lists it. */
-    private static String tieBreakRecord(TieBreakList list) {
+    static String tieBreakRecord(TieBreakList list) {
         var codes = new ArrayList<String>();
         codes.add("PTS");
         list.codes().forEach(code -> codes.add(code.toString()));
@@ -185,7 +189,7 @@ public final class TrfWriter {
         return String.format("%4d %c %c", opponent, colour == Colour.WHITE ? 'w' : 'b', code);
     }
 
-    private static char playedCode(GameResult result) {
+    static char playedCode(GameResult result) {
         return switch (result) {
             case WIN -> '1';
             case DRAW -> '=';
@@ -193,7 +197,7 @@ public final class TrfWriter {
         };
     }
 
-    private static char byeCode(Bye bye) {
+    static char byeCode(Bye bye) {
         return switch (bye) {
             case PAIRING_ALLOCATED -> 'U';
             case FULL_POINT -> 'F';
@@ -220,12 +224,12 @@ public final class TrfWriter {
         return points.toBigDecimal().setScale(1, RoundingMode.HALF_UP).toPlainString();
     }
 
-    private static String truncated(String value, int width) {
+    static String truncated(String value, int width) {
         return value.length() <= width ? value : value.substring(0, width);
     }
 
     /** Writes {@code value} from the 1-based column {@code column} on. */
-    private static void put(StringBuilder line, int column, String value) {
+    static void put(StringBuilder line, int column, String value) {
         pad(line, column - 1);
         line.replace(column - 1, column - 1 + value.length(), value);
     }

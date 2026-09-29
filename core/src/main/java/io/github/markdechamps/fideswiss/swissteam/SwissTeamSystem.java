@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The Swiss Team Pairing System (C.04.6, 2026): the PAB first, then the top-scoregroup with its upfloaters,
@@ -67,6 +68,11 @@ public record SwissTeamSystem(
             case FloatScore reading ->
                 new SwissTeamSystem(colourPreferences, upfloaterLookAhead, lastRoundZeroCd, reading);
         };
+    }
+
+    @Override
+    public Optional<ColourPreferenceType> teamColourPreferences() {
+        return Optional.of(colourPreferences);
     }
 
     @Override

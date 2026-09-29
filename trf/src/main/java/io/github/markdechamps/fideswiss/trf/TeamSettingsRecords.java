@@ -61,6 +61,30 @@ final class TeamSettingsRecords {
                 .with(scoring);
     }
 
+    /**
+     * The {@code 192} code the settings of a team event are written as, the inverse of {@link #read}: the Olympiad's
+     * provisional code, or {@code FIDE_TEAM} with its colour preference type and its score suffix
+     * ({@code _MP_GP}, {@code _MP}, {@code _GP_MP}, {@code _GP}).
+     */
+    static String codeOf(TournamentSettings settings) {
+        var preferences = settings.pairingSystem().teamColourPreferences();
+        if (preferences.isEmpty()) {
+            return OLYMPIAD;
+        }
+        var matches = settings.scoring().matches().orElseThrow();
+        var withSecondary = matches.secondary() == SecondaryScore.USED_FOR_COLOUR;
+        var scores = matches.primary() == PrimaryScore.MATCH_POINTS
+                ? (withSecondary ? "_MP_GP" : "_MP")
+                : (withSecondary ? "_GP_MP" : "_GP");
+        var type =
+                switch (preferences.get()) {
+                    case TYPE_A -> "_TYPEA";
+                    case TYPE_B -> "_TYPEB";
+                    case NONE -> "";
+                };
+        return "FIDE_TEAM" + type + scores;
+    }
+
     /** {@code FIDE_OLYMPIAD}, with or without {@code _BAKU}, which the Olympiad Pairing Rules then refuse. */
     private static boolean isOlympiad(String code) {
         return code.replaceFirst("_BAKU$", "").equals(OLYMPIAD);
