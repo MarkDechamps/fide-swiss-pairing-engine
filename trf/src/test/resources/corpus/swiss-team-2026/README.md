@@ -1,6 +1,6 @@
 # Swiss Team 2026 regression corpus
 
-Tournaments paired by the Oracle for the Swiss Team System 2026: Gacrux @ 6419149 (MIT, v1.10.62) with the
+Tournaments paired by the Oracle for the literal readings of the Swiss Team System 2026 (`SwissTeamRegressionCorpusTest` replays them under `bracket-seating=tpn` and `pab-value=draw`; the defaults corpus is `../swiss-team-2026-defaults`, ADR 0009): Gacrux @ 6419149 (MIT, v1.10.62) with the
 `tpn-order` patch (bracket seats by TPN only, C.04.6 3.6.1; Known Divergence KD-1):
 
 ```sh

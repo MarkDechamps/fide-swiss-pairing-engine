@@ -60,6 +60,10 @@ jobs:
           ./mvnw -B verify -pl oracle-it -am -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false \
             -Dit.test=SwissTeamOracleIT -Dfideswiss.oracle.events=forfeits,byes,withdrawals,late-entries \
             -Dfideswiss.oracle.tournaments=1000 -Dfideswiss.oracle.seed=$(date +%Y%m%d)
+          # The FIDE-literal readings (ADR 0009) against Gacrux patched with tpn-order.
+          ./mvnw -B verify -pl oracle-it -am -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false \
+            -Dit.test=SwissTeamOracleIT -Dfideswiss.oracle.gacrux.literal=true \
+            -Dfideswiss.oracle.tournaments=500 -Dfideswiss.oracle.seed=$(date +%Y%m%d)
       - name: Keep the inputs of every difference
         if: failure()
         uses: actions/upload-artifact@v4
