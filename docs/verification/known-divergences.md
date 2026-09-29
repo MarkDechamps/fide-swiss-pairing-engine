@@ -34,3 +34,16 @@ Each entry gives the scope, a minimised input, both outputs, the article, our re
   readings decision 1: the text names the secondary score, so it is not the Pairing Score).
 - **Handling:** the corpus accelerates only codes without a secondary score (`FIDE_TEAM_TYPEA_MP_BAKU`,
   `FIDE_TEAM_TYPEB_MP_BAKU`).
+
+## KD-4 Dutch 2017: JaVaFo 2.2 pairs differently when half-point byes are in play
+
+- **Scope:** Dutch System, pre-2026 Swiss Rules Edition (C.04.1 2017), JaVaFo 2.2 (Build 3222) against bbpPairings v5.0.1 and the library.
+- **Input:** `docs/verification/inputs/kd-4-javafo-half-point-byes.trf` (our own generated input, minimised by size only), round 3, with
+  half-point byes (`H`) in the history and in the round to pair.
+- **JaVaFo:** `16-8, 17-6, 18-10, 5-15, 7-14, 9-2`. **bbpPairings v5.0.1 and library:** `5-8, 6-2, 7-10, 9-16, 17-14, 18-15`.
+- **Reading:** not analysed yet. JaVaFo is closed source; corpora with only forfeits, withdrawals and late entries alone all agree
+  (320 of 320 rounds each), and only corpora with requested byes differ. The cause may be a TRF16 dialect detail of pending byes
+  or a reading of how a bye counts in the history; bbpPairings v5.0.1, the other 2017 Oracle, agrees with the library on every such input.
+- **Handling:** the JaVaFo gate of `oracle-it` plays no requested byes by default (`fideswiss.oracle.events`, see the manual, section 10),
+  so the nightly run never hides a new difference behind this one. Open item of the Verification strategy: explain it or drop JaVaFo as a
+  2017 Oracle.

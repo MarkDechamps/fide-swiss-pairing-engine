@@ -646,6 +646,36 @@ Other things to know:
 - Progress lines on a terminal are written to standard error; redirect or use `--quiet` if they disturb a script.
 - `check` reports DIFFERENT for a pairing that is legal but not the system's own; see section 8.
 
+## 10. Oracle gates
+
+The `oracle-it` module compares the library's pairings with external programs (the Oracles of the verification strategy). It runs them as separate processes; nothing of them is linked, copied or committed. The gates are Failsafe tests, so `./mvnw verify -pl oracle-it -am` runs them and the ordinary unit-test build never does.
+
+For every gate, the Random Tournament Generator plays a corpus of Dutch tournaments. The Oracle then pairs each round from the rounds before it, and its pairing must equal ours, board for board and bye for bye. The first differing round of a tournament is reported. The exact input the Oracle was given is saved under `oracle-it/target/oracle-failures/` for each difference, so the nightly job can keep it.
+
+| Gate | Program | Scope |
+|---|---|---|
+| `bbpPairingsV6PairsDutch2026AsWeDo` | bbpPairings v6.0.0 | Dutch 2026 |
+| `bbpPairingsV5PairsDutch2017AsWeDo` | bbpPairings v5.0.1 | Dutch 2017 (pre-2026 edition) |
+| `jaVaFoPairsDutch2017AsWeDo` | JaVaFo 2.2 | Dutch 2017, without requested byes (Known Divergence KD-4) |
+
+Point each gate to its program with a system property or an environment variable. A gate whose program is not configured is skipped, and the skip message names both.
+
+| Program | System property | Environment variable |
+|---|---|---|
+| bbpPairings v6.0.0 | `fideswiss.oracle.bbp6` | `FIDESWISS_ORACLE_BBP6` |
+| bbpPairings v5.0.1 | `fideswiss.oracle.bbp5` | `FIDESWISS_ORACLE_BBP5` |
+| JaVaFo 2.2 (a `.jar`, run with `java -jar`) | `fideswiss.oracle.javafo` | `FIDESWISS_ORACLE_JAVAFO` |
+
+Corpus settings, all system properties: `fideswiss.oracle.tournaments` (default 100), `fideswiss.oracle.seed` (default 20260929; the nightly job rotates it) and `fideswiss.oracle.events`, a comma list of what besides plain results is played (`forfeits`, `byes`, `withdrawals`, `late-entries`). The printed summary reads, for example, `bbpPairings v6.0.0: 822 of 822 rounds agree in 100 tournaments, 0 with a difference`.
+
+```sh
+FIDESWISS_ORACLE_BBP6=$HOME/oracles/bbpPairings.exe \
+  ./mvnw verify -pl oracle-it -am -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false \
+  -Dfideswiss.oracle.tournaments=500 -Dfideswiss.oracle.seed=42
+```
+
+Not covered yet: Gacrux for the Swiss Team System (it needs its `tpn-order` patch and a Python driver), our `check` on the oracle's own generated tournaments, the 50,000-tournament release gate's both-direction run, and reading the Known Divergence register automatically.
+
 ## References
 
 - `README.md`: overview, status table, readings of each Handbook text, the library API.

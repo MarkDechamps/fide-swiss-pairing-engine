@@ -23,6 +23,7 @@ Every change that can alter a pairing, a standing or a check verdict is listed u
 - The TRF26 writer: `012`, `142`, `152`, `162`, `192` (Dutch, Dutch 2017, Dubov, Burstein, Lim, with `_BAKU`), `212` and the `001` records, read back to the same rounds and settings.
 - The Random Tournament Generator (`generator` module): whole Dutch (2026 and pre-2026), Dubov and Lim tournaments from a logged seed, with Milvang's result model, forfeits, requested byes, withdrawals, late entries, and per-tournament Baku, scoring and Tie-break List; JaVaFo/bbp configuration files and model tournaments; the invariant checker on 200 tournaments per system and edition in every build and 5,000 nightly.
 - `fide-swiss generate` and the JaVaFo/bbp `-g` form, with a manifest per corpus and exit code 7 when more than 0.1% of the seeds are skipped.
+- The `oracle-it` gates: the generator's Dutch tournaments re-paired round by round by bbpPairings v6.0.0 (Dutch 2026), bbpPairings v5.0.1 and JaVaFo 2.2 (Dutch 2017), run as separate processes from a path in a system property or environment variable and skipped when absent; the nightly workflow builds the pinned programs and runs them on 5,000 tournaments. Known Divergence KD-4 registers JaVaFo's difference on requested byes.
 
 ### Pairing changes
 
