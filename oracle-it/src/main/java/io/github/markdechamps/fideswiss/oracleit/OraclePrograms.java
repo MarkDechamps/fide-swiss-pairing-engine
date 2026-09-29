@@ -1,14 +1,16 @@
 package io.github.markdechamps.fideswiss.oracleit;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 /**
  * Where the pinned Oracle programs are: a system property (for example {@code -Dfideswiss.oracle.bbp6=/opt/bbp6}) or
  * else an environment variable ({@code FIDESWISS_ORACLE_BBP6}). Nothing is downloaded here; a program that is not
- * configured is absent, and its gate is skipped with a message that says how to configure it.
+ * configured, or whose path does not exist, is absent, and its gate is skipped with a message that says how to configure it.
  */
 public enum OraclePrograms {
     /** bbpPairings v6.0.0, the Oracle of the Dutch System 2026. */
@@ -51,17 +53,42 @@ public enum OraclePrograms {
 
     /** The message a skipped test shows. */
     public String absence() {
+        return absence(System::getProperty, System::getenv, Files::exists);
+    }
+
+    /** Names the configured path when it does not exist, else says how to configure the program. */
+    public String absence(UnaryOperator<String> properties, UnaryOperator<String> environment, Predicate<Path> exists) {
+        var configured = configured(properties, environment);
+        if (configured.isPresent() && !exists.test(Path.of(configured.get()))) {
+            return label + " is configured but does not exist: " + configured.get() + " (" + property() + " or "
+                    + variable() + ")";
+        }
         return label + " is not configured: set -D" + property() + "=<path> or " + variable() + "=<path>";
     }
 
     public Optional<PairingOracle> locate() {
-        return locate(System::getProperty, System::getenv);
+        return locate(System::getProperty, System::getenv, Files::exists);
     }
 
     public Optional<PairingOracle> locate(UnaryOperator<String> properties, UnaryOperator<String> environment) {
-        var path = Optional.ofNullable(properties.apply(property()))
-                .or(() -> Optional.ofNullable(environment.apply(variable())));
-        return path.filter(value -> !value.isBlank()).map(this::program);
+        return locate(properties, environment, Files::exists);
+    }
+
+    /** The program, when a path is configured and exists; a path that is missing counts as absent, never as a failure. */
+    public Optional<PairingOracle> locate(
+            UnaryOperator<String> properties, UnaryOperator<String> environment, Predicate<Path> exists) {
+        return present(properties, environment, exists).map(this::program);
+    }
+
+    private Optional<String> present(
+            UnaryOperator<String> properties, UnaryOperator<String> environment, Predicate<Path> exists) {
+        return configured(properties, environment).filter(value -> exists.test(Path.of(value)));
+    }
+
+    private Optional<String> configured(UnaryOperator<String> properties, UnaryOperator<String> environment) {
+        return Optional.ofNullable(properties.apply(property()))
+                .or(() -> Optional.ofNullable(environment.apply(variable())))
+                .filter(value -> !value.isBlank());
     }
 
     private PairingOracle program(String path) {
@@ -80,10 +107,7 @@ public enum OraclePrograms {
     public Optional<ExternalPairingProgram> locateChecker() {
         return dialect == OracleDialect.GACRUX
                 ? Optional.empty()
-                : Optional.ofNullable(System.getProperty(property()))
-                        .or(() -> Optional.ofNullable(System.getenv(variable())))
-                        .filter(value -> !value.isBlank())
-                        .map(this::external);
+                : present(System::getProperty, System::getenv, Files::exists).map(this::external);
     }
 
     /** The Python that has Gacrux's requirements: {@code -Dfideswiss.oracle.gacrux.python} or {@code FIDESWISS_ORACLE_GACRUX_PYTHON}. */
