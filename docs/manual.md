@@ -33,6 +33,7 @@ The project is **pre-alpha**. Every system below is `experimental`: it pairs rou
 | C.04.5 | Double-Swiss System | 2026 | experimental; no Oracle exists, checked against a plain enumeration of the text |
 | C.04.6 | Swiss Team Pairing System | 2026 | experimental; matches a patched Gacrux on a 40-tournament regression corpus |
 | C.04.7 | Acceleration methods (Baku, explicit virtual points) | 2026 | implemented for Dutch, Dubov, Burstein, Lim and Double-Swiss |
+| D.02 | Olympiad Pairing Rules | 2022 (the only edition) | experimental; no Oracle exists, checked against a plain enumeration of the text |
 | C.07 | Tie-Breaks | 2026-03 and 2024-08 editions | implemented for individual and team tournaments |
 
 The Oracle results are the ones stated in `README.md` at the time of writing; the README table is the maintained record.
@@ -82,7 +83,9 @@ fide-swiss 0.1.0-SNAPSHOT
   C.04.4.1 Dubov System 2026: experimental
   C.04.4.2 Burstein System 2026: experimental
   C.04.4.3 Lim System 2026: experimental
+  C.04.5 Double-Swiss System 2026: experimental
   C.04.6 Swiss Team Pairing System 2026: experimental
+  D.02 Olympiad Pairing Rules 2022: experimental
 ```
 
 Running with no arguments, or with `help`, `--help` or `-h`, prints the usage text.
@@ -93,7 +96,7 @@ There are two grammars. A subcommand name first (`pair`, `check`, `standings`, `
 
 ```
 fide-swiss pair <in.trf> [-o <reply>] [-l [<trace>]] [--explain <id>]... [--quiet] [settings]
-fide-swiss [--dutch|--dubov|--burstein|--lim|--double-swiss|--swiss-team] <in.trf> -p [<reply>] [-l [<trace>]] [settings]
+fide-swiss [--dutch|--dubov|--burstein|--lim|--double-swiss|--swiss-team|--olympiad] <in.trf> -p [<reply>] [-l [<trace>]] [settings]
 fide-swiss check <in.trf> [--round <r>] [settings]   |   <in.trf> -c [<r>]   |   -check <in.trf>
 fide-swiss standings <in.trf> [--after <r>] [--why <id> <id>] [settings]
 fide-swiss generate -o <out%d.trf> [--seed <n>] [--count <k>] [--profile <name>] [--config <cfg>] [--model <in.trf>] [ranges] [tournament flags]
@@ -115,7 +118,7 @@ The flags below work on `pair`, `check` and `standings`, and after `-p`/`-c` in 
 
 | Flag | Values | Overrides | Meaning |
 |---|---|---|---|
-| `--system <name>` | `dutch`, `dubov`, `burstein`, `lim`, `double-swiss`, `swiss-team` | record `192` | The pairing system. Also written `--dutch`, `--dubov`, `--burstein`, `--lim`, `--double-swiss`, `--swiss-team`. The choice also decides how the file's round columns are read: `double-swiss` reads two TRF rounds per match, every other system one (4.2). |
+| `--system <name>` | `dutch`, `dubov`, `burstein`, `lim`, `double-swiss`, `swiss-team`, `olympiad` | record `192` | The pairing system. Also written `--dutch`, `--dubov`, `--burstein`, `--lim`, `--double-swiss`, `--swiss-team`, `--olympiad`. The choice also decides how the file's round columns are read: `double-swiss` reads two TRF rounds per match, every other system one (4.2). |
 | `--maxi-tournament` | none | (no TRF record exists) | Declare a Lim tournament a Maxi-tournament. Only meaningful for Lim. |
 | `--edition` | `2026`, `pre-2026` | record `192` edition | The Swiss Rules Edition. `pre-2026` is the Dutch System 2017. Dubov, Burstein, Lim and Double-Swiss reject `pre-2026`. |
 | `--rounds <n>` | integer | `142` / `XXR` | The number of rounds (for Double-Swiss: of matches). |
@@ -124,7 +127,7 @@ The flags below work on `pair`, `check` and `standings`, and after `-p`/`-c` in 
 | `--tiebreak-edition` | `2026-03`, `2024-08` | profile | The C.07 edition that defines the tie-break values. |
 | `--interpretation <name>=<value>` | see 5.5 and 5.6 | profile | A Swiss Team or Double-Swiss reading (ADR 0003). Repeatable. |
 
-A team file (one with `310` records) is paired by the Swiss Team System and only accepts `--swiss-team` (or `--system swiss-team`); asking for another system on it is an error, and so is asking for `--swiss-team` on a file with no `310` records (see section 9).
+A team file (one with `310` records) is paired by the Swiss Team System, or by the Olympiad Pairing Rules when its `192` is `FIDE_OLYMPIAD`, and only accepts the team systems `--swiss-team` and `--olympiad` (or `--system swiss-team|olympiad`). `--swiss-team` on a Swiss Team file keeps the file's colour preferences; naming the other team system switches to it (the Swiss Team System then has Type A preferences). Asking for an individual system on a team file is an error, and so is asking for a team system on a file with no `310` records (see section 9).
 
 ### 3.2 `pair`
 
@@ -147,7 +150,7 @@ fide-swiss --dubov tournament.trf -p                 # -p without a file: reply 
 | `--quiet` | Suppress the progress line. Without it, a terminal shows a one-line progress indicator on standard error after 500 ms of pairing, erased when the pairing ends. It is never shown when standard error is not a terminal. |
 | settings | see 3.1 |
 
-In the short form the system flags `--dutch`, `--dubov`, `--burstein`, `--lim`, `--double-swiss`, `--swiss-team` are settings flags like any other and may appear anywhere. If `-p` is missing (and no `-c`), the command stops with `nothing to do: give -p to pair the next round or -c to check`.
+In the short form the system flags `--dutch`, `--dubov`, `--burstein`, `--lim`, `--double-swiss`, `--swiss-team`, `--olympiad` are settings flags like any other and may appear anywhere. If `-p` is missing (and no `-c`), the command stops with `nothing to do: give -p to pair the next round or -c to check`.
 
 **The reply** is JaVaFo's Pairing Reply, ended with LF:
 
@@ -325,20 +328,21 @@ The value is upper-cased. An optional `_BAKU` suffix means Baku acceleration and
 | `FIDE_LIM`, `FIDE_LIM_2026` | Lim System 2026 (provisional: TRF26 has no Lim code) |
 | `FIDE_DOUBLESWISS`, `FIDE_DOUBLESWISS_2026` | Double-Swiss System 2026; also switches on two TRF rounds per match (4.2) |
 | `FIDE_TEAM...` | Swiss Team System (team files only, see below) |
+| `FIDE_OLYMPIAD` | Olympiad Pairing Rules 2022 (team files only; provisional: TRF26 has no Olympiad code) |
 | blank or no `192` | the profile's system: Dutch 2026 |
 
 Any other code is rejected with `Unsupported pairing system in record 192: <CODE>` (exit 3), for example `CUSTOM_DOUBLESWISS` or `CUSTOM_SWISS`. `_BAKU` on any code is provisional.
 
-For a **team file** (any `310` record, or a `192` containing `TEAM`), the code must start with `FIDE_TEAM`; the form is `FIDE_TEAM[_TYPEA|_TYPEB][_MP|_GP][_GP|_MP][_BAKU]`:
+For a **team file** (any `310` record, or a `192` containing `TEAM` or equal to `FIDE_OLYMPIAD`), the code must be `FIDE_OLYMPIAD` (5.7) or start with `FIDE_TEAM`. `FIDE_OLYMPIAD` takes the match points of `362` (primary), the game points of `162` and the bye of D.02 4.3 (1 matchpoint; `320` is not read); `FIDE_OLYMPIAD_BAKU` is refused, since D.02 has no acceleration (`[C.04.7] Acceleration is defined for the C.04 systems, not the Olympiad Pairing Rules`). The Swiss Team form is `FIDE_TEAM[_TYPEA|_TYPEB][_MP|_GP][_GP|_MP][_BAKU]`:
 
-- `_TYPEA` or `_TYPEB` sets the colour preference type (5.4); a bare `FIDE_TEAM` is Type A; a code with neither suffix, for example `FIDE_TEAM_MP`, uses no colour preferences.
+- `_TYPEA` or `_TYPEB` sets the colour preference type (5.5); a bare `FIDE_TEAM` is Type A; a code with neither suffix, for example `FIDE_TEAM_MP`, uses no colour preferences.
 - The first of `MP` (match points) and `GP` (game points) is the primary score; a second one is the secondary score used for colours. A code naming one has no secondary score; a code naming neither keeps the C.04.6 default (match points primary, game points secondary).
 
 Any other `192` code for a team file gives `Unsupported 192 code <code> for a team file`.
 
 ### 4.4 What is written
 
-The `generate` command writes TRF26 files with: `012` (the name `RTG <version> seed <n>`), `142`, `152`, `162` (only when different from the standard scoring), `192` (with `_BAKU` when Baku is on), `212` (`PTS` followed by the tie-break list, when the list is not empty) and one `001` record per participant. The writer reads back to the same rounds and settings. The writer can also emit `XXR` and `XXC` for JaVaFo. It does not write team files. A Double-Swiss tournament is written with two columns per match (4.2), `142` as twice the number of matches, `192 FIDE_DOUBLESWISS`, and a `162` that always carries `P`, `F` and `H`, the per-match bye values, so another reader never has to guess them.
+The `generate` command writes TRF26 files with: `012` (the name `RTG <version> seed <n>`), `142`, `152`, `162` (only when different from the standard scoring), `192` (with `_BAKU` when Baku is on), `212` (`PTS` followed by the tie-break list, when the list is not empty) and one `001` record per participant. The writer reads back to the same rounds and settings. The writer can also emit `XXR` and `XXC` for JaVaFo. It does not write team files, so the provisional `FIDE_OLYMPIAD` is never written. A Double-Swiss tournament is written with two columns per match (4.2), `142` as twice the number of matches, `192 FIDE_DOUBLESWISS`, and a `162` that always carries `P`, `F` and `H`, the per-match bye values, so another reader never has to guess them.
 
 ## 5. Pairing systems
 
@@ -410,24 +414,43 @@ The pairing is the procedure of the Swiss Team System (5.5), which C.04.5 repeat
 - **Float criteria** [C7] and [C8] lapse only in the last planned round.
 - **Interpretations** (`--interpretation`, as in 5.5): `upfloater-look-ahead=parity-minimum|graded` for [C6] and `float-score=pairing|real` for floats under acceleration. Double-Swiss has no colour preferences, so `last-round-zero-cd-type-b` is refused (`[C.04.5] The Double-Swiss System has no colour preferences, so no STRONG`).
 - **Library**: `PairingSystems.doubleSwiss()`, `Profiles.doubleSwiss(rounds)` and `ScoringScheme.doubleSwiss()`; record a match as `MatchOutcome.ofGames(List.of(game1, game2))`, each game seen from the player with White in game 1, whatever colour that player has in the game (so `WHITE_WINS` as game 2 is a win for the game-1 White, who plays game 2 with Black).
-- Edition: 2026 only (`--edition pre-2026` is rejected, `[GHR 1.3]`). Acceleration: Baku (5.7) and explicit `250`.
+- Edition: 2026 only (`--edition pre-2026` is rejected, `[GHR 1.3]`). Acceleration: Baku (5.8) and explicit `250`.
 - No Oracle exists. It is checked against a plain enumeration of the text, and the text's examples (3.5.4, 3.6.2) pass. Documented readings: README, "Readings of the Double-Swiss 2026 text"; prior art: `docs/research/double-swiss-2026-prior-art.md`.
 
-### 5.7 Acceleration (C.04.7)
+### 5.7 Olympiad Pairing Rules (D.02)
+
+The FIDE rules for the Chess Olympiad (D.02, effective from 1 January 2022, the only edition): a team Swiss outside C.04. Select it with `192 FIDE_OLYMPIAD` in a team file, `--olympiad` or `--system olympiad`. Teams are ranked by matchpoints, then their initial pairing number (3.2); a group is the teams with the same matchpoints (6.3). The round is paired as follows:
+
+1. **Bye** (Article 4): with an odd number of teams, the lowest ranked team that may have it and whose bye leaves the others pairable. A team may not have it if it had the bye, won a match because the opponents did not arrive (every board forfeited), or joined after round 1 (a Late Entry). It is worth 1 matchpoint and 2 game points (a drawn match on four boards).
+2. **Groups** (6.4): from the top group down to the Median Group, then from the bottom group up to it, and the Median Group last. The Median Group is the group of the median team: of the teams being paired, the lower of the two middle ones in the ranking. The groups above it and the Median Group are paired downward, the groups below it upward, and every upward rule is the downward rule mirrored.
+3. **Floaters** (Article 8, 9.4, 9.5): a group pairs as many of its teams as it can while the rest of the round can still be paired (Kept Pairings), and floats the others one group towards the Median Group. Above the median the lowest ranked team floats down first, below it the highest ranked floats up first, preferring a team that has an opponent in the next group (8.2.3, 8.3.3). A downfloater plays the highest ranked team of its new group, an upfloater the lowest ranked, as long as the group still keeps its pairings; a floater nobody there can take floats on. Floaters stop in the Median Group.
+4. **Inside a group** (9.1–9.3): the first team tries the first team of the bottom half, then the next, then the top half upwards (for six teams: 4, 5, 6, 3, 2), taking the first opponent with which the rest of the group can still be paired; the rest is paired the same way. This is the order of the 9.3 table.
+5. **Colour limits** (7.3, 7.4): board 1 of a team never gets a colour difference beyond +2 or -2, nor the same colour three times running, counted on played matches; a group that would keep fewer pairings within these limits is paired without them.
+6. **Colours of board 1** (7.2, 7.5–7.7), decided for the higher ranked team: a colour that breaks 7.3 for either team is avoided; then the team with the larger colour difference gets Black (equalisation); then each team gets the colour the other had in the latest round in which their colours differed; then the higher ranked team alternates from its last colour; with no colours at all, the colour drawn by lot (`152`, `--initial-colour`) goes to the higher ranked team when its pairing number is odd, the other colour when it is even (in round 1: the odd teams of the top half get the lot's colour).
+7. **Board order** (11.1): the matches are numbered by the higher ranked team's matchpoints, then the sum of both teams' matchpoints, then the higher ranked team's rating (the `310` strength, the average of its four highest ratings), highest first.
+
+- **Met** (6.1): a match with at least one board played. A match lost by default on every board is not a meeting, gives no colour, and the teams may meet again.
+- **Ranking** (3.1): a team file keeps the `310` order as the initial ranking; in the library `TeamStrength.initialRanking(teams, strengths)` ranks by the average of the four highest ratings, then the fifth player's rating, then the name, and `Profiles.olympiad(rounds)` sets up four boards at 2 / 1 / 0 match points with no tie-breaks (the Olympiad's tie-breaks are in its event regulations, not in D.02; declare them with `212` or `--tiebreaks`).
+- **Refused settings**: acceleration of any kind (`_BAKU`, `250`), and a scoring scheme without match points primary (`[D.02 3.2.1] The Olympiad Pairing Rules pair by matchpoints (TRF 362)`). It has no Interpretations.
+- **Check** (section 8): besides the Basic Rules, `check` reports `[D.02 7.3]` when board 1's colours break a limit that the other colours would keep. A pair that breaks 7.3 whatever its colours is not reported, because 7.4 may have disregarded the limits.
+- **Not in the library**: host teams, who is paired in round 1 and dropping a team short of players (articles 2 and 10) reach it as Late Entries, Withdrawals and absences; an unfinished game (5.1) is recorded as a draw and corrected later, and the published pairing stands (5.2); the arbiter's changes of 11.2 and 11.3.
+- No Oracle exists: Gacrux (FIDE's TieBreakServer) pairs only C.04.6, and bbpPairings, JaVaFo and chesspairing have no D.02. It is checked against a plain enumeration of the text on simulated tournaments, and the text's examples (the 9.3 table, the 88-team median of 6.4) pass. Documented readings: README, "Readings of the Olympiad Pairing Rules (2022)".
+
+### 5.8 Acceleration (C.04.7)
 
 Acceleration adds Virtual Points to a participant's score for pairing only. The result is the Pairing Score, which is the score wherever the pairing text says score (floats, PAB, board order included); standings never see it.
 
 - `Baku`: `192` suffix `_BAKU`, or `--acceleration baku` for the generator. The Accelerated Group is the top 2 x ceil(N/4) of the round-1 list, and a Late Entry ranked above its last participant joins it. Members of the group receive a win's points as virtual points in the first ceil(A/2) rounds and half of that in the rest of the first A rounds, where A = ceil(R/2) and R is the number of rounds; after that, nothing. For Double-Swiss a win is a match won 2-0, so the values are 2 and 1. Baku needs a win worth two draws and a loss worth nothing (`[C.04.7 1.1]`).
 - Explicit: `250` (TRF26) or `XXA` (JaVaFo) records give virtual points per participant and round. They override `_BAKU`.
 
-### 5.8 Colours and other settings at a glance
+### 5.9 Colours and other settings at a glance
 
 | Setting | Source | Values |
 |---|---|---|
 | Initial colour | `152`, `XXC`, `--initial-colour` | `white`, `black` |
 | Scoring scheme | `162` (and `362` for teams) | any points for win, draw, loss, PAB; standard 1 / 0.5 / 0 |
 | Number of rounds | `142`, `XXR`, `--rounds` | integer |
-| Swiss Rules Edition | `192`, `--edition` | `2026`, `pre-2026` (Dutch only) |
+| Swiss Rules Edition | `192`, `--edition` | `2026`, `pre-2026` (Dutch only; the Olympiad Pairing Rules have their own single edition) |
 | Games per round | `192 FIDE_DOUBLESWISS`, `--double-swiss` | two (a Double-Swiss match, two TRF rounds), else one |
 | Ranking of participants | file order | listed order of the `001` records |
 | Tie-break list and edition | `202`/`212`, `--tiebreaks`, `--tiebreak-edition` | section 6 |
@@ -542,7 +565,7 @@ fide-swiss -g [<cfg>|<seed>] -o <out.trf> [-s <seed>] [--dutch|--dubov|--burstei
 - `--seed <n>` is the corpus seed (unsigned 64 bit). Without it a fresh seed is drawn and printed on standard error as `seed <n>`. Tournament k of a corpus has its own seed derived from the corpus seed and k, and it is the one written in `012` and the manifest, so a single tournament can be reproduced alone.
 - `--count <k>`: the number of tournaments (default 1).
 - `-g` is the JaVaFo/bbpPairings form: one tournament, with the argument after `-g` being a configuration file or, when it is all digits, a seed; `-s <seed>` also gives the seed; a system flag may follow.
-- The Dutch, Dubov, Burstein, Lim and Double-Swiss systems generate individual tournaments; the generator does not write team files.
+- The Dutch, Dubov, Burstein, Lim and Double-Swiss systems generate individual tournaments; the generator does not write team files, so `--swiss-team` and `--olympiad` are refused (`the generator does not generate team tournaments yet (<name>)`).
 
 ### 7.2 Precedence
 
@@ -550,7 +573,7 @@ fide-swiss -g [<cfg>|<seed>] -o <out.trf> [-s <seed>] [--dutch|--dubov|--burstei
 2. a **configuration file** (`--config`, or the argument of `-g`), then a **model TRF** (`--model`): the settings and rates observed in an existing tournament (its field size, forfeit rate, bye rate, withdrawals) are copied;
 3. the **flags**.
 
-The profiles `team-swiss` and `olympiad` are **planned** and refused (`the <name> profile's system is not implemented yet`); another name gives `unknown profile <name>`.
+The profiles `team-swiss` and `olympiad` are **planned** and refused, since the generator does not generate team tournaments yet (`the generator does not generate team tournaments yet (<name>)`); another name gives `unknown profile <name>`.
 
 ### 7.3 Ranges
 
@@ -650,10 +673,11 @@ Errors go to standard error as `error: <message>`; the exit code tells the class
 | `error: unexpected argument <x>` | Unknown flag, or a second input file. |
 | `error: <flag> needs a value` | A flag at the end of the line. |
 | `error: not a number: <x>` | A numeric flag (`--rounds`, `--after`, `--round`, `--count`) with text. |
-| `error: unsupported pairing system <x>` | `--system` takes `dutch`, `dubov`, `burstein`, `lim`, `double-swiss`, `swiss-team`. |
+| `error: unsupported pairing system <x>` | `--system` takes `dutch`, `dubov`, `burstein`, `lim`, `double-swiss`, `swiss-team`, `olympiad`. |
 | `error: --edition takes 2026 or pre-2026, not <x>` | Bad edition value. Likewise `--tiebreak-edition takes 2026-03 or 2024-08`, `--initial-colour takes white or black`. |
 | `error: unknown --interpretation <x>` | Use one of the pairs in 5.5. |
 | `error: SwissTeamSystem pairs teams, and the file has no 310 records` | `--swiss-team` used on an individual file. |
+| `error: D.02 Olympiad Pairing Rules 2022 pairs teams, and the file has no 310 records` | `--olympiad` used on an individual file. |
 | `error: <system> cannot pair a team file (310 records)` | Another system was asked for on a team file. |
 | `error: Unsupported pairing system in record 192: <CODE>` | The `192` value is not in the table of 4.3 (for example `CUSTOM_DOUBLESWISS`, or a typo). Correct or remove the record: the record is parsed before any flag applies, so `--system` cannot work around it. |
 | `error: Unknown result code '<c>'` | A result character in a round block that is not in 4.2. |

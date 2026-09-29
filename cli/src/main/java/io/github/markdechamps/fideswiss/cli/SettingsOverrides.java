@@ -141,12 +141,14 @@ record SettingsOverrides(
 
     /**
      * A system of the file's own kind of competition. A team file keeps its own Swiss Team System, which carries
-     * the file's colour preferences.
+     * the file's colour preferences, when the flag names that system; the other team system replaces it.
      */
     private static TournamentSettings withSystem(TournamentSettings settings, PairingSystem chosen) {
         var file = settings.pairingSystem().competitionType();
         if (chosen.competitionType() == file) {
-            return file == CompetitionType.TEAM ? settings : settings.with(chosen);
+            var same = file == CompetitionType.TEAM
+                    && chosen.getClass().equals(settings.pairingSystem().getClass());
+            return same ? settings : settings.with(chosen);
         }
         throw new UsageException(
                 file == CompetitionType.TEAM

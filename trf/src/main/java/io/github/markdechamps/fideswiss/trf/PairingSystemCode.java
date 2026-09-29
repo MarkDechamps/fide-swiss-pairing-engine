@@ -14,6 +14,7 @@ import java.util.function.Supplier;
  * {@code FIDE_DUTCH_2017} is the Dutch System of the pre-2026 edition. {@code FIDE_LIM} is provisional: ETT26 has no
  * Lim code (TRF CLI surface). {@code FIDE_DOUBLESWISS} is C.04.5 2026, the only edition, and switches on the
  * two-rounds-per-match encoding (ADR 0007). A {@code _BAKU} suffix adds acceleration and leaves the system alone.
+ * The provisional {@code FIDE_OLYMPIAD} marks a team file, read by {@link TeamSettingsRecords}.
  */
 final class PairingSystemCode {
 
@@ -54,6 +55,9 @@ final class PairingSystemCode {
         }
         if (name.startsWith("C.04.5 ")) {
             return "FIDE_DOUBLESWISS";
+        }
+        if (name.startsWith("D.02 ")) {
+            return TeamSettingsRecords.OLYMPIAD;
         }
         throw new IllegalArgumentException("TRF26 has no 192 code for the pairing system " + name);
     }

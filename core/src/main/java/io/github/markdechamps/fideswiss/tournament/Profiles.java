@@ -44,6 +44,17 @@ public final class Profiles {
     }
 
     /**
+     * The Olympiad Pairing Rules (D.02, 2022): as {@link #teamSwiss}, four boards at 2 / 1 / 0 match points, with the
+     * bye worth 1 matchpoint and 2 game points (4.3) and no acceleration. The initial ranking of 3.1 is the caller's
+     * (the average of each team's four highest ratings, then the fifth: {@code TeamStrength}); this profile ranks by
+     * the team's rating and name. The Olympiad's tie-breaks are the event regulations', not D.02's, so the list is
+     * empty.
+     */
+    public static TournamentSettings olympiad(NumberOfRounds rounds) {
+        return teamSwiss(rounds).with(PairingSystems.olympiad());
+    }
+
+    /**
      * The Double-Swiss System (C.04.5, 2026): two games per match at 1 / ½ / 0, the PAB worth a game won and a game
      * drawn (1.4), and the individual tie-breaks of {@link #individualSwiss} over each player's game points.
      */

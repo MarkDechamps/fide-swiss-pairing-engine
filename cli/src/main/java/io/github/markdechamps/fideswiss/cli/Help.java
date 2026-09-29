@@ -5,7 +5,7 @@ final class Help {
     static final String TEXT = """
             usage:
               fide-swiss pair <in.trf> [-o <reply>] [-l [<trace>]] [settings]
-              fide-swiss [--dutch|--dubov|--burstein|--lim|--double-swiss|--swiss-team] <in.trf> -p [<reply>] [-l [<trace>]] [settings]
+              fide-swiss [--dutch|--dubov|--burstein|--lim|--double-swiss|--swiss-team|--olympiad] <in.trf> -p [<reply>] [-l [<trace>]] [settings]
               fide-swiss check <in.trf> [--round <r>]  |  <in.trf> -c [<r>]  |  -check <in.trf>
               fide-swiss standings <in.trf> [--after <r>] [--why <id> <id>]
               fide-swiss generate -o <out%d.trf> [--seed <n>] [--count <k>] [--profile <name>] [--config <cfg>] [--model <in.trf>]
@@ -28,10 +28,11 @@ final class Help {
               --random-scoring                  3/1/0 or 2/1/0 for 10% of the tournaments
 
             settings (override the file's records):
-              --system dutch|dubov|burstein|lim|double-swiss|swiss-team  the pairing system (also --dutch, --dubov,
-                                           --burstein, --lim, --double-swiss, --swiss-team); a file with 310 records
-                                           is a team file, paired by the Swiss Team System; double-swiss reads two
-                                           TRF rounds per match (ADR 0007)
+              --system dutch|dubov|burstein|lim|double-swiss|swiss-team|olympiad  the pairing system (also --dutch,
+                                           --dubov, --burstein, --lim, --double-swiss, --swiss-team, --olympiad); a
+                                           file with 310 records is a team file, paired by the Swiss Team System
+                                           unless its 192 is FIDE_OLYMPIAD (the Olympiad Pairing Rules, D.02);
+                                           double-swiss reads two TRF rounds per match (ADR 0007)
               --interpretation <name>=<value>  a Swiss Team or Double-Swiss reading (ADR 0003), repeatable:
                   upfloater-look-ahead=parity-minimum|graded, last-round-zero-cd-type-b=strong|none,
                   float-score=pairing|real

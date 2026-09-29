@@ -21,6 +21,7 @@ class SystemFlagTest {
         "--burstein, C.04.4.2 Burstein System 2026",
         "--lim, C.04.4.3 Lim System 2026",
         "--double-swiss, C.04.5 Double-Swiss System 2026",
+        "--olympiad, D.02 Olympiad Pairing Rules 2022",
     })
     void selectsTheSystemWithTheBbpStyleAlias(String flag, String system) {
         var command = (Command.Pair) CommandLineParser.parse(List.of(flag, "in.trf", "-p"));
@@ -33,7 +34,8 @@ class SystemFlagTest {
         "dutch, C.04.3 Dutch System 2026",
         "dubov, C.04.4.1 Dubov System 2026",
         "burstein, C.04.4.2 Burstein System 2026",
-        "double-swiss, C.04.5 Double-Swiss System 2026"
+        "double-swiss, C.04.5 Double-Swiss System 2026",
+        "olympiad, D.02 Olympiad Pairing Rules 2022"
     })
     void selectsTheSystemWithTheSystemFlag(String name, String system) {
         var command = (Command.Pair) CommandLineParser.parse(List.of("pair", "in.trf", "--system", name));
@@ -59,7 +61,7 @@ class SystemFlagTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"olympiad"})
+    @CsvSource({"burstein-2017", "schiller"})
     void rejectsASystemNotYetBuilt(String name) {
         assertThatThrownBy(() -> CommandLineParser.parse(List.of("pair", "in.trf", "--system", name)))
                 .isInstanceOf(UsageException.class);

@@ -6,6 +6,7 @@ import io.github.markdechamps.fideswiss.generator.Range;
 import io.github.markdechamps.fideswiss.pairing.PairingSystems;
 import io.github.markdechamps.fideswiss.standings.TieBreakList;
 import io.github.markdechamps.fideswiss.tournament.Acceleration;
+import io.github.markdechamps.fideswiss.tournament.CompetitionType;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import io.github.markdechamps.fideswiss.tournament.Profiles;
 import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
@@ -141,7 +142,7 @@ final class GenerateArguments {
             case "accelerated-open" -> Profiles.acceleratedOpen(DRAWN);
             case "double-swiss" -> Profiles.doubleSwiss(DRAWN);
             case "team-swiss", "olympiad" ->
-                throw new UsageException("the " + name + " profile's system is not implemented yet");
+                throw new UsageException("the generator does not generate team tournaments yet (" + name + ")");
             default -> throw new UsageException("unknown profile " + name);
         };
     }
@@ -184,9 +185,15 @@ final class GenerateArguments {
         return argument.startsWith("--") && CommandLineParser.SYSTEMS.containsKey(argument.substring(2));
     }
 
-    /** Double-Swiss brings its scoring along: a bye is worth a match of two games (C.04.5 Preface). */
+    /**
+     * Double-Swiss brings its scoring along: a bye is worth a match of two games (C.04.5 Preface). The team systems
+     * are refused: the generator writes no team files.
+     */
     private static UnaryOperator<GeneratorSettings> system(String name) {
         var system = CommandLineParser.system(name);
+        if (system.competitionType() == CompetitionType.TEAM) {
+            throw new UsageException("the generator does not generate team tournaments yet (" + name + ")");
+        }
         return system.gamesInSuccession() == 2
                 ? inTournament(tournament -> tournament.with(system).with(ScoringScheme.doubleSwiss()))
                 : inTournament(tournament -> tournament.with(system));

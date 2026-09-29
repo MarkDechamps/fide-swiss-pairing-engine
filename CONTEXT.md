@@ -106,7 +106,7 @@ _Avoid_: Middle group (the text's word, kept apart from Lim's median)
 
 **Kept Pairings**:
 The most pairings an Olympiad group can make among its own teams while every team not yet paired can still be paired (D.02 9.5, 8.4). One heaviest perfect matching over the rest of the round answers it. The group floats exactly the teams it cannot keep, and every step of its pairing must still reach this number.
-_Avoid_: Local maximum (it is asked of the whole round; the prototype calls it `GroupOptimum`)
+_Avoid_: Local maximum (it is asked of the whole round), Group optimum (the prototype's name)
 
 **Pairing Direction**:
 Whether a Lim scoregroup or an Olympiad group is paired downward (above the median, and the median itself) or upwards (below it). Every upward rule is the downward rule mirrored: the "first" player is the highest numbered (#1) downward and the lowest numbered upwards; for Olympiad teams, the highest and the lowest ranked (D.02 8.2/8.3, 9.2).

@@ -20,21 +20,30 @@ import java.util.regex.Pattern;
  * The settings of a team file over the {@code teamSwiss} profile: {@code 192}
  * ({@code FIDE_TEAM[_TYPEA|_TYPEB][_MP|_GP][_GP|_MP][_BAKU]}), game points from {@code 162}, match points from
  * {@code 362}, the boards from {@code 352} and the PAB's points from {@code 320} (or, under game points, from
- * {@code 162}'s {@code P} on every board).
+ * {@code 162}'s {@code P} on every board). The provisional {@code FIDE_OLYMPIAD} (ETT26 has no Olympiad code) takes
+ * the {@code olympiad} profile instead: the Olympiad Pairing Rules, by matchpoints, with its own bye.
  */
 final class TeamSettingsRecords {
 
     private static final Pattern SYMBOL_AND_POINTS = Pattern.compile("([A-Z]{1,2})\\s*(-?\\d+(?:\\.\\d+)?)");
 
+    /** Provisional: ETT26 has no code for the Olympiad Pairing Rules (TRF CLI surface). */
+    static final String OLYMPIAD = "FIDE_OLYMPIAD";
+
     private TeamSettingsRecords() {}
 
     static boolean declaresATeamSystem(Map<String, List<String>> records) {
         return records.containsKey("310")
-                || code(records).filter(code -> code.contains("TEAM")).isPresent();
+                || code(records)
+                        .filter(code -> code.contains("TEAM") || isOlympiad(code))
+                        .isPresent();
     }
 
     static TournamentSettings read(Map<String, List<String>> records, NumberOfRounds rounds, int boards) {
         var code = code(records).orElse("FIDE_TEAM");
+        if (isOlympiad(code)) {
+            return olympiad(records, rounds, boards);
+        }
         if (!code.startsWith("FIDE_TEAM")) {
             throw new InvalidTrfException("Unsupported 192 code " + code + " for a team file");
         }
@@ -50,6 +59,23 @@ final class TeamSettingsRecords {
         return Profiles.teamSwiss(rounds)
                 .with(PairingSystems.swissTeam(colourPreferences(code)))
                 .with(scoring);
+    }
+
+    /** {@code FIDE_OLYMPIAD}, with or without {@code _BAKU}, which the Olympiad Pairing Rules then refuse. */
+    private static boolean isOlympiad(String code) {
+        return code.replaceFirst("_BAKU$", "").equals(OLYMPIAD);
+    }
+
+    /** D.02: match points from {@code 362} (primary), game points from {@code 162}, the bye as 4.3 fixes it. */
+    private static TournamentSettings olympiad(Map<String, List<String>> records, NumberOfRounds rounds, int boards) {
+        var values = symbols(records, "362");
+        var matches = new MatchScoring(
+                        values.getOrDefault("TW", Points.of(2)),
+                        values.getOrDefault("TD", Points.of(1)),
+                        values.getOrDefault("TL", Points.ZERO),
+                        PrimaryScore.MATCH_POINTS)
+                .withBoards(boards);
+        return Profiles.olympiad(rounds).with(gameScoring(records).with(matches));
     }
 
     /** TYPEA or TYPEB; a bare {@code FIDE_TEAM} is Type A; any other code uses no colour preferences. */

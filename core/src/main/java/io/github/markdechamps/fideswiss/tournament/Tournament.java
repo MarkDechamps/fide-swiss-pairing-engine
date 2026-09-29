@@ -223,6 +223,11 @@ public final class Tournament {
         return settings.acceleration().virtualPointsOf(participant, round, this);
     }
 
+    /** A Late Entry (GHR 2.4): a participant not on the round-1 list, taken into account from a later round. */
+    public boolean isLateEntry(ParticipantId participant) {
+        return !attendance.startsInRoundOne(participant);
+    }
+
     /**
      * C.04.7 1.2–1.3: the top 2·⌈N/4⌉ of the round-1 list, down to the Last Accelerated Participant; a Late Entry
      * ranked above that participant joins the group.
