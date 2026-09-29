@@ -188,4 +188,36 @@ class TeamTieBreaksTest {
         assertThatThrownBy(() -> TieBreakList.parse("WIN:GP")).hasMessageContaining("only :MP");
         assertThatThrownBy(() -> TieBreakList.parse("BH/K4")).hasMessageContaining("/K applies only to SSSC");
     }
+
+    @Test
+    void foreBuchholzInGamePointsDrawsTheFinalRoundAtItsGamePoints() {
+        // C.07 8.3 with :GP: the final round is drawn 2-2 over four boards; team 1's opponents have 6.5, 6 and 5.
+        assertThat(value("FB:GP", 1)).isEqualByComparingTo("17.5");
+    }
+
+    @Test
+    void gamePointsAsThePrimaryScoreSwapTheRolesOfTheScores() {
+        var standings = roundRobin(PrimaryScore.GAME_POINTS, "MPvGP, SSSC").standings();
+
+        // Score is GP: 6.5, 6, 6, 5.5. Secondary is MP (3 each); factor = (3 * 4 GP) / 2 MP = 6.
+        assertThat(standings.standing(id(2)).score()).hasToString("6.5");
+        assertThat(standings.standing(id(1)).tieBreakValues().get(0).value()).contains(new BigDecimal("3"));
+        assertThat(standings.standing(id(1)).tieBreakValues().get(1).value().orElseThrow())
+                .isEqualByComparingTo("6"); // 3 + 18 / 6
+    }
+
+    @Test
+    void aForfeitedBoardIsAStandardResultAndAByeIsAWinOnEveryBoardForTheBoardTieBreaks() {
+        // C.07 12: team 1 won board 2 by forfeit (a standard win); team 3 has the PAB (a win's points per board).
+        var standings = TeamTable.of(3, 1, 2, PrimaryScore.MATCH_POINTS, "TBR")
+                .round("1-2 1 +", "3 PAB")
+                .standings();
+
+        assertThat(standings.standing(id(1)).tieBreakValues().get(0).value().orElseThrow())
+                .isEqualByComparingTo("1.0001");
+        assertThat(standings.standing(id(3)).tieBreakValues().get(0).value().orElseThrow())
+                .isEqualByComparingTo("1.0001");
+        assertThat(standings.standing(id(2)).tieBreakValues().get(0).value().orElseThrow())
+                .isEqualByComparingTo("0");
+    }
 }

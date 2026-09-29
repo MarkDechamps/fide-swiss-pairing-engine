@@ -140,9 +140,10 @@ public record TieBreakCode(
         if (forfeitsAsPlayed) {
             modifiers.add("P");
         }
+        var name = acronym.equals("MPVGP") ? "MPvGP" : acronym;
         var head = teamScore
-                .map(score -> acronym + (score == PrimaryScore.MATCH_POINTS ? ":MP" : ":GP"))
-                .orElse(acronym);
+                .map(score -> name + (score == PrimaryScore.MATCH_POINTS ? ":MP" : ":GP"))
+                .orElse(name);
         return modifiers.isEmpty() ? head : head + "/" + String.join("/", modifiers);
     }
 }
