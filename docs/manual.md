@@ -253,3 +253,81 @@ The table is a public contract (ADR 0005); changing it is a major-version change
 - The reply, the standings table, the check report and the version text go to standard output. Errors, the printed generator seed, the progress line and `--explain` text go to standard error.
 - Errors have the form `error: <message>`. Rule problems add the article in brackets and the participants involved: `error: [<article>] <message> (<participant>, ...)`.
 - Input is read as UTF-8, falling back to ISO-8859-1 when it is not valid UTF-8. Line endings CR, LF and CRLF are all accepted. Output files are written as UTF-8 with LF.
+
+## 4. TRF input and output
+
+The reader takes TRF26 and TRF16 files, plus the JaVaFo `XX?` lines. Records are recognised by their first three characters. Lines shorter than three characters and lines starting with `###` are skipped. A record the reader does not know is set aside and never an error. Fixed-column fields use the FIDE layout with 1-based columns.
+
+### 4.1 Records read
+
+| Record | Read for | Notes |
+|---|---|---|
+| `001` | one participant | Start rank (columns 5-8), title (11-13), name (15-47), rating (49-52; blank or 0 is unrated), points (81-84), rank (86-89), then one 10-column block per round from column 92. The start rank becomes the participant id used in every reply, table and message. The declared points and rank are only used by `check`. Other 001 fields (sex, federation, FIDE id, birth date) are ignored. |
+| `142` | number of rounds | First word of the value. Without it, `XXR`, else the number of round columns in the file (at least 1). |
+| `XXR` | number of rounds | JaVaFo's equivalent of `142`; used when `142` is absent. |
+| `152` | initial colour | Value starting with `B` is black, anything else white. Without `152` or `XXC`, the initial colour is inferred from the top participant paired in round 1 (as TRF26 prescribes and bbpPairings does); it defaults to white. |
+| `XXC` | initial colour | JaVaFo: the words `white1` or `black1`; the last one wins. |
+| `162` | scoring scheme | Symbol and points pairs: `W` win, `D` draw, `L` loss, `P` pairing-allocated bye. Missing values keep the standard 1 / 0.5 / 0. In a team file it gives the game points (and `P` per board). |
+| `192` | pairing system and acceleration | See 4.3. A blank value is like no record. |
+| `092` | pairing system | bbpPairings writes its code here. Read as `192` only when there is no `192` and the value starts with `FIDE_DUTCH`. |
+| `202` | tie-break list | The tie-breaks among equal points, comma separated (section 6). |
+| `212` | tie-break list | The full standings order starting with `PTS`; `PTS` is dropped. `212` is preferred over `202` when both exist. Without either, the profile's `BH/C1, BH, SB, DE`. |
+| `250` | explicit acceleration | Virtual points (TRF26): game points in columns 10-13, first and last round in 15-17 and 19-21, first and last id in 23-26 and 28-31. Blank ranges mean all rounds or a single id (the first). |
+| `XXA` | explicit acceleration | JaVaFo: id in columns 5-8, then the virtual points of round r at column 10 + 5(r-1). |
+| `310` | a team | Team number (5-7), name (9-40), strength factor (48-53, used as rating), match points (55-60), game points (62-67), rank (69-71), member start ranks from column 74 in steps of 5. Its presence makes the file a **team file**. |
+| `300` | team line-up for a round | Overrides the `310` line-up for that round. |
+| `320` | team pairing-allocated bye value | Match points at columns 5-8 and game points at 10-13. |
+| `330` | matches nobody played | Read for team files. |
+| `352` | board colour pattern | The pattern's length is the number of boards; it also gives a team its colour when board 1 has none. Without it the number of boards is the longest line-up. |
+| `362` | team match scoring | Symbols `TW`, `TD`, `TL` with points; defaults 2 / 1 / 0. |
+
+Everything else (`012`, `022`, `032`, `042`, `052`, `062`, `072`, `082`, `092` with another prefix, `102` ... `132`, `172`, `182`, `240`, etc.) is accepted and ignored. In particular `062`, the number of players, is not needed: the reader counts the `001` records itself. The header value of `012` is not used.
+
+### 4.2 The round blocks of `001`
+
+Each block covers 10 columns: opponent id (first 4 columns of the block), colour (column 6 of the block, `w`, `b` or `-`/blank for none), result (column 8).
+
+| Result | Meaning |
+|---|---|
+| `1` or `W` | win (`W` is a win in under one move: a game played) |
+| `=` or `D` | draw (`D`: a draw in under one move) |
+| `0` or `L` | loss |
+| `+` (with an opponent) | forfeit win. The opponent's cell holds `-`. |
+| `-` (with an opponent) | forfeit loss; `-` in both cells is a double forfeit |
+| `U` (opponent `0000`) | pairing-allocated bye |
+| `F` or `+` (opponent `0000`) | full-point bye (requested) |
+| `H` | half-point bye (requested) |
+| `Z`, `-` or blank (opponent `0000`) | zero-point bye (requested, or absence) |
+
+A game with no colour (a forfeit) puts the lower start rank on White. An unknown result code is an error: `Unknown result code 'x'`. A round that refers to an unknown player is `Round <r> refers to unknown player <id>`.
+
+Recorded rounds are read as facts (ADR 0004): the reader does not reject a rematch or a second PAB. `check` reports those.
+
+**The round to pair.** The rounds the file records are the rounds already played; `pair` pairs the round after them. If the last round column holds only byes/absences (no opponents and no PAB), it is not a played round but the list of participants who are absent, or who requested a bye, in the round to be paired: `0000 - H`, `0000 - F`, `0000 - Z`.
+
+### 4.3 Record `192` and system selection
+
+The value is upper-cased. An optional `_BAKU` suffix means Baku acceleration and does not change the system. Explicit virtual points in `250` or `XXA` override `_BAKU`.
+
+| `192` code | System |
+|---|---|
+| `FIDE_DUTCH`, `FIDE_DUTCH_2026`, `FIDE_DUTCH_2025` | Dutch System, 2026 |
+| `FIDE_DUTCH_2017` | Dutch System, pre-2026 edition (the 2017 text) |
+| `FIDE_DUBOV`, `FIDE_DUBOV_2026` | Dubov System 2026 |
+| `FIDE_BURSTEIN`, `FIDE_BURSTEIN_2026` | Burstein System 2026 |
+| `FIDE_LIM`, `FIDE_LIM_2026` | Lim System 2026 (provisional: TRF26 has no Lim code) |
+| `FIDE_TEAM...` | Swiss Team System (team files only, see below) |
+| blank or no `192` | the profile's system: Dutch 2026 |
+
+Any other code is rejected with `Unsupported pairing system in record 192: <CODE>` (exit 3). This includes `FIDE_DOUBLESWISS` (Double-Swiss is **planned**, ADR 0007 describes the intended TRF encoding, two TRF rounds per match, but the reader does not accept it yet).
+
+For a **team file** (any `310` record, or a `192` containing `TEAM`), the code must start with `FIDE_TEAM`; the form is `FIDE_TEAM[_TYPEA|_TYPEB][_MP|_GP][_GP|_MP][_BAKU]`:
+
+- `_TYPEA` or `_TYPEB` sets the colour preference type (5.4); a bare `FIDE_TEAM` is Type A; a code with neither suffix, for example `FIDE_TEAM_MP`, uses no colour preferences.
+- The first of `MP` (match points) and `GP` (game points) is the primary score; a second one is the secondary score used for colours. A code naming one has no secondary score; a code naming neither keeps the C.04.6 default (match points primary, game points secondary).
+
+Any other `192` code for a team file gives `Unsupported 192 code <code> for a team file`.
+
+### 4.4 What is written
+
+The `generate` command writes TRF26 files with: `012` (the name `RTG <version> seed <n>`), `142`, `152`, `162` (only when different from the standard scoring), `192` (with `_BAKU` when Baku is on), `212` (`PTS` followed by the tie-break list, when the list is not empty) and one `001` record per participant. The writer reads back to the same rounds and settings. The writer can also emit `XXR` and `XXC` for JaVaFo. It does not write team files.
