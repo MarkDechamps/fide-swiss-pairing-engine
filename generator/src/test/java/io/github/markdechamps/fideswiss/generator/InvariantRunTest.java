@@ -22,13 +22,14 @@ class InvariantRunTest {
     private static final CorpusSeed CORPUS = CorpusSeed.of(Long.getLong("fideswiss.invariant.seed", 20260925L));
     private static final int TOURNAMENTS = Integer.getInteger("fideswiss.invariant.tournaments", 200);
 
-    /** Every system with the editions it has a text for: Dubov, Burstein and Lim exist only in 2026. */
+    /** Every system with the editions it has a text for: Dubov, Burstein, Lim and Double-Swiss exist only in 2026. */
     enum PlayedSystem {
         DUTCH_2026(PairingSystems.dutch(), SwissRulesEdition.EDITION_2026),
         DUTCH_2017(PairingSystems.dutch(), SwissRulesEdition.PRE_2026),
         DUBOV_2026(PairingSystems.dubov(), SwissRulesEdition.EDITION_2026),
         BURSTEIN_2026(PairingSystems.burstein(), SwissRulesEdition.EDITION_2026),
-        LIM_2026(PairingSystems.lim(), SwissRulesEdition.EDITION_2026);
+        LIM_2026(PairingSystems.lim(), SwissRulesEdition.EDITION_2026),
+        DOUBLE_SWISS_2026(PairingSystems.doubleSwiss(), SwissRulesEdition.EDITION_2026);
 
         private final PairingSystem system;
         private final SwissRulesEdition edition;
@@ -39,7 +40,10 @@ class InvariantRunTest {
         }
 
         TournamentSettings settings() {
-            return Profiles.individualSwiss(NumberOfRounds.of(9)).with(system).with(edition);
+            var profile = system.gamesInSuccession() == 2
+                    ? Profiles.doubleSwiss(NumberOfRounds.of(9))
+                    : Profiles.individualSwiss(NumberOfRounds.of(9));
+            return profile.with(system).with(edition);
         }
     }
 

@@ -14,6 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.github.markdechamps.fideswiss.pairing.PairingSystems;
 import io.github.markdechamps.fideswiss.topscoregroup.Contender;
 import io.github.markdechamps.fideswiss.topscoregroup.ContenderPair;
+import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.Board;
 import io.github.markdechamps.fideswiss.tournament.Bye;
 import io.github.markdechamps.fideswiss.tournament.FloatScore;
@@ -111,6 +112,18 @@ class DoubleSwissSystemTest {
         // C.04.5 1.4.
         assertThat(Profiles.doubleSwiss(NumberOfRounds.of(5)).pairingAllocatedByeValue())
                 .isEqualTo(Points.of("1.5"));
+    }
+
+    @Test
+    void acceleratesByAMatchWonThenHalfOfIt() {
+        // C.04.7 1.2-1.4 (Acceleration across the systems, decision 3): a Double-Swiss round's win is 2-0.
+        var settings = Profiles.doubleSwiss(NumberOfRounds.of(7)).with(Acceleration.baku());
+        var tournament = Tournament.of(settings, TournamentMother.participants(8));
+
+        assertThat(tournament.virtualPointsOf(TournamentMother.id(1), RoundNumber.FIRST))
+                .isEqualTo(Points.of(2));
+        assertThat(tournament.virtualPointsOf(TournamentMother.id(1), RoundNumber.of(3)))
+                .isEqualTo(Points.of(1));
     }
 
     @Test
