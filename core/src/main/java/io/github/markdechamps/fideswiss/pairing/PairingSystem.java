@@ -40,6 +40,14 @@ public interface PairingSystem {
     }
 
     /**
+     * How many games each pairing plays in succession between the same two participants: two for the Double-Swiss
+     * System (C.04.5 Preface), one otherwise. A team match plays its boards side by side, so it counts one.
+     */
+    default int gamesInSuccession() {
+        return 1;
+    }
+
+    /**
      * What makes these settings unfit for the system, such as a Swiss Rules Edition it has no text for;
      * {@code Tournament.of} refuses them.
      */

@@ -12,21 +12,24 @@ import java.util.function.Supplier;
  * Record 192, the Encoded Type of Tournament (ETT26), for the systems the library pairs. A bare code takes the
  * 2026 rules, never the tournament date; {@code FIDE_DUTCH_2025} is an alias of {@code _2026}, and
  * {@code FIDE_DUTCH_2017} is the Dutch System of the pre-2026 edition. {@code FIDE_LIM} is provisional: ETT26 has no
- * Lim code (TRF CLI surface). A {@code _BAKU} suffix adds acceleration and leaves the system alone.
+ * Lim code (TRF CLI surface). {@code FIDE_DOUBLESWISS} is C.04.5 2026, the only edition, and switches on the
+ * two-rounds-per-match encoding (ADR 0007). A {@code _BAKU} suffix adds acceleration and leaves the system alone.
  */
 final class PairingSystemCode {
 
-    private static final Map<String, Supplier<PairingSystem>> SYSTEMS = Map.of(
-            "FIDE_DUTCH", PairingSystems::dutch,
-            "FIDE_DUTCH_2026", PairingSystems::dutch,
-            "FIDE_DUTCH_2025", PairingSystems::dutch,
-            "FIDE_DUTCH_2017", PairingSystems::dutch,
-            "FIDE_DUBOV", PairingSystems::dubov,
-            "FIDE_DUBOV_2026", PairingSystems::dubov,
-            "FIDE_BURSTEIN", PairingSystems::burstein,
-            "FIDE_BURSTEIN_2026", PairingSystems::burstein,
-            "FIDE_LIM", PairingSystems::lim,
-            "FIDE_LIM_2026", PairingSystems::lim);
+    private static final Map<String, Supplier<PairingSystem>> SYSTEMS = Map.ofEntries(
+            Map.entry("FIDE_DUTCH", PairingSystems::dutch),
+            Map.entry("FIDE_DUTCH_2026", PairingSystems::dutch),
+            Map.entry("FIDE_DUTCH_2025", PairingSystems::dutch),
+            Map.entry("FIDE_DUTCH_2017", PairingSystems::dutch),
+            Map.entry("FIDE_DUBOV", PairingSystems::dubov),
+            Map.entry("FIDE_DUBOV_2026", PairingSystems::dubov),
+            Map.entry("FIDE_BURSTEIN", PairingSystems::burstein),
+            Map.entry("FIDE_BURSTEIN_2026", PairingSystems::burstein),
+            Map.entry("FIDE_LIM", PairingSystems::lim),
+            Map.entry("FIDE_LIM_2026", PairingSystems::lim),
+            Map.entry("FIDE_DOUBLESWISS", PairingSystems::doubleSwiss),
+            Map.entry("FIDE_DOUBLESWISS_2026", PairingSystems::doubleSwiss));
 
     private PairingSystemCode() {}
 
@@ -48,6 +51,9 @@ final class PairingSystemCode {
         }
         if (name.startsWith("C.04.4.3 ")) {
             return "FIDE_LIM";
+        }
+        if (name.startsWith("C.04.5 ")) {
+            return "FIDE_DOUBLESWISS";
         }
         throw new IllegalArgumentException("TRF26 has no 192 code for the pairing system " + name);
     }

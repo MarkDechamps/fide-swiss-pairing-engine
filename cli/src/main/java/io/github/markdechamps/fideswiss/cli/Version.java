@@ -11,6 +11,7 @@ final class Version {
                 + "  C.04.4.1 Dubov System 2026: experimental\n"
                 + "  C.04.4.2 Burstein System 2026: experimental\n"
                 + "  C.04.4.3 Lim System 2026: experimental\n"
+                + "  C.04.5 Double-Swiss System 2026: experimental\n"
                 + "  C.04.6 Swiss Team Pairing System 2026: experimental\n";
     }
 

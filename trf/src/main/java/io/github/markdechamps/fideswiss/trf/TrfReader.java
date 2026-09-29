@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Optional;
 
 /** Reads a Tournament Report File (TRF26, TRF16 and the JaVaFo {@code XX?} lines) into the library's model. */
 public final class TrfReader {
@@ -13,6 +14,18 @@ public final class TrfReader {
 
     /** Lines may end with CR, LF or CRLF. Unknown records are kept aside, never an error. */
     public static TrfTournament read(String text) {
+        return read(text, Optional.empty());
+    }
+
+    /**
+     * As {@link #read(String)}, with the Double-Swiss encoding (two TRF rounds per match, ADR 0007) switched on or
+     * off whatever {@code 192} says: for a pairing system chosen on the command line.
+     */
+    public static TrfTournament read(String text, boolean doubleSwiss) {
+        return read(text, Optional.of(doubleSwiss));
+    }
+
+    private static TrfTournament read(String text, Optional<Boolean> doubleSwiss) {
         var players = new ArrayList<PlayerRecord>();
         var records = new LinkedHashMap<String, List<String>>();
         // Records keep their whole line: some, like XXA and 250, are read by column.
@@ -28,7 +41,7 @@ public final class TrfReader {
             }
         }
         players.sort(Comparator.comparingInt(PlayerRecord::startRank));
-        return TrfTournament.of(players, records);
+        return TrfTournament.of(players, records, doubleSwiss);
     }
 
     /** A header record's value: everything from column 5 on. */

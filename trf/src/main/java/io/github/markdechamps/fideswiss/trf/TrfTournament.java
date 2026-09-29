@@ -63,32 +63,56 @@ public final class TrfTournament {
     }
 
     static TrfTournament of(List<PlayerRecord> players, Map<String, List<String>> records) {
+        return of(players, records, Optional.empty());
+    }
+
+    /**
+     * As declared, or with the Double-Swiss encoding (ADR 0007) switched on or off by the command line's system,
+     * which overrides {@code 192}.
+     */
+    static TrfTournament of(
+            List<PlayerRecord> players, Map<String, List<String>> records, Optional<Boolean> doubleSwissOverride) {
         if (TeamSettingsRecords.declaresATeamSystem(records)) {
             return ofTeams(players, records);
         }
+        var declaredSystem = firstValue(records, "192").flatMap(PairingSystemCode::parse);
+        var doubleSwiss = doubleSwissOverride.orElseGet(() ->
+                declaredSystem.filter(system -> system.gamesInSuccession() == 2).isPresent());
         var columns = players.stream()
                 .mapToInt(player -> player.rounds().size())
                 .max()
                 .orElse(0);
-        var lastColumnOnlyMarksAbsences = columns > 0 && isOnlyAbsenceMarks(players, columns);
-        var completeRounds = lastColumnOnlyMarksAbsences ? columns - 1 : columns;
         var rounds = new ArrayList<Round>();
-        for (var round = 1; round <= completeRounds; round++) {
-            rounds.add(roundOf(players, round));
+        Map<ParticipantId, Bye> absences;
+        int recordedRounds;
+        if (doubleSwiss) {
+            var matches = new MatchColumns(players).read();
+            rounds.addAll(matches.rounds());
+            absences = matches.absences();
+            recordedRounds = (columns + 1) / 2;
+        } else {
+            var lastColumnOnlyMarksAbsences = columns > 0 && isOnlyAbsenceMarks(players, columns);
+            var completeRounds = lastColumnOnlyMarksAbsences ? columns - 1 : columns;
+            for (var round = 1; round <= completeRounds; round++) {
+                rounds.add(roundOf(players, round));
+            }
+            absences = lastColumnOnlyMarksAbsences ? absenceMarks(players, columns) : Map.<ParticipantId, Bye>of();
+            recordedRounds = columns;
         }
-        var absences = lastColumnOnlyMarksAbsences ? absenceMarks(players, columns) : Map.<ParticipantId, Bye>of();
         var participants = players.stream().map(PlayerRecord::participant).toList();
-        var numberOfRounds = declaredNumberOfRounds(records).orElse(Math.max(columns, 1));
-        var profile = Profiles.individualSwiss(NumberOfRounds.of(numberOfRounds));
-        var withSystem = firstValue(records, "192")
-                .flatMap(PairingSystemCode::parse)
+        var numberOfRounds = declaredNumberOfRounds(records, doubleSwiss).orElse(Math.max(recordedRounds, 1));
+        var profile = doubleSwiss
+                ? Profiles.doubleSwiss(NumberOfRounds.of(numberOfRounds))
+                : Profiles.individualSwiss(NumberOfRounds.of(numberOfRounds));
+        var withSystem = declaredSystem
+                .filter(system -> (system.gamesInSuccession() == 2) == doubleSwiss)
                 .map(profile::with)
                 .orElse(profile)
                 .with(RankingKey.asListed())
                 .with(initialColour(records, players))
-                .with(scoring(records))
+                .with(scoring(records, profile.scoring()))
                 .with(swissRulesEdition(records))
-                .with(AccelerationRecords.read(records, numberOfRounds));
+                .with(AccelerationRecords.read(records, numberOfRounds, false, doubleSwiss));
         var settings = declaredTieBreaks(records).map(withSystem::with).orElse(withSystem);
         return new TrfTournament(
                 settings,
@@ -247,7 +271,7 @@ public final class TrfTournament {
         };
     }
 
-    private static boolean isOnlyAbsenceMarks(List<PlayerRecord> players, int column) {
+    static boolean isOnlyAbsenceMarks(List<PlayerRecord> players, int column) {
         return players.stream()
                 .map(player -> player.cellOf(column))
                 .noneMatch(cell -> cell.hasOpponent() || cell.isPairingAllocatedBye());
@@ -293,7 +317,7 @@ public final class TrfTournament {
                         player.startRank() < Integer.parseInt(cell.opponent().orElseThrow()));
     }
 
-    private static RoundCell cellOfPlayer(List<PlayerRecord> players, ParticipantId id, int round) {
+    static RoundCell cellOfPlayer(List<PlayerRecord> players, ParticipantId id, int round) {
         return players.stream()
                 .filter(player -> player.participant().id().equals(id))
                 .findFirst()
@@ -323,19 +347,37 @@ public final class TrfTournament {
 
     /**
      * {@code 162}: pairs of a symbol and its points; {@code W} win, {@code D} draw, {@code L} loss, {@code P} the
-     * PAB. Values not given keep their defaults.
+     * PAB. Values not given keep their defaults. Under Double-Swiss the bye symbols are values per match (ADR 0007);
+     * {@code F} and {@code H}, which the writer adds, are read as two games won and two drawn.
      */
-    private static ScoringScheme scoring(Map<String, List<String>> records) {
-        var scoring = ScoringScheme.standard();
+    private static ScoringScheme scoring(Map<String, List<String>> records, ScoringScheme baseline) {
+        var scoring = baseline;
         for (var value : records.getOrDefault("162", List.of())) {
             var matcher = SCORING_PAIR.matcher(value);
             while (matcher.find()) {
                 var points = Points.of(matcher.group(2));
                 scoring = switch (matcher.group(1).charAt(0)) {
                     case 'W' ->
-                        new ScoringScheme(points, scoring.draw(), scoring.loss(), scoring.pairingAllocatedBye());
-                    case 'D' -> new ScoringScheme(scoring.win(), points, scoring.loss(), scoring.pairingAllocatedBye());
-                    case 'L' -> new ScoringScheme(scoring.win(), scoring.draw(), points, scoring.pairingAllocatedBye());
+                        new ScoringScheme(
+                                points,
+                                scoring.draw(),
+                                scoring.loss(),
+                                scoring.pairingAllocatedBye(),
+                                scoring.matches());
+                    case 'D' ->
+                        new ScoringScheme(
+                                scoring.win(),
+                                points,
+                                scoring.loss(),
+                                scoring.pairingAllocatedBye(),
+                                scoring.matches());
+                    case 'L' ->
+                        new ScoringScheme(
+                                scoring.win(),
+                                scoring.draw(),
+                                points,
+                                scoring.pairingAllocatedBye(),
+                                scoring.matches());
                     case 'P' -> scoring.withPairingAllocatedBye(points);
                     default -> scoring;
                 };
@@ -348,6 +390,19 @@ public final class TrfTournament {
         return firstValue(records, "142")
                 .or(() -> firstValue(records, "XXR"))
                 .map(value -> Integer.parseInt(TrfReader.words(value).getFirst()));
+    }
+
+    /** Under Double-Swiss, {@code 142} counts TRF rounds, two per match, so it must be even (ADR 0007). */
+    private static Optional<Integer> declaredNumberOfRounds(Map<String, List<String>> records, boolean doubleSwiss) {
+        var declared = declaredNumberOfRounds(records);
+        if (!doubleSwiss) {
+            return declared;
+        }
+        declared.filter(rounds -> rounds % 2 == 1).ifPresent(rounds -> {
+            throw new InvalidTrfException(
+                    "Record 142 declares " + rounds + " rounds: a Double-Swiss file has two per match (ADR 0007)");
+        });
+        return declared.map(rounds -> rounds / 2);
     }
 
     /**

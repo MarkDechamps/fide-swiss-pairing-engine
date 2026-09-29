@@ -2,6 +2,7 @@ package io.github.markdechamps.fideswiss.cli;
 
 import io.github.markdechamps.fideswiss.pairing.NoLegalPairingException;
 import io.github.markdechamps.fideswiss.pairing.PairingProgress;
+import io.github.markdechamps.fideswiss.pairing.PairingSystem;
 import io.github.markdechamps.fideswiss.pairing.Progress;
 import io.github.markdechamps.fideswiss.tournament.InvalidSettingsException;
 import io.github.markdechamps.fideswiss.tournament.InvalidTournamentException;
@@ -112,8 +113,18 @@ public final class Main {
                 .orElseGet(() -> StandingsTable.of(standings)));
     }
 
+    /**
+     * A system chosen on the command line also chooses how the file's rounds are read: two TRF rounds per match for
+     * the Double-Swiss System, one otherwise (ADR 0007).
+     */
     private TrfTournament read(String input, SettingsOverrides overrides) {
-        var file = TrfReader.read(readInput(input));
+        var text = readInput(input);
+        var file = TrfReader.read(text);
+        var chosenGames = overrides.system().map(PairingSystem::gamesInSuccession);
+        if (chosenGames.isPresent()
+                && chosenGames.get() != file.settings().pairingSystem().gamesInSuccession()) {
+            file = TrfReader.read(text, chosenGames.get() == 2);
+        }
         return file.with(overrides.applyTo(file.settings()));
     }
 

@@ -26,7 +26,10 @@ class PairingSystemCodeTest {
         "FIDE_LIM, C.04.4.3 Lim System 2026",
         "FIDE_LIM_2026, C.04.4.3 Lim System 2026",
         "FIDE_DUTCH_BAKU, C.04.3 Dutch System 2026",
-        "FIDE_LIM_BAKU, C.04.4.3 Lim System 2026"
+        "FIDE_LIM_BAKU, C.04.4.3 Lim System 2026",
+        "FIDE_DOUBLESWISS, C.04.5 Double-Swiss System 2026",
+        "FIDE_DOUBLESWISS_2026, C.04.5 Double-Swiss System 2026",
+        "FIDE_DOUBLESWISS_BAKU, C.04.5 Double-Swiss System 2026"
     })
     void selectsThePairingSystemFromRecord192(String code, String system) {
         var file = TrfReader.read("012 Test\r192 " + code + "\r" + PLAYERS);
@@ -35,7 +38,8 @@ class PairingSystemCodeTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"CUSTOM_SWISS", "FIDE_BURSTEIN_2025", "NONSENSE"})
+    @ValueSource(
+            strings = {"CUSTOM_SWISS", "CUSTOM_DOUBLESWISS", "FIDE_DOUBLESWISS_2025", "FIDE_BURSTEIN_2025", "NONSENSE"})
     void rejectsACodeItCannotPair(String code) {
         assertThatThrownBy(() -> TrfReader.read("012 Test\r192 " + code + "\r" + PLAYERS))
                 .isInstanceOf(InvalidTrfException.class)

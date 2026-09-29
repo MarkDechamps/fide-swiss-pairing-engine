@@ -66,6 +66,12 @@ public record DoubleSwissSystem(UpfloaterLookAhead upfloaterLookAhead, FloatScor
         };
     }
 
+    /** Preface: a match of two games played in succession, with alternating colours. */
+    @Override
+    public int gamesInSuccession() {
+        return 2;
+    }
+
     @Override
     public List<Problem> problemsWith(TournamentSettings settings) {
         return Edition2026Only.problemsWith(this, settings);

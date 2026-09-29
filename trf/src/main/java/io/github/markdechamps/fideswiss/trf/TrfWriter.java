@@ -6,12 +6,14 @@ import io.github.markdechamps.fideswiss.tournament.Board;
 import io.github.markdechamps.fideswiss.tournament.Bye;
 import io.github.markdechamps.fideswiss.tournament.Colour;
 import io.github.markdechamps.fideswiss.tournament.GameResult;
+import io.github.markdechamps.fideswiss.tournament.MatchOutcome;
 import io.github.markdechamps.fideswiss.tournament.Participant;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
 import io.github.markdechamps.fideswiss.tournament.Points;
 import io.github.markdechamps.fideswiss.tournament.Round;
 import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
+import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,9 +71,9 @@ public final class TrfWriter {
         var lines = new ArrayList<String>();
         var settings = tournament.settings();
         lines.add("012 " + options.name());
-        lines.add("142 " + settings.numberOfRounds().value());
+        lines.add("142 " + settings.numberOfRounds().value() * gamesInSuccession());
         lines.add("152 " + (settings.initialColour().colour() == Colour.WHITE ? "W" : "B"));
-        scoringRecord(settings.scoring()).ifPresent(lines::add);
+        scoringRecord(settings).ifPresent(lines::add);
         lines.add("192 " + PairingSystemCode.of(settings) + accelerationSuffix(settings.acceleration()));
         if (!settings.tieBreakList().isEmpty()) {
             lines.add("212 " + tieBreakRecord(settings.tieBreakList()));
@@ -97,14 +99,24 @@ public final class TrfWriter {
         return String.join(",", codes);
     }
 
-    /** {@code 162}: symbol at column 6 with points at 7–10, each next pair 9 columns on; defaults left out. */
-    private static Optional<String> scoringRecord(ScoringScheme scoring) {
+    /**
+     * {@code 162}: symbol at column 6 with points at 7–10, each next pair 9 columns on; defaults left out. A
+     * Double-Swiss file always has the per-match bye values {@code P}, {@code F} and {@code H} (ADR 0007).
+     */
+    private static Optional<String> scoringRecord(TournamentSettings settings) {
+        var scoring = settings.scoring();
         var standard = ScoringScheme.standard();
         var values = new LinkedHashMap<Character, Points>();
         putIfDifferent(values, 'W', scoring.win(), standard.win());
         putIfDifferent(values, 'D', scoring.draw(), standard.draw());
         putIfDifferent(values, 'L', scoring.loss(), standard.loss());
         scoring.pairingAllocatedBye().ifPresent(value -> values.put('P', value));
+        if (settings.pairingSystem().gamesInSuccession() == 2) {
+            var pab = settings.pairingAllocatedByeValue();
+            values.put('P', pab);
+            values.put('F', scoring.pointsFor(Bye.FULL_POINT, pab));
+            values.put('H', scoring.pointsFor(Bye.HALF_POINT, pab));
+        }
         if (values.isEmpty()) {
             return Optional.empty();
         }
@@ -135,27 +147,41 @@ public final class TrfWriter {
         put(line, 81, String.format("%4s", decimal(pointsOf(participant.id()))));
         var column = ROUND_COLUMN;
         for (var round : tournament.rounds()) {
-            put(line, column, cellOf(round, participant.id()));
-            column += ROUND_WIDTH;
+            for (var game = 0; game < gamesInSuccession(); game++) {
+                put(line, column, cellOf(round, participant.id(), game));
+                column += ROUND_WIDTH;
+            }
         }
         var absence = tournament.absencesInNextRound().get(participant.id());
         if (absence != null && tournament.settings().numberOfRounds().includes(tournament.nextRound())) {
-            put(line, column, "0000 - " + byeCode(absence));
+            for (var game = 0; game < gamesInSuccession(); game++) {
+                put(line, column, "0000 - " + byeCode(absence));
+                column += ROUND_WIDTH;
+            }
         }
         return line.toString().stripTrailing();
     }
 
-    private String cellOf(Round round, ParticipantId participant) {
+    /** Two games in succession take one column each, the colours reversed in game 2 (ADR 0007). */
+    private int gamesInSuccession() {
+        return tournament.settings().pairingSystem().gamesInSuccession();
+    }
+
+    private String cellOf(Round round, ParticipantId participant, int game) {
         return round.boardOf(participant)
-                .map(board -> boardCell(board, participant))
+                .map(board -> boardCell(board, participant, game))
                 .orElseGet(() -> "0000 - " + byeCode(round.byeOf(participant).orElse(Bye.ZERO_POINT)));
     }
 
-    private String boardCell(Board board, ParticipantId participant) {
-        var colour = board.colourOf(participant);
+    private String boardCell(Board board, ParticipantId participant, int game) {
+        var side = board.colourOf(participant);
+        var outcome = gamesInSuccession() == 1
+                ? board.outcome()
+                : ((MatchOutcome) board.outcome()).games().get(game);
+        var colour = game % 2 == 0 ? side : side.opposite();
         var opponent = startRanks.get(board.opponentOf(participant));
-        var result = board.outcome().resultOf(colour);
-        var code = board.outcome().isPlayed() ? playedCode(result) : (result == GameResult.WIN ? '+' : '-');
+        var result = outcome.resultOf(side);
+        var code = outcome.isPlayed() ? playedCode(result) : (result == GameResult.WIN ? '+' : '-');
         return String.format("%4d %c %c", opponent, colour == Colour.WHITE ? 'w' : 'b', code);
     }
 
@@ -183,7 +209,7 @@ public final class TrfWriter {
         var total = Points.ZERO;
         for (var round : tournament.rounds()) {
             var points = round.boardOf(participant)
-                    .map(board -> scoring.pointsFor(board.outcome().resultOf(board.colourOf(participant))))
+                    .map(board -> scoring.pointsFor(board.outcome(), board.colourOf(participant)))
                     .orElseGet(() -> scoring.pointsFor(round.byeOf(participant).orElse(Bye.ZERO_POINT), pabValue));
             total = total.plus(points);
         }

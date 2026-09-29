@@ -6,6 +6,7 @@ import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.BoardNumber;
 import io.github.markdechamps.fideswiss.tournament.GameOutcome;
 import io.github.markdechamps.fideswiss.tournament.InitialColour;
+import io.github.markdechamps.fideswiss.tournament.MatchOutcome;
 import io.github.markdechamps.fideswiss.tournament.Name;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import io.github.markdechamps.fideswiss.tournament.Outcome;
@@ -131,7 +132,7 @@ public final class TournamentGenerator {
          */
         private TournamentSettings variations(RandomGenerator random) {
             var variations = settings.tournament();
-            if (settings.nonStandardScoring().happens(random)) {
+            if (settings.nonStandardScoring().happens(random) && gamesInSuccession() == 1) {
                 variations = variations.with(NON_STANDARD_SCORINGS.get(random.nextInt(NON_STANDARD_SCORINGS.size())));
             }
             if (settings.bakuAcceleration().happens(random)
@@ -307,18 +308,45 @@ public final class TournamentGenerator {
             return outcomes;
         }
 
-        /** Each side is absent independently, as in bbp, so that 1 in N games is forfeited. */
+        /**
+         * Each side is absent independently, as in bbp, so that 1 in N games is forfeited. A Double-Swiss match
+         * (C.04.5 Preface) plays two games with the colours reversed: a player absent for the match forfeits both,
+         * and a player present may still forfeit one game, at the same rate.
+         */
         private Outcome outcomeOf(PairedBoard board, RandomGenerator random) {
+            var white = strengths.get(board.white());
+            var black = strengths.get(board.black());
             var absence = parameters.forfeitRate() == 0 ? 0 : 1 - Math.sqrt(1 - 1.0 / parameters.forfeitRate());
+            var forfeit = forfeit(random, absence);
+            if (gamesInSuccession() == 1) {
+                return forfeit.orElseGet(() -> settings.resultModel().outcome(white, black, random));
+            }
+            if (forfeit.isPresent()) {
+                return MatchOutcome.ofGames(List.of(forfeit.get(), forfeit.get()));
+            }
+            var gameOne = forfeit(random, absence)
+                    .orElseGet(() -> settings.resultModel().outcome(white, black, random));
+            var gameTwo = forfeit(random, absence)
+                    .orElseGet(() ->
+                            settings.resultModel().outcome(black, white, random).mirrored());
+            return MatchOutcome.ofGames(List.of(gameOne, gameTwo));
+        }
+
+        /** Seen from the sides of the board: WHITE is game 1's White. */
+        private static Optional<GameOutcome> forfeit(RandomGenerator random, double absence) {
             var whiteAbsent = random.nextDouble() < absence;
             var blackAbsent = random.nextDouble() < absence;
             if (whiteAbsent && blackAbsent) {
-                return GameOutcome.DOUBLE_FORFEIT;
+                return Optional.of(GameOutcome.DOUBLE_FORFEIT);
             }
             if (whiteAbsent || blackAbsent) {
-                return whiteAbsent ? GameOutcome.BLACK_WINS_BY_FORFEIT : GameOutcome.WHITE_WINS_BY_FORFEIT;
+                return Optional.of(whiteAbsent ? GameOutcome.BLACK_WINS_BY_FORFEIT : GameOutcome.WHITE_WINS_BY_FORFEIT);
             }
-            return settings.resultModel().outcome(strengths.get(board.white()), strengths.get(board.black()), random);
+            return Optional.empty();
+        }
+
+        private int gamesInSuccession() {
+            return settings.tournament().pairingSystem().gamesInSuccession();
         }
 
         private static boolean happens(RandomGenerator random, int rate) {
