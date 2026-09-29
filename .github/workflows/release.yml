@@ -27,10 +27,16 @@ jobs:
           cache: maven
       - name: Build and verify
         run: ./mvnw -B verify -pl '!oracle-it'
-      # The 50k release gate per Oracle-verified system runs here, sharded, once oracle-it provides it.
+
+  # The 50,000-tournament gate, sharded, in both directions per Oracle (release-gate.yml).
+  oracle-gate:
+    uses: ./.github/workflows/release-gate.yml
+    with:
+      tournaments: 50000
+      shards: 50
 
   jlink:
-    needs: gate
+    needs: [gate, oracle-gate]
     strategy:
       matrix:
         include:
@@ -72,7 +78,7 @@ jobs:
           path: fide-swiss-${{ inputs.version }}-${{ matrix.platform }}.zip
 
   publish:
-    needs: [gate, jlink]
+    needs: [gate, oracle-gate, jlink]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
