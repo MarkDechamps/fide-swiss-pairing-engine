@@ -63,6 +63,7 @@ jobs:
             make -C "bbpPairings-${version}"
           done
       - name: Fetch JaVaFo 2.2
+        continue-on-error: true
         run: curl -fsSL -A "Mozilla/5.0" -o javafo.jar https://www.rrweb.org/javafo/current/javafo.jar
       - name: Fetch Gacrux @ 6419149 and its Python environment
         run: |

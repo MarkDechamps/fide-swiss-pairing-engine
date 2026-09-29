@@ -25,6 +25,7 @@ jobs:
           done
       # JaVaFo refuses plain curl (HTTP 999); its licence has no redistribution grant, so it is used here only.
       - name: Fetch JaVaFo 2.2
+        continue-on-error: true
         run: curl -fsSL -A "Mozilla/5.0" -o javafo.jar https://www.rrweb.org/javafo/current/javafo.jar
       # Gacrux (FIDE's TieBreakServer), the Swiss Team System Oracle, pinned to the commit its Known Divergences
       # were measured on; its Python needs networkx only.
