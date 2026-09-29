@@ -8,6 +8,7 @@ import io.github.markdechamps.fideswiss.standings.TieBreakList;
 import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import io.github.markdechamps.fideswiss.tournament.Profiles;
+import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
 import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -183,9 +184,12 @@ final class GenerateArguments {
         return argument.startsWith("--") && CommandLineParser.SYSTEMS.containsKey(argument.substring(2));
     }
 
+    /** Double-Swiss brings its scoring along: a bye is worth a match of two games (C.04.5 Preface). */
     private static UnaryOperator<GeneratorSettings> system(String name) {
         var system = CommandLineParser.system(name);
-        return inTournament(tournament -> tournament.with(system));
+        return system.gamesInSuccession() == 2
+                ? inTournament(tournament -> tournament.with(system).with(ScoringScheme.doubleSwiss()))
+                : inTournament(tournament -> tournament.with(system));
     }
 
     private static long seed(String value) {

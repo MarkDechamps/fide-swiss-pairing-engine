@@ -81,6 +81,16 @@ class DoubleSwissCommandTest {
     }
 
     @Test
+    void generatesWithTheSystemFlagAsWithTheProfile() throws IOException {
+        var flagged = directory.resolve("flagged.trf");
+        run("-g", "11", "--double-swiss", "-o", flagged.toString());
+
+        assertThat(Files.readString(flagged))
+                .contains("\r\n192 FIDE_DOUBLESWISS\r\n")
+                .contains("F 2.0    H 1.0");
+    }
+
+    @Test
     void listsTheSystemInTheVersion() {
         run("version");
 
