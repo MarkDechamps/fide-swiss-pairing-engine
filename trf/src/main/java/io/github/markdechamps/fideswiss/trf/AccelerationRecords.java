@@ -18,9 +18,14 @@ final class AccelerationRecords {
     private AccelerationRecords() {}
 
     static Acceleration read(Map<String, List<String>> records, int numberOfRounds) {
+        return read(records, numberOfRounds, false);
+    }
+
+    /** For a team event whose primary score is match points, {@code 250}'s match points are the Virtual Points. */
+    static Acceleration read(Map<String, List<String>> records, int numberOfRounds, boolean inMatchPoints) {
         var points = new HashMap<ParticipantId, Map<RoundNumber, Points>>();
         records.getOrDefault("XXA", List.of()).forEach(line -> readXxa(line, points));
-        records.getOrDefault("250", List.of()).forEach(line -> read250(line, points, numberOfRounds));
+        records.getOrDefault("250", List.of()).forEach(line -> read250(line, points, numberOfRounds, inMatchPoints));
         if (!points.isEmpty()) {
             return Acceleration.explicit(VirtualPoints.of(points));
         }
@@ -46,10 +51,19 @@ final class AccelerationRecords {
 
     /**
      * {@code 250}: match points at 5–8 (teams), game points at 10–13, rounds 15–17 to 19–21, ids 23–26 to
-     * 28–31. For individuals the game points are the Virtual Points.
+     * 28–31. For individuals the game points are the Virtual Points, and for teams on match points the match
+     * points, unless the record leaves them blank (TRF26's own team example).
      */
-    private static void read250(String line, Map<ParticipantId, Map<RoundNumber, Points>> points, int numberOfRounds) {
-        var value = Points.of(PlayerRecord.columns(line, 10, 13).trim());
+    private static void read250(
+            String line,
+            Map<ParticipantId, Map<RoundNumber, Points>> points,
+            int numberOfRounds,
+            boolean inMatchPoints) {
+        var matchPoints = PlayerRecord.columns(line, 5, 8).trim();
+        var value = Points.of(
+                inMatchPoints && !matchPoints.isEmpty()
+                        ? matchPoints
+                        : PlayerRecord.columns(line, 10, 13).trim());
         var firstRound = number(PlayerRecord.columns(line, 15, 17), 1);
         var lastRound = number(PlayerRecord.columns(line, 19, 21), numberOfRounds);
         var firstId = number(PlayerRecord.columns(line, 23, 26), 1);

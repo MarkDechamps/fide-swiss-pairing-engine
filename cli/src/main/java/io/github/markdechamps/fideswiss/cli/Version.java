@@ -9,7 +9,8 @@ final class Version {
         return "fide-swiss " + number() + "\n"
                 + "  C.04.3 Dutch System 2026 (with C.04.1/C.04.2 2026): experimental\n"
                 + "  C.04.4.1 Dubov System 2026: experimental\n"
-                + "  C.04.4.3 Lim System 2026: experimental\n";
+                + "  C.04.4.3 Lim System 2026: experimental\n"
+                + "  C.04.6 Swiss Team Pairing System 2026: experimental\n";
     }
 
     static String number() {

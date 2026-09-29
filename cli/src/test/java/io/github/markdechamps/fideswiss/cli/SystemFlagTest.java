@@ -52,7 +52,7 @@ class SystemFlagTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"burstein", "swiss-team"})
+    @CsvSource({"burstein", "double-swiss"})
     void rejectsASystemNotYetBuilt(String name) {
         assertThatThrownBy(() -> CommandLineParser.parse(List.of("pair", "in.trf", "--system", name)))
                 .isInstanceOf(UsageException.class);

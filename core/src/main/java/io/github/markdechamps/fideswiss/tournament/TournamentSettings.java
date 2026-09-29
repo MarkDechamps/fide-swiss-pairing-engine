@@ -149,6 +149,11 @@ public record TournamentSettings(
                 edition);
     }
 
+    /** One reading of an ambiguous article of the Pairing System (ADR 0003). */
+    public TournamentSettings with(Interpretation interpretation) {
+        return with(pairingSystem.with(interpretation));
+    }
+
     /** The value of every PAB of this event: the scheme's, or else the one the Pairing System defines. */
     public Points pairingAllocatedByeValue() {
         return scoring.pairingAllocatedBye().orElseGet(() -> pairingSystem.pairingAllocatedByeValue(scoring));

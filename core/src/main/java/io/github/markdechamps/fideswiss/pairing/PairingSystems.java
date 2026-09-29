@@ -3,6 +3,8 @@ package io.github.markdechamps.fideswiss.pairing;
 import io.github.markdechamps.fideswiss.dubov.DubovSystem;
 import io.github.markdechamps.fideswiss.dutch.DutchSystem;
 import io.github.markdechamps.fideswiss.lim.LimSystem;
+import io.github.markdechamps.fideswiss.swissteam.SwissTeamSystem;
+import io.github.markdechamps.fideswiss.tournament.ColourPreferenceType;
 import io.github.markdechamps.fideswiss.tournament.InvalidSettingsException;
 import io.github.markdechamps.fideswiss.tournament.Problem;
 import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
@@ -24,6 +26,16 @@ public final class PairingSystems {
      */
     public static PairingSystem dutch(SwissRulesEdition edition) {
         return DutchSystem.of(edition);
+    }
+
+    /** The Swiss Team Pairing System (C.04.6, 2026) with Type A colour preferences and default Interpretations. */
+    public static PairingSystem swissTeam() {
+        return swissTeam(ColourPreferenceType.TYPE_A);
+    }
+
+    /** The Swiss Team Pairing System with the competition's colour preferences (1.7). */
+    public static PairingSystem swissTeam(ColourPreferenceType colourPreferences) {
+        return SwissTeamSystem.of(colourPreferences);
     }
 
     /** The Dubov System (C.04.4.1, 2026). */
