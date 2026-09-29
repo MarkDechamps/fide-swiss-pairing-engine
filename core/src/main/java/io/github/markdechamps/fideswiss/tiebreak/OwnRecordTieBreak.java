@@ -5,6 +5,7 @@ import io.github.markdechamps.fideswiss.standings.TieBreakValue;
 import io.github.markdechamps.fideswiss.tournament.Colour;
 import io.github.markdechamps.fideswiss.tournament.GameResult;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
+import io.github.markdechamps.fideswiss.tournament.PrimaryScore;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -31,15 +32,17 @@ final class OwnRecordTieBreak implements IndividualTieBreak {
         this.rule = rule;
     }
 
-    /** 7.1: rounds in which the participant got a win's points, with or without playing. */
+    /**
+     * 7.1: rounds in which the participant got a win's points, with or without playing. A team's win is a won match,
+     * counted in match points whatever the primary score is (only {@code WIN:MP} exists for teams).
+     */
     static OwnRecordTieBreak wins(TieBreakCode code) {
-        return new OwnRecordTieBreak(
-                code,
-                "C.07 7.1",
-                true,
-                (rounds, context) -> count(rounds.entries().stream()
-                        .filter(entry -> entry.points().equals(context.winValue()))
-                        .count()));
+        return new OwnRecordTieBreak(code, "C.07 7.1", true, (rounds, context) -> {
+            var matchPoints = context.in(PrimaryScore.MATCH_POINTS);
+            return count(matchPoints.of(rounds.id()).entries().stream()
+                    .filter(entry -> entry.points().equals(matchPoints.winValue()))
+                    .count());
+        });
     }
 
     /** 7.2: games won over the board. */

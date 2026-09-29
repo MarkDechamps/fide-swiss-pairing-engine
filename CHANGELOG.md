@@ -25,9 +25,12 @@ Every change that can alter a pairing, a standing or a check verdict is listed u
 - `fide-swiss generate` and the JaVaFo/bbp `-g` form, with a manifest per corpus and exit code 7 when more than 0.1% of the seeds are skipped.
 - The `oracle-it` gates: the generator's Dutch tournaments re-paired round by round by bbpPairings v6.0.0 (Dutch 2026), bbpPairings v5.0.1 and JaVaFo 2.2 (Dutch 2017), run as separate processes from a path in a system property or environment variable and skipped when absent; the nightly workflow builds the pinned programs and runs them on 5,000 tournaments. Known Divergence KD-4 registers JaVaFo's difference on requested byes.
 
+- The team tie-breaks of C.07 2026-03 art. 11–13: the team scores `:MP` and `:GP` on `WIN`, `WON`, `PS`, `BH`, `AOB`, `FB` and `KS`; `MPvGP`; `EMMSB`, `EMGSB`, `EGMSB`, `EGGSB` with Cut-1/2; `EDE`, `EDEBT`, `EDEBB`, `EDET`, `EDEB`; `SSSC` with `/Kx`, `/F` and `/P`; and the knock-out tie-breaks `BC`, `TBR`, `BBE`. They are selectable in TRF `202`/`212` and `--tiebreaks`, and `fide-swiss standings` ranks team files (and Double-Swiss files) with them.
+
 ### Pairing changes
 
 - First pairings: Dutch 2026, identical to bbpPairings v6.0.0 in every round of the committed regression corpus and of 647 generated tournaments. Documented readings: 4.4.1, [C5], [C8], [C9], [C18]/[C20] and ADR 0006.
+- Standings, team and Double-Swiss files: WIN counts matches won in match points, and the Koya limit, the Fore Buchholz draw and the Dummy Opponent's cap read the value of the score the tie-break reads (a match win's points, or a board's game points times the boards), not a single game's.
 - Check verdicts: under the Dutch System, `check` reports [C3] (2026) or C.3 (pre-2026) when two non-topscorers with the same absolute colour preference meet.
 - First pairings: Dubov 2026 (C.04.4.1), no Oracle; identical to its Literal Enumerator in every simulated round, plain and accelerated. Documented readings: 1.8 upfloats, [C9], 4.4.1, the 3.2.4 shifters, ARO rounding, 3.1.4, 5.2.4 and MaxT.
 - First pairings: Lim 2026 (C.04.4.3), no Oracle; identical to its Literal Enumerator in every simulated round (plain, Maxi-tournament and accelerated), and no round with a legal pairing is blocked. Documented readings: floater choice, numbering, the Median Scoregroup, compatibility, 3.10, incoming floaters, Article 4, Maxi-tournament, cracking, the PAB, colours, and the median under acceleration. The chesspairing Witness differs widely and never gates, so no Known Divergence is recorded.
