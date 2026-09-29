@@ -56,7 +56,7 @@ final class DirectEncounter implements TieBreak {
     }
 
     /** The group from its top down, participants the text cannot separate sharing a tier. */
-    private List<List<ParticipantId>> order(List<ParticipantId> group, TieBreakContext context) {
+    List<List<ParticipantId>> order(List<ParticipantId> group, TieBreakContext context) {
         if (group.size() < 2) {
             return List.of(group);
         }

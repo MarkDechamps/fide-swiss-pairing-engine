@@ -4,7 +4,9 @@ import io.github.markdechamps.fideswiss.standings.TieBreakCode;
 import io.github.markdechamps.fideswiss.standings.TieBreakEdition;
 import io.github.markdechamps.fideswiss.standings.TieBreakList;
 import io.github.markdechamps.fideswiss.tournament.InvalidSettingsException;
+import io.github.markdechamps.fideswiss.tournament.PrimaryScore;
 import io.github.markdechamps.fideswiss.tournament.Problem;
+import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -17,11 +19,16 @@ final class TieBreaks {
 
     private TieBreaks() {}
 
-    static List<TieBreak> of(TieBreakList list, TieBreakEdition edition) {
+    static List<TieBreak> of(TieBreakList list, TieBreakEdition edition, ScoringScheme scoring) {
         var problems = new ArrayList<Problem>();
         var tieBreaks = new ArrayList<TieBreak>();
         for (var code : list.codes()) {
-            if (edition == TieBreakEdition.EDITION_2024_08 && (NEW_IN_2026.contains(code.acronym()) || code.fore())) {
+            if (scoring.matches().isEmpty()
+                    && (TieBreakList.isTeamOnly(code.acronym())
+                            || code.teamScore().isPresent())) {
+                problems.add(Problem.citing("C.07 13", code + " needs a team competition (match scoring, TRF 362)"));
+            } else if (edition == TieBreakEdition.EDITION_2024_08
+                    && (NEW_IN_2026.contains(code.acronym()) || code.fore())) {
                 problems.add(Problem.citing("C.07 5", code + " does not exist in Tie-break Edition 2024-08"));
             } else {
                 tieBreaks.add(of(code));
@@ -34,7 +41,24 @@ final class TieBreaks {
     }
 
     private static TieBreak of(TieBreakCode code) {
+        var tieBreak = built(code);
+        return code.teamScore()
+                .map(score -> (TieBreak) new TeamScored(tieBreak, score))
+                .orElse(tieBreak);
+    }
+
+    private static TieBreak built(TieBreakCode code) {
         return switch (code.acronym()) {
+            case "MPVGP" -> new MatchPointsOrGamePoints(code);
+            case "EMMSB" -> extended(code, PrimaryScore.MATCH_POINTS, PrimaryScore.MATCH_POINTS, "C.07 13.2.1");
+            case "EMGSB" -> extended(code, PrimaryScore.MATCH_POINTS, PrimaryScore.GAME_POINTS, "C.07 13.2.2");
+            case "EGMSB" -> extended(code, PrimaryScore.GAME_POINTS, PrimaryScore.MATCH_POINTS, "C.07 13.2.3");
+            case "EGGSB" -> extended(code, PrimaryScore.GAME_POINTS, PrimaryScore.GAME_POINTS, "C.07 13.2.4");
+            case "EDE", "EDEBT", "EDEBB", "EDET", "EDEB" -> new ExtendedDirectEncounter(code);
+            case "SSSC" -> new ScoresAndScheduleStrength(code);
+            case "BC" -> new BoardResults(code, BoardResults.Rule.BOARD_COUNT);
+            case "TBR" -> new BoardResults(code, BoardResults.Rule.TOP_BOARD_RESULTS);
+            case "BBE" -> new BoardResults(code, BoardResults.Rule.BOTTOM_BOARD_ELIMINATION);
             case "BH" -> sum(code, new Buchholz(code.forfeitsAsPlayed()), "C.07 8.1");
             case "FB" -> sum(code, new ForeBuchholz(code.forfeitsAsPlayed()), "C.07 8.3");
             case "SB" -> sum(code, new SonnebornBerger(code.forfeitsAsPlayed()), "C.07 9.1");
@@ -63,6 +87,11 @@ final class TieBreaks {
             default ->
                 throw new InvalidSettingsException(List.of(Problem.citing("C.07 5", code + " is not implemented yet")));
         };
+    }
+
+    private static TieBreak extended(
+            TieBreakCode code, PrimaryScore opponentTotal, PrimaryScore scored, String article) {
+        return sum(code, new ExtendedSonnebornBerger(opponentTotal, scored, code.forfeitsAsPlayed()), article);
     }
 
     private static TieBreak sum(TieBreakCode code, TermSource source, String article) {

@@ -34,7 +34,7 @@ public final class Profiles {
     /**
      * The Swiss Team System (C.04.6, 2026): match points 2 / 1 / 0 primary over four boards, game points for
      * colours, a PAB worth a drawn match, Type A colour preferences and every Interpretation at its default. The
-     * team tie-breaks ({@code MPvGP, EDE, EMGSB/C1}) are not implemented yet, so the list is empty for now.
+     * Tie-break List is empty: a team file declares its own (TRF 202 or 212, for example {@code MPvGP, EDE, EMGSB/C1}).
      */
     public static TournamentSettings teamSwiss(NumberOfRounds rounds) {
         return individualSwiss(rounds)

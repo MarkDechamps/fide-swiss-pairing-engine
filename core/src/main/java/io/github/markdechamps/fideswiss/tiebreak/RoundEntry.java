@@ -81,6 +81,11 @@ record RoundEntry(
         return kind == Kind.FORFEIT_WIN || kind == Kind.FORFEIT_LOSS;
     }
 
+    /** The same round scored in the other team score (C.07 11.1). */
+    RoundEntry withPoints(Points other) {
+        return new RoundEntry(round, kind, opponent, colour, result, other);
+    }
+
     /** The same pairing scored as a draw, for Fore Buchholz (C.07 8.3). */
     RoundEntry drawn(Points drawValue) {
         return new RoundEntry(round, Kind.GAME, opponent, colour, Optional.of(GameResult.DRAW), drawValue);
