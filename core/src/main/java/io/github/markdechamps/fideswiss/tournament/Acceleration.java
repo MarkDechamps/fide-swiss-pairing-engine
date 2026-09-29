@@ -44,7 +44,9 @@ public sealed interface Acceleration {
 
     /**
      * The Baku method (C.04.7 1.2–1.4): the Accelerated Group is the top 2·⌈N/4⌉ of the round-1 list; in the first
-     * ⌈R/2⌉ rounds it gets a win's points for the first ⌈accelerated/2⌉ of them and half of that for the rest.
+     * ⌈R/2⌉ rounds it gets a win's points for the first ⌈accelerated/2⌉ of them and half of that for the rest. A
+     * Double-Swiss round is a match of two games, so its win is a match won 2-0 (Acceleration across the systems,
+     * decision 3).
      */
     record Baku() implements Acceleration {
         @Override
@@ -52,7 +54,10 @@ public sealed interface Acceleration {
             if (!tournament.isInAcceleratedGroup(participant)) {
                 return Points.ZERO;
             }
-            var win = tournament.settings().scoring().primaryWin();
+            var settings = tournament.settings();
+            var win = settings.scoring()
+                    .primaryWin()
+                    .times(settings.pairingSystem().gamesInSuccession());
             var accelerated = (tournament.settings().numberOfRounds().value() + 1) / 2;
             var atFullValue = (accelerated + 1) / 2;
             if (round.value() <= atFullValue) {

@@ -29,6 +29,7 @@ final class CommandLineParser {
             "dubov", PairingSystems::dubov,
             "burstein", PairingSystems::burstein,
             "lim", PairingSystems::lim,
+            "double-swiss", PairingSystems::doubleSwiss,
             "swiss-team", PairingSystems::swissTeam);
 
     private CommandLineParser() {}

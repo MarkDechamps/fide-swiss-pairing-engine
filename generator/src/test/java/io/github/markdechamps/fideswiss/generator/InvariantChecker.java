@@ -22,7 +22,9 @@ import java.util.Set;
  * who already had one or a win's points without playing (Art. 3–4; before 2026 a requested full-point bye does not
  * bar it, Dutch 2017 reading R9), everyone in every round either on a board or
  * given a reason, nobody on a board after withdrawing (GHR 3.2), and the colour limits of Art. 6–7 in every round
- * but the last, where Dutch topscorers may break them. The Standings after the last round rank everyone.
+ * but the last, where Dutch topscorers may break them; a Double-Swiss match gives both colours, one per game, and
+ * C.04.5 has no colour criterion. A match is a meeting unless a side forfeited both games (C.04.5 Preface). The
+ * Standings after the last round rank everyone.
  */
 final class InvariantChecker {
 
@@ -43,7 +45,7 @@ final class InvariantChecker {
             noRematches(round, met, violations);
             pairingAllocatedByes(round, barredFromPab, violations);
             recordColours(round, colours);
-            if (number < lastRound) {
+            if (number < lastRound && tournament.settings().pairingSystem().gamesInSuccession() == 1) {
                 colourLimits(number, colours, violations);
             }
             bars(round, edition, barredFromPab);
@@ -86,7 +88,7 @@ final class InvariantChecker {
 
     private static void noRematches(Round round, Set<Set<ParticipantId>> met, List<String> violations) {
         for (var board : round.boards()) {
-            if (board.outcome().isPlayed() && !met.add(Set.of(board.white(), board.black()))) {
+            if (board.outcome().isMeeting() && !met.add(Set.of(board.white(), board.black()))) {
                 violations.add(
                         "round " + round.number() + ": " + board.white() + " and " + board.black() + " meet again");
             }

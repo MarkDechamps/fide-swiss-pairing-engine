@@ -31,7 +31,7 @@ public final class SimulatedTournaments {
             try {
                 var pairing = tournament.pairNextRound();
                 var outcomes = new HashMap<BoardNumber, Outcome>();
-                pairing.boards().forEach(board -> outcomes.put(board.number(), randomOutcome(random)));
+                pairing.boards().forEach(board -> outcomes.put(board.number(), randomOutcome(settings, random)));
                 tournament = tournament.withRound(pairing.completedWith(outcomes));
             } catch (NoLegalPairingException e) {
                 return;
@@ -50,7 +50,36 @@ public final class SimulatedTournaments {
         return result;
     }
 
-    private static Outcome randomOutcome(Random random) {
+    /** A game, or under match scoring a match of as many games (Double-Swiss: two), each drawn independently. */
+    private static Outcome randomOutcome(TournamentSettings settings, Random random) {
+        var matches = settings.scoring().matches();
+        if (matches.isEmpty()) {
+            return randomOutcome(random);
+        }
+        if (random.nextInt(50) == 0) {
+            var forfeited =
+                    random.nextBoolean() ? GameOutcome.WHITE_WINS_BY_FORFEIT : GameOutcome.BLACK_WINS_BY_FORFEIT;
+            return MatchOutcome.ofGames(
+                    java.util.Collections.nCopies(matches.get().boards(), forfeited));
+        }
+        var games = new java.util.ArrayList<GameOutcome>();
+        for (var game = 0; game < matches.get().boards(); game++) {
+            games.add(random.nextInt(60) == 0 ? rareResult(random) : randomOutcome(random));
+        }
+        return MatchOutcome.ofGames(games);
+    }
+
+    /** The Preface's odd games: ½-0, 0-½, 0-0 and a double forfeit. */
+    private static GameOutcome rareResult(Random random) {
+        return switch (random.nextInt(4)) {
+            case 0 -> GameOutcome.WHITE_HALF_BLACK_ZERO;
+            case 1 -> GameOutcome.WHITE_ZERO_BLACK_HALF;
+            case 2 -> GameOutcome.BOTH_ZERO;
+            default -> GameOutcome.DOUBLE_FORFEIT;
+        };
+    }
+
+    private static GameOutcome randomOutcome(Random random) {
         var draw = random.nextInt(100);
         if (draw < 4) {
             return random.nextBoolean() ? GameOutcome.WHITE_WINS_BY_FORFEIT : GameOutcome.BLACK_WINS_BY_FORFEIT;

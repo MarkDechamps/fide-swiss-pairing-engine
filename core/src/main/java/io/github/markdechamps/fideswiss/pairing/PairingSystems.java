@@ -1,6 +1,7 @@
 package io.github.markdechamps.fideswiss.pairing;
 
 import io.github.markdechamps.fideswiss.burstein.BursteinSystem;
+import io.github.markdechamps.fideswiss.doubleswiss.DoubleSwissSystem;
 import io.github.markdechamps.fideswiss.dubov.DubovSystem;
 import io.github.markdechamps.fideswiss.dutch.DutchSystem;
 import io.github.markdechamps.fideswiss.lim.LimSystem;
@@ -37,6 +38,11 @@ public final class PairingSystems {
     /** The Swiss Team Pairing System with the competition's colour preferences (1.7). */
     public static PairingSystem swissTeam(ColourPreferenceType colourPreferences) {
         return SwissTeamSystem.of(colourPreferences);
+    }
+
+    /** The Double-Swiss System (C.04.5, 2026) with default Interpretations: two-game matches, the PAB first. */
+    public static PairingSystem doubleSwiss() {
+        return DoubleSwissSystem.withDefaults();
     }
 
     /** The Dubov System (C.04.4.1, 2026). */

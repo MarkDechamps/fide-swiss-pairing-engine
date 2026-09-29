@@ -34,6 +34,17 @@ public record ScoringScheme(
         return standard().with(MatchScoring.standard());
     }
 
+    /**
+     * Double-Swiss (C.04.5 Preface): 1 / ½ / 0 per game, a match of two games scored by its game points, and a bye
+     * worth the points of a match (a full-point bye two games won, a half-point bye two drawn).
+     */
+    public static ScoringScheme doubleSwiss() {
+        return standard()
+                .with(MatchScoring.standard()
+                        .withPrimary(PrimaryScore.GAME_POINTS)
+                        .withBoards(2));
+    }
+
     public ScoringScheme withPairingAllocatedBye(Points value) {
         return new ScoringScheme(win, draw, loss, Optional.of(value), matches);
     }

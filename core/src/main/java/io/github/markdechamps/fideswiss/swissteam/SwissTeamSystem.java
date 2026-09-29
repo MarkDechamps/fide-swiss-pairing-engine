@@ -8,7 +8,6 @@ import io.github.markdechamps.fideswiss.pairing.RoundPairing;
 import io.github.markdechamps.fideswiss.pairing.TraceStep;
 import io.github.markdechamps.fideswiss.topscoregroup.Contender;
 import io.github.markdechamps.fideswiss.topscoregroup.ContenderPair;
-import io.github.markdechamps.fideswiss.topscoregroup.PairCriterion;
 import io.github.markdechamps.fideswiss.topscoregroup.TopScoregroupProcedure;
 import io.github.markdechamps.fideswiss.topscoregroup.TopScoregroupRound;
 import io.github.markdechamps.fideswiss.tournament.Acceleration;
@@ -32,8 +31,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * The Swiss Team Pairing System (C.04.6, 2026): the PAB first, then the top-scoregroup with its upfloaters,
@@ -118,7 +115,7 @@ public record SwissTeamSystem(
                         new TopScoregroupRound(contenders, floatCriteriaLapse, upfloaterLookAhead, criteria))
                 .orElseThrow(() -> noLegalPairing(trace));
         pairing.pairingAllocatedBye().ifPresent(team -> trace.add(new TraceStep.ByeDecision(team.id(), "C.04.6 3.4")));
-        pairing.brackets().forEach(bracket -> trace.add(bracketStep(bracket, criteria)));
+        pairing.brackets().forEach(bracket -> trace.add(bracket.traceStep(criteria)));
         var colours = new TeamColourAllocation(preferences, settings.initialColour(), secondaryScore(settings));
         var boards = new ArrayList<PairedBoard>();
         var ordered = pairing.pairs().stream().sorted(BOARD_ORDER).toList();
@@ -164,30 +161,6 @@ public record SwissTeamSystem(
 
     private static SecondaryScore secondaryScore(TournamentSettings settings) {
         return settings.scoring().matches().map(MatchScoring::secondary).orElse(SecondaryScore.USED_FOR_COLOUR);
-    }
-
-    private static TraceStep bracketStep(TopScoregroupProcedure.Bracket bracket, List<PairCriterion> criteria) {
-        var upfloaters = Set.copyOf(bracket.upfloaters());
-        var failed = criteria.stream()
-                .map(criterion -> failures(criterion, bracket, upfloaters))
-                .filter(failure -> !failure.isEmpty())
-                .collect(Collectors.joining(", "));
-        return new TraceStep.TopScoregroupBracket(
-                bracket.residents().getFirst().score().toString(),
-                bracket.residents().stream().map(Contender::id).toList(),
-                bracket.upfloaters().stream().map(Contender::id).toList(),
-                bracket.pairs().stream()
-                        .map(pair -> List.of(pair.top().id(), pair.bottom().id()))
-                        .toList(),
-                failed);
-    }
-
-    private static String failures(
-            PairCriterion criterion, TopScoregroupProcedure.Bracket bracket, Set<Contender> upfloaters) {
-        var count = bracket.pairs().stream()
-                .mapToLong(pair -> criterion.failureOf(pair, upfloaters))
-                .sum();
-        return count == 0 ? "" : "[" + criterion.article() + "] " + count;
     }
 
     private static NoLegalPairingException noLegalPairing(List<TraceStep> trace) {

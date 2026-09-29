@@ -1,10 +1,13 @@
 package io.github.markdechamps.fideswiss.topscoregroup;
 
+import io.github.markdechamps.fideswiss.pairing.TraceStep;
 import io.github.markdechamps.fideswiss.tournament.Points;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The Top-Scoregroup Procedure shared word for word by the Swiss Team (C.04.6) and Double-Swiss (C.04.5) Systems,
@@ -14,7 +17,32 @@ import java.util.Optional;
 public final class TopScoregroupProcedure {
 
     /** One bracket: its residents, the upfloaters chosen for it, and its pairs. */
-    public record Bracket(List<Contender> residents, List<Contender> upfloaters, List<ContenderPair> pairs) {}
+    public record Bracket(List<Contender> residents, List<Contender> upfloaters, List<ContenderPair> pairs) {
+
+        /** The bracket as a trace step, with how often its pairs fail each of the system's bracket criteria. */
+        public TraceStep traceStep(List<PairCriterion> criteria) {
+            var floating = Set.copyOf(upfloaters);
+            var failed = criteria.stream()
+                    .map(criterion -> failures(criterion, floating))
+                    .filter(failure -> !failure.isEmpty())
+                    .collect(Collectors.joining(", "));
+            return new TraceStep.TopScoregroupBracket(
+                    residents.getFirst().score().toString(),
+                    residents.stream().map(Contender::id).toList(),
+                    upfloaters.stream().map(Contender::id).toList(),
+                    pairs.stream()
+                            .map(pair -> List.of(pair.top().id(), pair.bottom().id()))
+                            .toList(),
+                    failed);
+        }
+
+        private String failures(PairCriterion criterion, Set<Contender> floating) {
+            var count = pairs.stream()
+                    .mapToLong(pair -> criterion.failureOf(pair, floating))
+                    .sum();
+            return count == 0 ? "" : "[" + criterion.article() + "] " + count;
+        }
+    }
 
     /** The round-pairing before colours; empty from {@link #pair} when it cannot be completed (3.3.3). */
     public record RoundPairing(Optional<Contender> pairingAllocatedBye, List<Bracket> brackets) {

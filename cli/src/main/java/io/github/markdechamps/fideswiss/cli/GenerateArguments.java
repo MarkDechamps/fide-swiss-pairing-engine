@@ -8,6 +8,7 @@ import io.github.markdechamps.fideswiss.standings.TieBreakList;
 import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import io.github.markdechamps.fideswiss.tournament.Profiles;
+import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
 import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -59,7 +60,7 @@ final class GenerateArguments {
         return new Command.Generate(seed, count, output, baseline, configuration, model, overrides);
     }
 
-    /** JaVaFo/bbp: {@code [--dutch|--dubov|--burstein|--lim] -g [<cfg>|<seed>] -o <out> [-s <seed>]}; one tournament. */
+    /** JaVaFo/bbp: {@code [--dutch|--dubov|--burstein|--lim|--double-swiss] -g [<cfg>|<seed>] -o <out> [-s <seed>]}; one tournament. */
     static Command compatible(Deque<String> queue) {
         Optional<Long> seed = Optional.empty();
         Optional<String> configuration = Optional.empty();
@@ -138,7 +139,8 @@ final class GenerateArguments {
         return switch (name) {
             case "individual-swiss" -> Profiles.individualSwiss(DRAWN);
             case "accelerated-open" -> Profiles.acceleratedOpen(DRAWN);
-            case "double-swiss", "team-swiss", "olympiad" ->
+            case "double-swiss" -> Profiles.doubleSwiss(DRAWN);
+            case "team-swiss", "olympiad" ->
                 throw new UsageException("the " + name + " profile's system is not implemented yet");
             default -> throw new UsageException("unknown profile " + name);
         };
@@ -182,9 +184,12 @@ final class GenerateArguments {
         return argument.startsWith("--") && CommandLineParser.SYSTEMS.containsKey(argument.substring(2));
     }
 
+    /** Double-Swiss brings its scoring along: a bye is worth a match of two games (C.04.5 Preface). */
     private static UnaryOperator<GeneratorSettings> system(String name) {
         var system = CommandLineParser.system(name);
-        return inTournament(tournament -> tournament.with(system));
+        return system.gamesInSuccession() == 2
+                ? inTournament(tournament -> tournament.with(system).with(ScoringScheme.doubleSwiss()))
+                : inTournament(tournament -> tournament.with(system));
     }
 
     private static long seed(String value) {

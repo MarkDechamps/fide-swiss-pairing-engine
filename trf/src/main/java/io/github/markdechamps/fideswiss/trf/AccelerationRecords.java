@@ -23,9 +23,22 @@ final class AccelerationRecords {
 
     /** For a team event whose primary score is match points, {@code 250}'s match points are the Virtual Points. */
     static Acceleration read(Map<String, List<String>> records, int numberOfRounds, boolean inMatchPoints) {
+        return read(records, numberOfRounds, inMatchPoints, false);
+    }
+
+    /**
+     * Under Double-Swiss (ADR 0007) {@code 250}'s rounds are TRF rounds, two per match, so a range must cover whole
+     * matches; {@code XXA}, JaVaFo's, has no Double-Swiss reading and is refused.
+     */
+    static Acceleration read(
+            Map<String, List<String>> records, int numberOfRounds, boolean inMatchPoints, boolean doubleSwiss) {
         var points = new HashMap<ParticipantId, Map<RoundNumber, Points>>();
+        if (doubleSwiss && records.containsKey("XXA")) {
+            throw new InvalidTrfException("XXA has no Double-Swiss reading; use 250 over whole matches (ADR 0007)");
+        }
         records.getOrDefault("XXA", List.of()).forEach(line -> readXxa(line, points));
-        records.getOrDefault("250", List.of()).forEach(line -> read250(line, points, numberOfRounds, inMatchPoints));
+        records.getOrDefault("250", List.of())
+                .forEach(line -> read250(line, points, numberOfRounds, inMatchPoints, doubleSwiss));
         if (!points.isEmpty()) {
             return Acceleration.explicit(VirtualPoints.of(points));
         }
@@ -58,14 +71,22 @@ final class AccelerationRecords {
             String line,
             Map<ParticipantId, Map<RoundNumber, Points>> points,
             int numberOfRounds,
-            boolean inMatchPoints) {
+            boolean inMatchPoints,
+            boolean doubleSwiss) {
         var matchPoints = PlayerRecord.columns(line, 5, 8).trim();
         var value = Points.of(
                 inMatchPoints && !matchPoints.isEmpty()
                         ? matchPoints
                         : PlayerRecord.columns(line, 10, 13).trim());
-        var firstRound = number(PlayerRecord.columns(line, 15, 17), 1);
-        var lastRound = number(PlayerRecord.columns(line, 19, 21), numberOfRounds);
+        var columnsPerRound = doubleSwiss ? 2 : 1;
+        var firstColumn = number(PlayerRecord.columns(line, 15, 17), 1);
+        var lastColumn = number(PlayerRecord.columns(line, 19, 21), numberOfRounds * columnsPerRound);
+        if (doubleSwiss && (firstColumn % 2 == 0 || lastColumn % 2 == 1)) {
+            throw new InvalidTrfException("Record 250 covers TRF rounds " + firstColumn + "-" + lastColumn
+                    + ", not whole Double-Swiss matches (ADR 0007)");
+        }
+        var firstRound = (firstColumn + columnsPerRound - 1) / columnsPerRound;
+        var lastRound = lastColumn / columnsPerRound;
         var firstId = number(PlayerRecord.columns(line, 23, 26), 1);
         var lastId = number(PlayerRecord.columns(line, 28, 31), firstId);
         for (var id = firstId; id <= lastId; id++) {

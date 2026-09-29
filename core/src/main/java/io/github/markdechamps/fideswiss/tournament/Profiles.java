@@ -42,4 +42,12 @@ public final class Profiles {
                 .with(ScoringScheme.teams())
                 .with(TieBreakList.none());
     }
+
+    /**
+     * The Double-Swiss System (C.04.5, 2026): two games per match at 1 / ½ / 0, the PAB worth a game won and a game
+     * drawn (1.4), and the individual tie-breaks of {@link #individualSwiss} over each player's game points.
+     */
+    public static TournamentSettings doubleSwiss(NumberOfRounds rounds) {
+        return individualSwiss(rounds).with(PairingSystems.doubleSwiss()).with(ScoringScheme.doubleSwiss());
+    }
 }

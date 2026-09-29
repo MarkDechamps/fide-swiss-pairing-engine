@@ -30,9 +30,9 @@ The project is **pre-alpha**. Every system below is `experimental`: it pairs rou
 | C.04.4.1 | Dubov System | 2026 | experimental; no Oracle exists, checked against a plain enumeration of the text |
 | C.04.4.2 | Burstein System | 2026 | experimental; seeding rounds are Dutch rounds; no Oracle |
 | C.04.4.3 | Lim System | 2026 | experimental; no Oracle |
-| C.04.5 | Double-Swiss System | 2026 | **planned**; not built |
+| C.04.5 | Double-Swiss System | 2026 | experimental; no Oracle exists, checked against a plain enumeration of the text |
 | C.04.6 | Swiss Team Pairing System | 2026 | experimental; matches a patched Gacrux on a 40-tournament regression corpus |
-| C.04.7 | Acceleration methods (Baku, explicit virtual points) | 2026 | implemented for Dutch, Dubov, Burstein and Lim |
+| C.04.7 | Acceleration methods (Baku, explicit virtual points) | 2026 | implemented for Dutch, Dubov, Burstein, Lim and Double-Swiss |
 | C.07 | Tie-Breaks | 2026-03 and 2024-08 editions | implemented for individual tournaments; team tie-breaks **planned** |
 
 The Oracle results are the ones stated in `README.md` at the time of writing; the README table is the maintained record.
@@ -93,11 +93,11 @@ There are two grammars. A subcommand name first (`pair`, `check`, `standings`, `
 
 ```
 fide-swiss pair <in.trf> [-o <reply>] [-l [<trace>]] [--explain <id>]... [--quiet] [settings]
-fide-swiss [--dutch|--dubov|--burstein|--lim|--swiss-team] <in.trf> -p [<reply>] [-l [<trace>]] [settings]
+fide-swiss [--dutch|--dubov|--burstein|--lim|--double-swiss|--swiss-team] <in.trf> -p [<reply>] [-l [<trace>]] [settings]
 fide-swiss check <in.trf> [--round <r>] [settings]   |   <in.trf> -c [<r>]   |   -check <in.trf>
 fide-swiss standings <in.trf> [--after <r>] [--why <id> <id>] [settings]
 fide-swiss generate -o <out%d.trf> [--seed <n>] [--count <k>] [--profile <name>] [--config <cfg>] [--model <in.trf>] [ranges] [tournament flags]
-fide-swiss -g [<cfg>|<seed>] -o <out.trf> [-s <seed>] [--dutch|--dubov|--burstein|--lim]
+fide-swiss -g [<cfg>|<seed>] -o <out.trf> [-s <seed>] [--dutch|--dubov|--burstein|--lim|--double-swiss]
 fide-swiss version | -r
 ```
 
@@ -115,14 +115,14 @@ The flags below work on `pair`, `check` and `standings`, and after `-p`/`-c` in 
 
 | Flag | Values | Overrides | Meaning |
 |---|---|---|---|
-| `--system <name>` | `dutch`, `dubov`, `burstein`, `lim`, `swiss-team` | record `192` | The pairing system. Also written `--dutch`, `--dubov`, `--burstein`, `--lim`, `--swiss-team`. |
+| `--system <name>` | `dutch`, `dubov`, `burstein`, `lim`, `double-swiss`, `swiss-team` | record `192` | The pairing system. Also written `--dutch`, `--dubov`, `--burstein`, `--lim`, `--double-swiss`, `--swiss-team`. The choice also decides how the file's round columns are read: `double-swiss` reads two TRF rounds per match, every other system one (4.2). |
 | `--maxi-tournament` | none | (no TRF record exists) | Declare a Lim tournament a Maxi-tournament. Only meaningful for Lim. |
-| `--edition` | `2026`, `pre-2026` | record `192` edition | The Swiss Rules Edition. `pre-2026` is the Dutch System 2017. Dubov, Burstein and Lim reject `pre-2026`. |
-| `--rounds <n>` | integer | `142` / `XXR` | The number of rounds. |
+| `--edition` | `2026`, `pre-2026` | record `192` edition | The Swiss Rules Edition. `pre-2026` is the Dutch System 2017. Dubov, Burstein, Lim and Double-Swiss reject `pre-2026`. |
+| `--rounds <n>` | integer | `142` / `XXR` | The number of rounds (for Double-Swiss: of matches). |
 | `--initial-colour` | `white`, `black` | `152` / `XXC` | The initial colour. |
 | `--tiebreaks "<list>"` | a C.07 list, see section 6 | `202` / `212` | The tie-break list. |
 | `--tiebreak-edition` | `2026-03`, `2024-08` | profile | The C.07 edition that defines the tie-break values. |
-| `--interpretation <name>=<value>` | see 5.5 | profile | A Swiss Team reading (ADR 0003). Repeatable. |
+| `--interpretation <name>=<value>` | see 5.5 and 5.6 | profile | A Swiss Team or Double-Swiss reading (ADR 0003). Repeatable. |
 
 A team file (one with `310` records) is paired by the Swiss Team System and only accepts `--swiss-team` (or `--system swiss-team`); asking for another system on it is an error, and so is asking for `--swiss-team` on a file with no `310` records (see section 9).
 
@@ -147,7 +147,7 @@ fide-swiss --dubov tournament.trf -p                 # -p without a file: reply 
 | `--quiet` | Suppress the progress line. Without it, a terminal shows a one-line progress indicator on standard error after 500 ms of pairing, erased when the pairing ends. It is never shown when standard error is not a terminal. |
 | settings | see 3.1 |
 
-In the short form the system flags `--dutch`, `--dubov`, `--burstein`, `--lim`, `--swiss-team` are settings flags like any other and may appear anywhere. If `-p` is missing (and no `-c`), the command stops with `nothing to do: give -p to pair the next round or -c to check`.
+In the short form the system flags `--dutch`, `--dubov`, `--burstein`, `--lim`, `--double-swiss`, `--swiss-team` are settings flags like any other and may appear anywhere. If `-p` is missing (and no `-c`), the command stops with `nothing to do: give -p to pair the next round or -c to check`.
 
 **The reply** is JaVaFo's Pairing Reply, ended with LF:
 
@@ -161,9 +161,9 @@ In the short form the system flags `--dutch`, `--dubov`, `--burstein`, `--lim`, 
 10 11
 ```
 
-The first line is the number of lines that follow. Each further line is `white black`, one per board in board order (General Handling Rules 3.6), using the ids of the file. The pairing-allocated bye, if any, comes last as `<id> 0`. Ids are the file's own, never the internal pairing numbers (ADR 0006 explains why the two can differ).
+The first line is the number of lines that follow. Each further line is `white black`, one per board in board order (General Handling Rules 3.6), using the ids of the file. The pairing-allocated bye, if any, comes last as `<id> 0`. For Double-Swiss a line is one match and `white` is the player with White in game 1 (game 2 is played with the colours reversed). Ids are the file's own, never the internal pairing numbers (ADR 0006 explains why the two can differ).
 
-**Absent players in the last round column.** If the last round column of the file holds only `0000 - H`, `0000 - F` or `0000 - Z` marks, those participants are treated as absent from the round to be paired (half-point bye request, full-point bye request, zero-point bye request).
+**Absent players in the last round column.** If the last round column of the file holds only `0000 - H`, `0000 - F` or `0000 - Z` marks, those participants are treated as absent from the round to be paired (half-point bye request, full-point bye request, zero-point bye request). For Double-Swiss the marks fill the two columns of the next match (a mark in the first of them is enough).
 
 **Ctrl-C** cancels a running pairing without writing a reply; the README states exit code 130 for this (that value comes from the shell/JVM, not from program code).
 
@@ -262,17 +262,17 @@ The reader takes TRF26 and TRF16 files, plus the JaVaFo `XX?` lines. Records are
 | Record | Read for | Notes |
 |---|---|---|
 | `001` | one participant | Start rank (columns 5-8), title (11-13), name (15-47), rating (49-52; blank or 0 is unrated), points (81-84), rank (86-89), then one 10-column block per round from column 92. The start rank becomes the participant id used in every reply, table and message. The declared points and rank are only used by `check`. Other 001 fields (sex, federation, FIDE id, birth date) are ignored. |
-| `142` | number of rounds | First word of the value. Without it, `XXR`, else the number of round columns in the file (at least 1). |
+| `142` | number of rounds | First word of the value. Without it, `XXR`, else the number of round columns in the file (at least 1). For Double-Swiss it counts TRF rounds, two per match, so it must be even (`Record 142 declares 5 rounds: a Double-Swiss file has two per match`); `142 18` is a 9-round event. |
 | `XXR` | number of rounds | JaVaFo's equivalent of `142`; used when `142` is absent. |
 | `152` | initial colour | Value starting with `B` is black, anything else white. Without `152` or `XXC`, the initial colour is inferred from the top participant paired in round 1 (as TRF26 prescribes and bbpPairings does); it defaults to white. |
 | `XXC` | initial colour | JaVaFo: the words `white1` or `black1`; the last one wins. |
-| `162` | scoring scheme | Symbol and points pairs: `W` win, `D` draw, `L` loss, `P` pairing-allocated bye. Missing values keep the standard 1 / 0.5 / 0. In a team file it gives the game points (and `P` per board). |
+| `162` | scoring scheme | Symbol and points pairs: `W` win, `D` draw, `L` loss, `P` pairing-allocated bye. Missing values keep the standard 1 / 0.5 / 0. In a team file it gives the game points (and `P` per board). For Double-Swiss `W`, `D`, `L` score one game, and `P` is the value of a PAB for the whole match (default 1.5); `F` and `H`, which the writer adds, are read as two games won (full-point bye) and two drawn (half-point bye), whatever value they carry. |
 | `192` | pairing system and acceleration | See 4.3. A blank value is like no record. |
 | `092` | pairing system | bbpPairings writes its code here. Read as `192` only when there is no `192` and the value starts with `FIDE_DUTCH`. |
 | `202` | tie-break list | The tie-breaks among equal points, comma separated (section 6). |
 | `212` | tie-break list | The full standings order starting with `PTS`; `PTS` is dropped. `212` is preferred over `202` when both exist. Without either, the profile's `BH/C1, BH, SB, DE`. |
-| `250` | explicit acceleration | Virtual points (TRF26): game points in columns 10-13, first and last round in 15-17 and 19-21, first and last id in 23-26 and 28-31. Blank ranges mean all rounds or a single id (the first). |
-| `XXA` | explicit acceleration | JaVaFo: id in columns 5-8, then the virtual points of round r at column 10 + 5(r-1). |
+| `250` | explicit acceleration | Virtual points (TRF26): game points in columns 10-13, first and last round in 15-17 and 19-21, first and last id in 23-26 and 28-31. Blank ranges mean all rounds or a single id (the first). For Double-Swiss the rounds are TRF rounds and must cover whole matches (start odd, end even); `250 ... 1 4 ...` is matches 1 and 2. |
+| `XXA` | explicit acceleration | JaVaFo: id in columns 5-8, then the virtual points of round r at column 10 + 5(r-1). Refused in a Double-Swiss file (JaVaFo has no Double-Swiss); use `250`. |
 | `310` | a team | Team number (5-7), name (9-40), strength factor (48-53, used as rating), match points (55-60), game points (62-67), rank (69-71), member start ranks from column 74 in steps of 5. Its presence makes the file a **team file**. |
 | `300` | team line-up for a round | Overrides the `310` line-up for that round. |
 | `320` | team pairing-allocated bye value | Match points at columns 5-8 and game points at 10-13. |
@@ -302,6 +302,14 @@ A game with no colour (a forfeit) puts the lower start rank on White. An unknown
 
 Recorded rounds are read as facts (ADR 0004): the reader does not reject a rematch or a second PAB. `check` reports those.
 
+**Double-Swiss matches (ADR 0007).** TRF26 has one result per round, so a Double-Swiss match *k* takes two columns: TRF round 2k-1 is game 1 and TRF round 2k is game 2. The reader does this when `192` is `FIDE_DOUBLESWISS` or when `--double-swiss` (`--system double-swiss`) is given; without either a Double-Swiss file reads as twice the rounds. Each column holds that game's own result codes, so a 1½-½ match is `1` then `=`, a game ending ½-0 is `=` for one player and `0` for the other, 0-0 is `0` for both, and a single forfeited game is `+`/`-` in its column. The two columns of a match must agree, otherwise the file is invalid (exit 3):
+
+- the same opponent in both, with reversed colours (`w` then `b`, or `b` then `w`); the same colour twice is `... has the same colour in both games`;
+- a bye fills both columns with opponent `0000` and the same code (`U`, `H`, `F`, `Z`); a bye in one game only is `... has a bye in one game only: byes apply only to matches`;
+- a match with game 1 recorded and game 2 empty is `Double-Swiss match <k> is half recorded`.
+
+A player forfeits the match only by forfeiting both games (`-` in both columns); such a match is not a meeting, so the two may be paired again. The player scheduled White in game 1 had White in the match if at least one game was played. Everywhere else (the reply, `--rounds`, `check --round`, the trace and every message) a round is a match.
+
 **The round to pair.** The rounds the file records are the rounds already played; `pair` pairs the round after them. If the last round column holds only byes/absences (no opponents and no PAB), it is not a played round but the list of participants who are absent, or who requested a bye, in the round to be paired: `0000 - H`, `0000 - F`, `0000 - Z`.
 
 ### 4.3 Record `192` and system selection
@@ -315,10 +323,11 @@ The value is upper-cased. An optional `_BAKU` suffix means Baku acceleration and
 | `FIDE_DUBOV`, `FIDE_DUBOV_2026` | Dubov System 2026 |
 | `FIDE_BURSTEIN`, `FIDE_BURSTEIN_2026` | Burstein System 2026 |
 | `FIDE_LIM`, `FIDE_LIM_2026` | Lim System 2026 (provisional: TRF26 has no Lim code) |
+| `FIDE_DOUBLESWISS`, `FIDE_DOUBLESWISS_2026` | Double-Swiss System 2026; also switches on two TRF rounds per match (4.2) |
 | `FIDE_TEAM...` | Swiss Team System (team files only, see below) |
 | blank or no `192` | the profile's system: Dutch 2026 |
 
-Any other code is rejected with `Unsupported pairing system in record 192: <CODE>` (exit 3). This includes `FIDE_DOUBLESWISS` (Double-Swiss is **planned**, ADR 0007 describes the intended TRF encoding, two TRF rounds per match, but the reader does not accept it yet).
+Any other code is rejected with `Unsupported pairing system in record 192: <CODE>` (exit 3), for example `CUSTOM_DOUBLESWISS` or `CUSTOM_SWISS`. `_BAKU` on any code is provisional.
 
 For a **team file** (any `310` record, or a `192` containing `TEAM`), the code must start with `FIDE_TEAM`; the form is `FIDE_TEAM[_TYPEA|_TYPEB][_MP|_GP][_GP|_MP][_BAKU]`:
 
@@ -329,7 +338,7 @@ Any other `192` code for a team file gives `Unsupported 192 code <code> for a te
 
 ### 4.4 What is written
 
-The `generate` command writes TRF26 files with: `012` (the name `RTG <version> seed <n>`), `142`, `152`, `162` (only when different from the standard scoring), `192` (with `_BAKU` when Baku is on), `212` (`PTS` followed by the tie-break list, when the list is not empty) and one `001` record per participant. The writer reads back to the same rounds and settings. The writer can also emit `XXR` and `XXC` for JaVaFo. It does not write team files.
+The `generate` command writes TRF26 files with: `012` (the name `RTG <version> seed <n>`), `142`, `152`, `162` (only when different from the standard scoring), `192` (with `_BAKU` when Baku is on), `212` (`PTS` followed by the tie-break list, when the list is not empty) and one `001` record per participant. The writer reads back to the same rounds and settings. The writer can also emit `XXR` and `XXC` for JaVaFo. It does not write team files. A Double-Swiss tournament is written with two columns per match (4.2), `142` as twice the number of matches, `192 FIDE_DOUBLESWISS`, and a `162` that always carries `P`, `F` and `H`, the per-match bye values, so another reader never has to guess them.
 
 ## 5. Pairing systems
 
@@ -360,7 +369,6 @@ The first rounds ("seeding rounds", 1.6) are paired exactly as the Dutch System 
 - Edition: 2026 only.
 - Acceleration: supported.
 - No Oracle (bbpPairings pairs the older text). Documented readings: README, "Readings of the Burstein 2026 text" (seeding rounds, [C6]/[C7], [C8], unplayed rounds, board order, the duplicated line of the 4.3 note).
-- Note: `fide-swiss version` does not list this system yet; the code pairs it.
 
 ### 5.4 Lim System (C.04.4.3)
 
@@ -389,17 +397,27 @@ Pairs teams for a team event. The PAB is decided first, then the top scoregroup 
 | `last-round-zero-cd-type-b` | `strong`, `none` | A1 | Type B: whether a team with colour difference 0 that had the same colour in its last two matches has a strong preference when the last round is paired, or none. |
 | `float-score` | `pairing`, `real` | A8 | Under acceleration: whether a floater of the previous round is judged on the Pairing Scores of that round or on the real scores. |
 
-An unknown name or value is `error: unknown --interpretation <text>`. Giving an interpretation to a system that has none (any system but Swiss Team) fails with `error: The pairing system has no Interpretation <VALUE>`, for example `REAL`. Known divergences from the Oracle are registered in `docs/verification/known-divergences.md`.
+An unknown name or value is `error: unknown --interpretation <text>`. Double-Swiss takes `upfloater-look-ahead` and `float-score` with the same defaults (5.6). Giving an interpretation to a system that has none (Dutch, Dubov, Burstein, Lim) fails with `error: The pairing system has no Interpretation <VALUE>`, for example `REAL`. Known divergences from the Oracle are registered in `docs/verification/known-divergences.md`.
 
-### 5.6 Double-Swiss (C.04.5): planned
+### 5.6 Double-Swiss System (C.04.5)
 
-Not built. ADR 0007 records the intended TRF encoding (a match is two TRF rounds); the profiles `double-swiss`, `team-swiss` and `olympiad` of the generator are refused with `the <name> profile's system is not implemented yet`.
+Every pairing is a match of two games between the same two players, played in succession with the colours reversed; each game is scored 1 / ½ / 0, so a match ends 2-0, 1½-½, 1-1 and so on, and the Preface's rare ½-0, 0-½ and 0-0 games are allowed. Select it with `192 FIDE_DOUBLESWISS`, `--double-swiss` or `--system double-swiss`; in a TRF a match takes two round columns (4.2).
+
+The pairing is the procedure of the Swiss Team System (5.5), which C.04.5 repeats word for word (3.3–3.6): the PAB first, then the top scoregroup of the players still unpaired with the first set of upfloaters (the fewest, then the highest scores, then [C6] and [C7], then the 3.5.4 order), paired by the first Pairing Identifier that best keeps [C8] (upfloaters' opponents who floated in the previous round). Colours come last, by Article 4 for each match: both new, the initial colour to an odd-TPN higher-ranked player (4.3.1); then White to the one with fewer Whites (4.3.2); then the most recent difference (4.3.3); then alternation of the higher-ranked player (4.3.4) and of the opponent (4.3.5). There is no colour criterion in the pairing. Boards follow GHR 3.6.
+
+- **PAB** (1.4): 3.4.2 the lowest score, 3.4.3 the most matches played, 3.4.4 the largest TPN, among the players whose bye leaves the others pairable and who have not had a PAB, won a match by forfeit or had a full-point bye ([C2]). It is worth a game won plus a game drawn, 1.5, unless `162 P` says otherwise. A requested full-point bye is worth two games won (2), a half-point bye two draws (1).
+- **Forfeits** (Preface): a match is forfeited only when a player forfeits both games; it is then not a meeting and gives no colour, and the pair may meet again. Any other match is a meeting and counts as played.
+- **Float criteria** [C7] and [C8] lapse only in the last planned round.
+- **Interpretations** (`--interpretation`, as in 5.5): `upfloater-look-ahead=parity-minimum|graded` for [C6] and `float-score=pairing|real` for floats under acceleration. Double-Swiss has no colour preferences, so `last-round-zero-cd-type-b` is refused (`[C.04.5] The Double-Swiss System has no colour preferences, so no STRONG`).
+- **Library**: `PairingSystems.doubleSwiss()`, `Profiles.doubleSwiss(rounds)` and `ScoringScheme.doubleSwiss()`; record a match as `MatchOutcome.ofGames(List.of(game1, game2))`, each game seen from the player with White in game 1, whatever colour that player has in the game (so `WHITE_WINS` as game 2 is a win for the game-1 White, who plays game 2 with Black).
+- Edition: 2026 only (`--edition pre-2026` is rejected, `[GHR 1.3]`). Acceleration: Baku (5.7) and explicit `250`.
+- No Oracle exists. It is checked against a plain enumeration of the text, and the text's examples (3.5.4, 3.6.2) pass. Documented readings: README, "Readings of the Double-Swiss 2026 text"; prior art: `docs/research/double-swiss-2026-prior-art.md`.
 
 ### 5.7 Acceleration (C.04.7)
 
 Acceleration adds Virtual Points to a participant's score for pairing only. The result is the Pairing Score, which is the score wherever the pairing text says score (floats, PAB, board order included); standings never see it.
 
-- `Baku`: `192` suffix `_BAKU`, or `--acceleration baku` for the generator. The Accelerated Group is the top 2 x ceil(N/4) of the round-1 list, and a Late Entry ranked above its last participant joins it. Members of the group receive a win's points as virtual points in the first ceil(A/2) rounds and half of that in the rest of the first A rounds, where A = ceil(R/2) and R is the number of rounds; after that, nothing. Baku needs a win worth two draws and a loss worth nothing (`[C.04.7 1.1]`).
+- `Baku`: `192` suffix `_BAKU`, or `--acceleration baku` for the generator. The Accelerated Group is the top 2 x ceil(N/4) of the round-1 list, and a Late Entry ranked above its last participant joins it. Members of the group receive a win's points as virtual points in the first ceil(A/2) rounds and half of that in the rest of the first A rounds, where A = ceil(R/2) and R is the number of rounds; after that, nothing. For Double-Swiss a win is a match won 2-0, so the values are 2 and 1. Baku needs a win worth two draws and a loss worth nothing (`[C.04.7 1.1]`).
 - Explicit: `250` (TRF26) or `XXA` (JaVaFo) records give virtual points per participant and round. They override `_BAKU`.
 
 ### 5.8 Colours and other settings at a glance
@@ -410,6 +428,7 @@ Acceleration adds Virtual Points to a participant's score for pairing only. The 
 | Scoring scheme | `162` (and `362` for teams) | any points for win, draw, loss, PAB; standard 1 / 0.5 / 0 |
 | Number of rounds | `142`, `XXR`, `--rounds` | integer |
 | Swiss Rules Edition | `192`, `--edition` | `2026`, `pre-2026` (Dutch only) |
+| Games per round | `192 FIDE_DOUBLESWISS`, `--double-swiss` | two (a Double-Swiss match, two TRF rounds), else one |
 | Ranking of participants | file order | listed order of the `001` records |
 | Tie-break list and edition | `202`/`212`, `--tiebreaks`, `--tiebreak-edition` | section 6 |
 
@@ -484,15 +503,15 @@ fide-swiss -g [<cfg>|<seed>] -o <out.trf> [-s <seed>] [--dutch|--dubov|--burstei
 - `--seed <n>` is the corpus seed (unsigned 64 bit). Without it a fresh seed is drawn and printed on standard error as `seed <n>`. Tournament k of a corpus has its own seed derived from the corpus seed and k, and it is the one written in `012` and the manifest, so a single tournament can be reproduced alone.
 - `--count <k>`: the number of tournaments (default 1).
 - `-g` is the JaVaFo/bbpPairings form: one tournament, with the argument after `-g` being a configuration file or, when it is all digits, a seed; `-s <seed>` also gives the seed; a system flag may follow.
-- Only the Dutch, Dubov, Burstein and Lim systems generate individual tournaments; the generator does not write team files.
+- The Dutch, Dubov, Burstein, Lim and Double-Swiss systems generate individual tournaments; the generator does not write team files.
 
 ### 7.2 Precedence
 
-1. the **profile** (`--profile individual-swiss`, the default, or `accelerated-open` which is Baku); the profile's number of rounds is a placeholder because the generator draws the rounds;
+1. the **profile** (`--profile individual-swiss`, the default, `accelerated-open` which is Baku, or `double-swiss`, two-game matches with the PAB worth 1.5); the profile's number of rounds is a placeholder because the generator draws the rounds;
 2. a **configuration file** (`--config`, or the argument of `-g`), then a **model TRF** (`--model`): the settings and rates observed in an existing tournament (its field size, forfeit rate, bye rate, withdrawals) are copied;
 3. the **flags**.
 
-The profiles `double-swiss`, `team-swiss` and `olympiad` are **planned** and refused (`the <name> profile's system is not implemented yet`); another name gives `unknown profile <name>`.
+The profiles `team-swiss` and `olympiad` are **planned** and refused (`the <name> profile's system is not implemented yet`); another name gives `unknown profile <name>`.
 
 ### 7.3 Ranges
 
@@ -505,7 +524,7 @@ A range flag takes a number, which fixes the parameter, or `A..B`, drawn per tou
 | `--highest-rating` | 2400..2800 | rating of the top player |
 | `--lowest-rating` | 1400..2300 | rating of the bottom player; ratings are uniform between the two |
 | `--unrated <%>` | 0..10 | percentage of unrated players (with a hidden strength) |
-| `--forfeit-rate` | 1 game in 6..30 | forfeit frequency; each side absent independently, so double forfeits occur; 0 never |
+| `--forfeit-rate` | 1 game in 6..30 | forfeit frequency; each side absent independently, so double forfeits occur; 0 never. In a Double-Swiss match a player absent for the match forfeits both games, and a player present may still forfeit one game at the same rate. |
 | `--hpb-rate`, `--zpb-rate` | 1 in 15..3225 player-rounds | half-point and zero-point byes (never in the last round, at most two per participant) |
 | `--fpb-rate` | none | full-point byes (1 in N; 0 never) |
 | `--withdrawals <%>` | 0..5 | withdrawals after a random round |
@@ -518,13 +537,13 @@ A range that is not a number or `A..B` gives `<flag> takes a number or a range A
 
 | Flag | Values | Meaning |
 |---|---|---|
-| `--system`, `--dutch`, `--dubov`, `--burstein`, `--lim` | dutch, dubov, burstein, lim | the pairing system |
+| `--system`, `--dutch`, `--dubov`, `--burstein`, `--lim`, `--double-swiss` | dutch, dubov, burstein, lim, double-swiss | the pairing system; `double-swiss` also takes the Double-Swiss scoring (byes worth a match) |
 | `--maxi-tournament` | | declare Lim a Maxi-tournament |
 | `--edition` | `2026`, `pre-2026` | Swiss Rules Edition |
 | `--tiebreak-edition` | `2026-03`, `2024-08` | C.07 edition |
 | `--acceleration` | `none`, `baku`, `random` | `random` applies Baku to 20 % of the tournaments; Baku is only applied where the scoring allows it |
 | `--tiebreaks` | a list or `random` | `random` draws 3 to 5 entries per tournament |
-| `--random-scoring` | | scores 10 % of the tournaments 3/1/0 or 2/1/0 |
+| `--random-scoring` | | scores 10 % of the tournaments 3/1/0 or 2/1/0 (never a Double-Swiss one) |
 
 ### 7.5 Configuration files
 
@@ -592,23 +611,27 @@ Errors go to standard error as `error: <message>`; the exit code tells the class
 | `error: unexpected argument <x>` | Unknown flag, or a second input file. |
 | `error: <flag> needs a value` | A flag at the end of the line. |
 | `error: not a number: <x>` | A numeric flag (`--rounds`, `--after`, `--round`, `--count`) with text. |
-| `error: unsupported pairing system <x>` | `--system` takes `dutch`, `dubov`, `burstein`, `lim`, `swiss-team`. |
+| `error: unsupported pairing system <x>` | `--system` takes `dutch`, `dubov`, `burstein`, `lim`, `double-swiss`, `swiss-team`. |
 | `error: --edition takes 2026 or pre-2026, not <x>` | Bad edition value. Likewise `--tiebreak-edition takes 2026-03 or 2024-08`, `--initial-colour takes white or black`. |
 | `error: unknown --interpretation <x>` | Use one of the pairs in 5.5. |
 | `error: SwissTeamSystem pairs teams, and the file has no 310 records` | `--swiss-team` used on an individual file. |
 | `error: <system> cannot pair a team file (310 records)` | Another system was asked for on a team file. |
-| `error: Unsupported pairing system in record 192: <CODE>` | The `192` value is not in the table of 4.3 (for example `FIDE_DOUBLESWISS`, or a typo). Correct or remove the record: the record is parsed before any flag applies, so `--system` cannot work around it. |
+| `error: Unsupported pairing system in record 192: <CODE>` | The `192` value is not in the table of 4.3 (for example `CUSTOM_DOUBLESWISS`, or a typo). Correct or remove the record: the record is parsed before any flag applies, so `--system` cannot work around it. |
 | `error: Unknown result code '<c>'` | A result character in a round block that is not in 4.2. |
+| `error: Player <n> in Double-Swiss match <k> (TRF rounds <a> and <b>) has ...` | The two columns of a Double-Swiss match disagree: another opponent, a bye in one game only, or the same colour twice (4.2). Fix the file, or leave out `--double-swiss` if it is not a Double-Swiss file. |
+| `error: Double-Swiss match <k> is half recorded: TRF round <b> has no games` | Game 1 is recorded and game 2 is not. Record game 2, or remove game 1, before pairing. |
+| `error: Record 142 declares <n> rounds: a Double-Swiss file has two per match` | `142` counts TRF rounds, two per match. |
+| `error: Record 250 covers TRF rounds <a>-<b>, not whole Double-Swiss matches`, `XXA has no Double-Swiss reading` | Explicit acceleration in a Double-Swiss file: give `250` ranges from an odd to an even TRF round. |
 | `error: Round <r> refers to unknown player <id>` | An opponent id with no `001` record. |
 | `error: Points must be a number like 11.5, not '...'` / `A rank must be a whole number, not '...'` | Malformed columns 81-84 or 86-89 of a `001` record. |
 | `error: The tournament has only <n> rounds` | Pairing after the last round. Raise `--rounds` if the event is longer. |
 | `error: Participant appears more than once in round <r> (<id>)`, `Expected round <r> but got round <n>`, `Unknown participant in round <r>`, `Two participants share an id` | The file's rounds are structurally inconsistent (checked while the file is read). |
-| `error: [GHR 1.3] The library has only the 2026 text of the <system>, not edition PRE_2026` | `--edition pre-2026` with Dubov, Burstein or Lim; only Dutch has the older edition. |
+| `error: [GHR 1.3] The library has only the 2026 text of the <system>, not edition PRE_2026` | `--edition pre-2026` with Dubov, Burstein, Lim or Double-Swiss; only Dutch has the older edition. |
 | `error: [GHR 1.3] The Dutch System of edition ... cannot pair a tournament of edition ...` | A conflict between the system and the edition. |
 | `error: [C.07 5] unknown tie-break <x>` (and the other C.07 messages of 6.1) | Fix the list of `202`/`212`/`--tiebreaks`. |
 | `error: [C.04.7 1.1] Baku acceleration needs a win worth two draws and a loss worth nothing` | Baku with a scoring such as 3/1/0. Use explicit virtual points or another scoring. |
 | `error: [C.04.4.3 3.2.3] only the Lim System has a Maxi-tournament setting, not <system>` | `--maxi-tournament` without `--lim`. |
-| `error: [C.04.3 1.9.3] ...` / `[C.04.6 3.3.3] The round-pairing cannot be completed` (exit 1) | No legal pairing exists for this round. The pairing trace follows the message on standard error and shows the last bracket the engine reached. Check requested byes and withdrawals, and run `check` on the earlier rounds. |
+| `error: [C.04.3 1.9.3] ...` / `[C.04.6 3.3.3]` or `[C.04.5 3.3.3] The round-pairing cannot be completed` (exit 1) | No legal pairing exists for this round. The pairing trace follows the message on standard error and shows the last bracket the engine reached. Check requested byes and withdrawals, and run `check` on the earlier rounds. |
 | `error: The pairing was cancelled` | Interrupted by Ctrl-C. No reply is written. |
 | `error: A team lists player <id>, who has no 001 record`, `Round <r>: player <id> belongs to no 310 team` | A team file whose `310` lines and `001` records disagree. |
 | `error: -o needs %d in it to name <k> files`, `error: generate needs -o <file or pattern with %d>`, `error: -g needs -o <file>` | Generator arguments (section 7.1). |
@@ -627,6 +650,6 @@ Other things to know:
 
 - `README.md`: overview, status table, readings of each Handbook text, the library API.
 - `CHANGELOG.md`: added features and pairing changes (every change that can alter an output is listed under "Pairing changes").
-- `docs/adr/`: decisions: 0003 Swiss Team interpretations, 0004 recorded rounds are facts, 0005 the JaVaFo/bbpPairings protocol, 0006 pairing numbers, 0007 Double-Swiss encoding (planned), 0008 a pairing change is a versioned change.
+- `docs/adr/`: decisions: 0003 Swiss Team interpretations, 0004 recorded rounds are facts, 0005 the JaVaFo/bbpPairings protocol, 0006 pairing numbers, 0007 Double-Swiss encoding, 0008 a pairing change is a versioned change.
 - `docs/verification/`: the article-to-test map for the Dutch System 2026 and the Known Divergence register.
 - `docs/research/`: notes on the Handbook texts, TRF and the oracles.
