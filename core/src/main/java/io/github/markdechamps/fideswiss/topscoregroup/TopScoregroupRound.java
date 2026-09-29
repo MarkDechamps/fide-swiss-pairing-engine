@@ -1,7 +1,9 @@
 package io.github.markdechamps.fideswiss.topscoregroup;
 
+import io.github.markdechamps.fideswiss.tournament.BracketSeating;
 import io.github.markdechamps.fideswiss.tournament.Points;
 import io.github.markdechamps.fideswiss.tournament.UpfloaterLookAhead;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.TreeSet;
@@ -14,11 +16,29 @@ public record TopScoregroupRound(
         List<Contender> contenders,
         boolean floatCriteriaLapse,
         UpfloaterLookAhead upfloaterLookAhead,
-        List<PairCriterion> pairCriteria) {
+        List<PairCriterion> pairCriteria,
+        BracketSeating seating) {
+
+    /** Seating by TPN alone (C.04.6 3.6.1 as written), which Double-Swiss has no other reading of. */
+    public TopScoregroupRound(
+            List<Contender> contenders,
+            boolean floatCriteriaLapse,
+            UpfloaterLookAhead upfloaterLookAhead,
+            List<PairCriterion> pairCriteria) {
+        this(contenders, floatCriteriaLapse, upfloaterLookAhead, pairCriteria, BracketSeating.tpn());
+    }
 
     public TopScoregroupRound {
         contenders = List.copyOf(contenders);
         pairCriteria = List.copyOf(pairCriteria);
+    }
+
+    /** The order in which a bracket's members take seats: the smaller comes first, and is a pair's top member. */
+    Comparator<Contender> seatOrder() {
+        var byTpn = Comparator.comparingInt(Contender::tpn);
+        return seating == BracketSeating.TPN
+                ? byTpn
+                : Comparator.comparing(Contender::score).reversed().thenComparing(byTpn);
     }
 
     /**

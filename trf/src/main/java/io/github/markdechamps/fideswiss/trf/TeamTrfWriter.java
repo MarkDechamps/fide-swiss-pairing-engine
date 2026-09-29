@@ -102,16 +102,14 @@ final class TeamTrfWriter {
         return line.toString();
     }
 
-    /** The PAB's game points per board: its primary value spread over the boards under game points, else a draw. */
+    /** The PAB's game points per board: its game points spread over the boards (a win's or a draw's, by the system). */
     private String pabPerBoard() {
         var scoring = tournament.settings().scoring();
-        var perBoard = scoring.matches().orElseThrow().primary() == PrimaryScore.GAME_POINTS
-                ? tournament
-                        .settings()
-                        .pairingAllocatedByeValue()
-                        .toBigDecimal()
-                        .divide(java.math.BigDecimal.valueOf(boards), 4, RoundingMode.HALF_UP)
-                : scoring.draw().toBigDecimal();
+        var byeGamePoints = scoring.matches().orElseThrow().primary() == PrimaryScore.GAME_POINTS
+                ? tournament.settings().pairingAllocatedByeValue()
+                : tournament.settings().pairingSystem().secondaryPairingAllocatedByeValue(scoring);
+        var perBoard =
+                byeGamePoints.toBigDecimal().divide(java.math.BigDecimal.valueOf(boards), 4, RoundingMode.HALF_UP);
         return perBoard.setScale(1, RoundingMode.HALF_UP).toPlainString();
     }
 
@@ -241,7 +239,7 @@ final class TeamTrfWriter {
         var matches = scoring.matches().orElseThrow();
         var primary = scoring.primaryScore() == score;
         var pab = tournament.settings().pairingAllocatedByeValue();
-        var secondaryPab = score == PrimaryScore.MATCH_POINTS ? matches.draw() : scoring.drawnMatchGamePoints();
+        var secondaryPab = tournament.settings().pairingSystem().secondaryPairingAllocatedByeValue(scoring);
         var total = Points.ZERO;
         for (var round : tournament.rounds()) {
             var points = round.boardOf(team)

@@ -94,9 +94,7 @@ final class TieBreakContext {
     private static Map<ParticipantId, ParticipantRounds> otherScoreRounds(
             Tournament tournament, int rounds, Map<ParticipantId, ParticipantRounds> primary) {
         var scoring = tournament.settings().scoring();
-        var byeValue = scoring.primaryScore() == PrimaryScore.MATCH_POINTS
-                ? scoring.drawnMatchGamePoints()
-                : scoring.matches().map(MatchScoring::draw).orElse(scoring.draw());
+        var byeValue = tournament.settings().pairingSystem().secondaryPairingAllocatedByeValue(scoring);
         var view = new LinkedHashMap<ParticipantId, ParticipantRounds>();
         primary.forEach((id, own) -> {
             var entries = new ArrayList<RoundEntry>();

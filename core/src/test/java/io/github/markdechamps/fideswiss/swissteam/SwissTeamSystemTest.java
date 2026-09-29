@@ -9,12 +9,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.github.markdechamps.fideswiss.pairing.PairingSystems;
 import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.Board;
+import io.github.markdechamps.fideswiss.tournament.BracketSeating;
 import io.github.markdechamps.fideswiss.tournament.ColourPreferenceType;
 import io.github.markdechamps.fideswiss.tournament.CompetitionType;
 import io.github.markdechamps.fideswiss.tournament.GameOutcome;
 import io.github.markdechamps.fideswiss.tournament.InvalidSettingsException;
 import io.github.markdechamps.fideswiss.tournament.MatchOutcome;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
+import io.github.markdechamps.fideswiss.tournament.PabValue;
 import io.github.markdechamps.fideswiss.tournament.Points;
 import io.github.markdechamps.fideswiss.tournament.PrimaryScore;
 import io.github.markdechamps.fideswiss.tournament.Profiles;
@@ -55,11 +57,9 @@ class SwissTeamSystemTest {
         }
     }
 
-    @Test
-    void seatsAnUpfloaterWithASmallerTpnAsTopMember() {
-        // Gacrux probe case 1 (ruling G1): 1, 2 and 4 won, 3 and 7 drew; the upfloater 3 is a top member, so the
-        // bracket pairs 1-3 and 2-4, which patched Gacrux colours 3-1 and 4-2.
-        var tournament = teams(8, 5)
+    private static Tournament probeCaseOne(BracketSeating seating) {
+        // Gacrux probe case 1: 1, 2 and 4 won, 3 and 7 drew.
+        return Tournament.of(Profiles.teamSwiss(NumberOfRounds.of(5)).with(seating), TournamentMother.participants(8))
                 .withRound(Round.of(
                         RoundNumber.FIRST,
                         List.of(
@@ -68,19 +68,40 @@ class SwissTeamSystemTest {
                                 match(3, 3, 7, DRAW, DRAW),
                                 match(4, 4, 8, WHITE_WINS, WHITE_WINS)),
                         Map.of()));
-
-        var pairing = tournament.pairNextRound();
-
-        assertThatPairing(pairing).hasBoards("4-2", "3-1", "7-5", "6-8");
     }
 
     @Test
-    void valuesThePabAtADrawnMatch() {
-        // C.04.6 1.4: 1 match point under match points, 2 game points over four boards under game points.
+    void seatsMembersByScoreThenTpnByDefaultAsGacruxDoes() {
+        // ADR 0009, KD-1: the winner 4 is the top member, so the bracket pairs 4-1 and 3-2.
+        assertThatPairing(probeCaseOne(BracketSeating.scoreThenTpn()).pairNextRound())
+                .hasBoards("4-1", "3-2", "7-5", "6-8");
+    }
+
+    @Test
+    void seatsAnUpfloaterWithASmallerTpnAsTopMemberWhenReadLiterally() {
+        // Ruling G1 (C.04.6 3.6.1): the upfloater 3 is a top member, so 1-3 and 2-4, which patched Gacrux colours 3-1
+        // and 4-2.
+        assertThatPairing(probeCaseOne(BracketSeating.tpn()).pairNextRound()).hasBoards("4-2", "3-1", "7-5", "6-8");
+    }
+
+    @Test
+    void valuesThePabAtAWinPerBoardByDefaultAsGacruxDoes() {
+        // ADR 0009, KD-2: 1 match point (a drawn match) under match points, a win on each of four boards under game
+        // points.
         var teams = Profiles.teamSwiss(NumberOfRounds.of(5));
         var gamePoints = teams.with(ScoringScheme.teams().withPrimaryScore(PrimaryScore.GAME_POINTS));
 
         assertThat(teams.pairingAllocatedByeValue()).isEqualTo(Points.of(1));
+        assertThat(gamePoints.pairingAllocatedByeValue()).isEqualTo(Points.of(4));
+    }
+
+    @Test
+    void valuesThePabAtADrawnMatchWhenReadLiterally() {
+        // C.04.6 1.4: 2 game points over four boards under game points.
+        var gamePoints = Profiles.teamSwiss(NumberOfRounds.of(5))
+                .with(ScoringScheme.teams().withPrimaryScore(PrimaryScore.GAME_POINTS))
+                .with(PabValue.draw());
+
         assertThat(gamePoints.pairingAllocatedByeValue()).isEqualTo(Points.of(2));
     }
 

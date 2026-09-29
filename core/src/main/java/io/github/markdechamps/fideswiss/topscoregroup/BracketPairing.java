@@ -37,6 +37,7 @@ final class BracketPairing {
 
     private final class Search {
         private final List<Contender> contenders;
+        private final Comparator<Contender> seatOrder = round.seatOrder();
         private final Set<Contender> upfloaters;
         private final LexicographicWeights weights;
         private final Map<Contender, Role> roles = new HashMap<>();
@@ -47,11 +48,11 @@ final class BracketPairing {
         Search(List<Contender> residents, List<Contender> upfloaters) {
             this.contenders = new ArrayList<>(residents);
             this.contenders.addAll(upfloaters);
-            this.contenders.sort(Comparator.comparingInt(Contender::tpn));
+            this.contenders.sort(seatOrder);
             this.upfloaters = Set.copyOf(upfloaters);
             this.weights = new LexicographicWeights(
                     contenders.size() + 1, Math.max(1, round.pairCriteria().size()));
-            var best = CheapestPerfectMatching.of(contenders, this::cost)
+            var best = CheapestPerfectMatching.of(contenders, this::cost, seatOrder)
                     .orElseThrow(() -> new IllegalStateException("The bracket has no legal pairing"));
             this.target = best.cost();
             this.knownOptimal = best.pairs();
@@ -93,7 +94,9 @@ final class BracketPairing {
             }
             var top = tops.get(index);
             for (var bottom : contenders) {
-                if (roles.get(bottom) != Role.BOTTOM || fixed.containsKey(bottom) || bottom.tpn() < top.tpn()) {
+                if (roles.get(bottom) != Role.BOTTOM
+                        || fixed.containsKey(bottom)
+                        || seatOrder.compare(bottom, top) < 0) {
                     continue;
                 }
                 fixed.put(top, bottom);
@@ -111,14 +114,14 @@ final class BracketPairing {
             if (knownOptimal.stream().allMatch(this::fitsIdentifier)) {
                 return true;
             }
-            var reached = CheapestPerfectMatching.of(contenders, this::cost)
+            var reached = CheapestPerfectMatching.of(contenders, this::cost, seatOrder)
                     .filter(result -> result.cost().equals(target));
             reached.ifPresent(result -> knownOptimal = result.pairs());
             return reached.isPresent();
         }
 
         private Optional<BigInteger> cost(Contender a, Contender b) {
-            var pair = ContenderPair.of(a, b);
+            var pair = ContenderPair.of(a, b, seatOrder);
             if (!a.mayMeet(b) || !fitsIdentifier(pair)) {
                 return Optional.empty();
             }

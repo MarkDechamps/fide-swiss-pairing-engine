@@ -3,6 +3,7 @@ package io.github.markdechamps.fideswiss.tiebreak;
 import io.github.markdechamps.fideswiss.standings.TieBreakCode;
 import io.github.markdechamps.fideswiss.standings.TieBreakEdition;
 import io.github.markdechamps.fideswiss.standings.TieBreakList;
+import io.github.markdechamps.fideswiss.tournament.EdebtBoardCount;
 import io.github.markdechamps.fideswiss.tournament.InvalidSettingsException;
 import io.github.markdechamps.fideswiss.tournament.PrimaryScore;
 import io.github.markdechamps.fideswiss.tournament.Problem;
@@ -19,7 +20,8 @@ final class TieBreaks {
 
     private TieBreaks() {}
 
-    static List<TieBreak> of(TieBreakList list, TieBreakEdition edition, ScoringScheme scoring) {
+    static List<TieBreak> of(
+            TieBreakList list, TieBreakEdition edition, ScoringScheme scoring, EdebtBoardCount edebtBoardCount) {
         var problems = new ArrayList<Problem>();
         var tieBreaks = new ArrayList<TieBreak>();
         for (var code : list.codes()) {
@@ -31,7 +33,7 @@ final class TieBreaks {
                     && (NEW_IN_2026.contains(code.acronym()) || code.fore())) {
                 problems.add(Problem.citing("C.07 5", code + " does not exist in Tie-break Edition 2024-08"));
             } else {
-                tieBreaks.add(of(code));
+                tieBreaks.add(of(code, edebtBoardCount));
             }
         }
         if (!problems.isEmpty()) {
@@ -40,21 +42,21 @@ final class TieBreaks {
         return tieBreaks;
     }
 
-    private static TieBreak of(TieBreakCode code) {
-        var tieBreak = built(code);
+    private static TieBreak of(TieBreakCode code, EdebtBoardCount edebtBoardCount) {
+        var tieBreak = built(code, edebtBoardCount);
         return code.teamScore()
                 .map(score -> (TieBreak) new TeamScored(tieBreak, score))
                 .orElse(tieBreak);
     }
 
-    private static TieBreak built(TieBreakCode code) {
+    private static TieBreak built(TieBreakCode code, EdebtBoardCount edebtBoardCount) {
         return switch (code.acronym()) {
             case "MPVGP" -> new MatchPointsOrGamePoints(code);
             case "EMMSB" -> extended(code, PrimaryScore.MATCH_POINTS, PrimaryScore.MATCH_POINTS, "C.07 13.2.1");
             case "EMGSB" -> extended(code, PrimaryScore.MATCH_POINTS, PrimaryScore.GAME_POINTS, "C.07 13.2.2");
             case "EGMSB" -> extended(code, PrimaryScore.GAME_POINTS, PrimaryScore.MATCH_POINTS, "C.07 13.2.3");
             case "EGGSB" -> extended(code, PrimaryScore.GAME_POINTS, PrimaryScore.GAME_POINTS, "C.07 13.2.4");
-            case "EDE", "EDEBT", "EDEBB", "EDET", "EDEB" -> new ExtendedDirectEncounter(code);
+            case "EDE", "EDEBT", "EDEBB", "EDET", "EDEB" -> new ExtendedDirectEncounter(code, edebtBoardCount);
             case "SSSC" -> new ScoresAndScheduleStrength(code);
             case "BC" -> new BoardResults(code, BoardResults.Rule.BOARD_COUNT);
             case "TBR" -> new BoardResults(code, BoardResults.Rule.TOP_BOARD_RESULTS);

@@ -12,11 +12,15 @@ import io.github.markdechamps.fideswiss.topscoregroup.Contender;
 import io.github.markdechamps.fideswiss.topscoregroup.ContenderPair;
 import io.github.markdechamps.fideswiss.topscoregroup.TopScoregroupProcedure;
 import io.github.markdechamps.fideswiss.topscoregroup.TopScoregroupRound;
+import io.github.markdechamps.fideswiss.tournament.BakuSecondaryScore;
 import io.github.markdechamps.fideswiss.tournament.BoardNumber;
+import io.github.markdechamps.fideswiss.tournament.BracketSeating;
+import io.github.markdechamps.fideswiss.tournament.EdebtBoardCount;
 import io.github.markdechamps.fideswiss.tournament.FloatScore;
 import io.github.markdechamps.fideswiss.tournament.Interpretation;
 import io.github.markdechamps.fideswiss.tournament.InvalidSettingsException;
 import io.github.markdechamps.fideswiss.tournament.LastRoundZeroCdTypeB;
+import io.github.markdechamps.fideswiss.tournament.PabValue;
 import io.github.markdechamps.fideswiss.tournament.PairingNumber;
 import io.github.markdechamps.fideswiss.tournament.PairingScore;
 import io.github.markdechamps.fideswiss.tournament.Points;
@@ -55,6 +59,11 @@ public record DoubleSwissSystem(UpfloaterLookAhead upfloaterLookAhead, FloatScor
         return "C.04.5 Double-Swiss System 2026";
     }
 
+    private static DoubleSwissSystem noSuchReading(Interpretation reading) {
+        throw new InvalidSettingsException(
+                List.of(Problem.citing("C.04.5", "The Double-Swiss System has no Swiss Team reading " + reading)));
+    }
+
     @Override
     public DoubleSwissSystem with(Interpretation interpretation) {
         return switch (interpretation) {
@@ -63,6 +72,10 @@ public record DoubleSwissSystem(UpfloaterLookAhead upfloaterLookAhead, FloatScor
             case LastRoundZeroCdTypeB reading ->
                 throw new InvalidSettingsException(List.of(Problem.citing(
                         "C.04.5", "The Double-Swiss System has no colour preferences, so no " + reading)));
+            case BracketSeating reading -> noSuchReading(reading);
+            case PabValue reading -> noSuchReading(reading);
+            case BakuSecondaryScore reading -> noSuchReading(reading);
+            case EdebtBoardCount reading -> noSuchReading(reading);
         };
     }
 

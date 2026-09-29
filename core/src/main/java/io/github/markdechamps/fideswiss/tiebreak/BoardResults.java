@@ -40,10 +40,17 @@ final class BoardResults implements TieBreak {
 
     private final TieBreakCode code;
     private final Rule rule;
+    private final boolean higherBoardCountFirst;
 
     BoardResults(TieBreakCode code, Rule rule) {
+        this(code, rule, false);
+    }
+
+    /** {@code higherBoardCountFirst}: EDEBT and EDEBB rank a higher Board Count first (ADR 0009); BC never does. */
+    BoardResults(TieBreakCode code, Rule rule, boolean higherBoardCountFirst) {
         this.code = code;
         this.rule = rule;
+        this.higherBoardCountFirst = higherBoardCountFirst;
     }
 
     @Override
@@ -67,7 +74,7 @@ final class BoardResults implements TieBreak {
                     new TieBreakValue(
                             code,
                             comparable ? Optional.of(valueOf(perBoard)) : Optional.empty(),
-                            rule != Rule.BOARD_COUNT,
+                            rule != Rule.BOARD_COUNT || higherBoardCountFirst,
                             contributions,
                             rule == Rule.BOARD_COUNT && !comparable
                                     ? rule.article + ": not usable, the tied teams scored different game points"
