@@ -80,11 +80,10 @@ $ fide-swiss version
 fide-swiss 0.1.0-SNAPSHOT
   C.04.3 Dutch System 2026 (with C.04.1/C.04.2 2026): experimental
   C.04.4.1 Dubov System 2026: experimental
+  C.04.4.2 Burstein System 2026: experimental
   C.04.4.3 Lim System 2026: experimental
   C.04.6 Swiss Team Pairing System 2026: experimental
 ```
-
-Note: the `version` listing does not yet mention the Burstein System although it is built; the list in section 1 is the accurate one.
 
 Running with no arguments, or with `help`, `--help` or `-h`, prints the usage text.
 
