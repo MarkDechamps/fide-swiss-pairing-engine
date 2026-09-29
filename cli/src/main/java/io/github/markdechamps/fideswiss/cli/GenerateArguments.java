@@ -141,7 +141,7 @@ final class GenerateArguments {
             case "accelerated-open" -> Profiles.acceleratedOpen(DRAWN);
             case "double-swiss" -> Profiles.doubleSwiss(DRAWN);
             case "team-swiss", "olympiad" ->
-                throw new UsageException("the " + name + " profile's system is not implemented yet");
+                throw new UsageException("the generator does not generate team tournaments yet (" + name + ")");
             default -> throw new UsageException("unknown profile " + name);
         };
     }

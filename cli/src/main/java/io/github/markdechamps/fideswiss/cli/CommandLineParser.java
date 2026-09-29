@@ -30,7 +30,8 @@ final class CommandLineParser {
             "burstein", PairingSystems::burstein,
             "lim", PairingSystems::lim,
             "double-swiss", PairingSystems::doubleSwiss,
-            "swiss-team", PairingSystems::swissTeam);
+            "swiss-team", PairingSystems::swissTeam,
+            "olympiad", PairingSystems::olympiad);
 
     private CommandLineParser() {}
 
