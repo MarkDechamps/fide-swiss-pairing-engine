@@ -25,6 +25,7 @@ A Java reference library for the FIDE Swiss pairing systems: it pairs the next r
 | C.07 | Tie-break Regulations (historic: an uncapped Dummy Opponent, no STD/TPN/RTNG) | 2024-08 | experimental |
 | — | TRF26 (reads TRF16 and the JaVaFo dialect; a Double-Swiss match is written as two rounds, one per game, ADR 0007) | 2026 | experimental: read; written with `012`, `142`, `152`, `162`, `192` (`FIDE_DUTCH`, `FIDE_DUTCH_2017`, `FIDE_DUBOV`, `FIDE_BURSTEIN`, `FIDE_LIM`, `FIDE_DOUBLESWISS`, with `_BAKU`), `212` and `001`; a Maxi-tournament has no record and is not written |
 | — | Random Tournament Generator, the free TRF26 generator FIDE endorsement asks for | — | experimental: Dutch 2026 and pre-2026, Dubov, Burstein, Lim and Double-Swiss 2026, with and without Baku; the invariant checker is clean on 200 tournaments per system and edition in every build and runs on 5,000 of each nightly |
+| — | Oracle gates (`oracle-it`) | — | nightly: the generator's Dutch tournaments re-paired round by round by bbpPairings v6.0.0 (2026), bbpPairings v5.0.1 and JaVaFo 2.2 (2017, no requested byes, KD-4); locally 100 tournaments (822 rounds) agree with each; skipped when the program is not configured, see the manual, section 10 |
 
 The Swiss rules edition and the tie-break edition are chosen explicitly per tournament; the latest is the default.
 

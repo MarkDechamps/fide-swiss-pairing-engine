@@ -15,9 +15,32 @@ jobs:
           distribution: temurin
           java-version: '25'
           cache: maven
-      # Pinned bbpPairings v6, Gacrux and JaVaFo are fetched here once Verification strategy defines the runs.
+      # Pinned Oracles, fetched and built here and run as separate processes; nothing of them is committed
+      # (Verification strategy). Gacrux for the Swiss Team System is not wired yet.
+      - name: Build bbpPairings v6.0.0 and v5.0.1
+        run: |
+          for version in 6.0.0 5.0.1; do
+            curl -fsSL "https://github.com/BieremaBoyzProgramming/bbpPairings/archive/refs/tags/v${version}.tar.gz" | tar -xz
+            make -C "bbpPairings-${version}"
+          done
+      # JaVaFo refuses plain curl (HTTP 999); its licence has no redistribution grant, so it is used here only.
+      - name: Fetch JaVaFo 2.2
+        run: curl -fsSL -A "Mozilla/5.0" -o javafo.jar https://www.rrweb.org/javafo/current/javafo.jar
+      # 5,000 generated tournaments per Oracle-backed scope, from a corpus seed that rotates each night.
       - name: Oracle comparison runs
-        run: ./mvnw -B verify -pl oracle-it -am
+        env:
+          FIDESWISS_ORACLE_BBP6: ${{ github.workspace }}/bbpPairings-6.0.0/build/bbpPairings.exe
+          FIDESWISS_ORACLE_BBP5: ${{ github.workspace }}/bbpPairings-5.0.1/build/bbpPairings.exe
+          FIDESWISS_ORACLE_JAVAFO: ${{ github.workspace }}/javafo.jar
+        run: >-
+          ./mvnw -B verify -pl oracle-it -am -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false
+          -Dfideswiss.oracle.tournaments=5000 -Dfideswiss.oracle.seed=$(date +%Y%m%d)
+      - name: Keep the inputs of every difference
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-failures
+          path: oracle-it/target/oracle-failures/
 
   invariants:
     runs-on: ubuntu-latest
