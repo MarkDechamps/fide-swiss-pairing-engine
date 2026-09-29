@@ -123,7 +123,7 @@ The flags below work on `pair`, `check` and `standings`, and after `-p`/`-c` in 
 | `--initial-colour` | `white`, `black` | `152` / `XXC` | The initial colour. |
 | `--tiebreaks "<list>"` | a C.07 list, see section 6 | `202` / `212` | The tie-break list. |
 | `--tiebreak-edition` | `2026-03`, `2024-08` | profile | The C.07 edition that defines the tie-break values. |
-| `--interpretation <name>=<value>` | see 5.6 | profile | A Swiss Team reading (ADR 0003). Repeatable. |
+| `--interpretation <name>=<value>` | see 5.5 | profile | A Swiss Team reading (ADR 0003). Repeatable. |
 
 A team file (one with `310` records) is paired by the Swiss Team System and only accepts `--swiss-team` (or `--system swiss-team`); asking for another system on it is an error, and so is asking for `--swiss-team` on a file with no `310` records (see section 9).
 
@@ -390,7 +390,7 @@ Pairs teams for a team event. The PAB is decided first, then the top scoregroup 
 | `last-round-zero-cd-type-b` | `strong`, `none` | A1 | Type B: whether a team with colour difference 0 that had the same colour in its last two matches has a strong preference when the last round is paired, or none. |
 | `float-score` | `pairing`, `real` | A8 | Under acceleration: whether a floater of the previous round is judged on the Pairing Scores of that round or on the real scores. |
 
-An unknown name or value is `error: unknown --interpretation <text>`. Giving an interpretation to a system that has none fails with `The pairing system has no Interpretation <name>`. Known divergences from the Oracle are registered in `docs/verification/known-divergences.md`.
+An unknown name or value is `error: unknown --interpretation <text>`. Giving an interpretation to a system that has none (any system but Swiss Team) fails with `error: The pairing system has no Interpretation <VALUE>`, for example `REAL`. Known divergences from the Oracle are registered in `docs/verification/known-divergences.md`.
 
 ### 5.6 Double-Swiss (C.04.5): planned
 
@@ -400,7 +400,7 @@ Not built. ADR 0007 records the intended TRF encoding (a match is two TRF rounds
 
 Acceleration adds Virtual Points to a participant's score for pairing only. The result is the Pairing Score, which is the score wherever the pairing text says score (floats, PAB, board order included); standings never see it.
 
-- `Baku`: `192` suffix `_BAKU`, or `--acceleration baku` for the generator. The Accelerated Group is the top 2 x ceil(N/4) of the round-1 list, and a Late Entry ranked above its last participant joins it. In the first ceil(R/2) rounds, the first half of that group gets the points of a win as virtual points, the rest half of it. Baku needs a win worth two draws and a loss worth nothing (`[C.04.7 1.1]`).
+- `Baku`: `192` suffix `_BAKU`, or `--acceleration baku` for the generator. The Accelerated Group is the top 2 x ceil(N/4) of the round-1 list, and a Late Entry ranked above its last participant joins it. Members of the group receive a win's points as virtual points in the first ceil(A/2) rounds and half of that in the rest of the first A rounds, where A = ceil(R/2) and R is the number of rounds; after that, nothing. Baku needs a win worth two draws and a loss worth nothing (`[C.04.7 1.1]`).
 - Explicit: `250` (TRF26) or `XXA` (JaVaFo) records give virtual points per participant and round. They override `_BAKU`.
 
 ### 5.8 Colours and other settings at a glance
@@ -413,3 +413,221 @@ Acceleration adds Virtual Points to a participant's score for pairing only. The 
 | Swiss Rules Edition | `192`, `--edition` | `2026`, `pre-2026` (Dutch only) |
 | Ranking of participants | file order | listed order of the `001` records |
 | Tie-break list and edition | `202`/`212`, `--tiebreaks`, `--tiebreak-edition` | section 6 |
+
+## 6. Tie-breaks and standings
+
+Standings are computed from the recorded rounds by the FIDE Tie-Break Regulations (C.07). The definition of every value is fixed by the **Tie-break Edition**, chosen with `--tiebreak-edition` and independent of the Swiss Rules Edition:
+
+| Edition | Meaning |
+|---|---|
+| `2026-03` (default) | applied from 1 March 2026: the Dummy Opponent is capped (16.4); `STD`, `TPN`, `RTNG` and `AOB/F` exist |
+| `2024-08` | applied 1 August 2024 to 28 February 2026: the Dummy Opponent scores the participant's own score; `STD`, `TPN`, `RTNG` and the `/F` modifier are rejected (`[C.07 5] <code> does not exist in Tie-break Edition 2024-08`, reported when the standings are computed, for example by `standings`; `pair` does not need the tie-breaks) |
+
+### 6.1 The tie-break list
+
+The list comes from `212` (without `PTS`), else `202`, else the default `BH/C1, BH, SB, DE`; `--tiebreaks "<list>"` overrides all of them. Entries are comma separated, case insensitive, and `PTS` and blanks are ignored. The score always comes first; the list only separates participants with equal scores. The Handbook hyphen form `BH-C1` is read as `BH/C1`.
+
+Implemented individual tie-breaks (C.07 art. 5):
+
+| Code | Tie-break |
+|---|---|
+| `DE` | Direct Encounter (art. 6) |
+| `WIN`, `WON` | number of wins, number of games won (over the board) |
+| `BPG`, `BWG` | games played with Black, wins with Black |
+| `PS` | Progressive Scores |
+| `REP` | rounds elected to play |
+| `STD` | standard points (2026-03 only) |
+| `TPN` | tournament pairing number (2026-03 only) |
+| `BH` | Buchholz |
+| `AOB` | average of opponents' Buchholz (`AOB/F` uses Fore Buchholz, 2026-03 only) |
+| `FB` | Fore Buchholz |
+| `SB` | Sonneborn-Berger |
+| `KS` | Koya System |
+| `ARO` | average rating of opponents |
+| `TPR` | tournament performance rating |
+| `PTP` | perfect tournament performance |
+| `APRO`, `APPO` | average performance rating of opponents, average perfect performance of opponents |
+| `RTNG` | the participant's own rating (2026-03 only) |
+
+Modifiers, after a slash: `/C1`, `/C2` (Cut-1, Cut-2: drop the lowest 1 or 2 values), `/M1`, `/M2` (Median-1, Median-2: drop the highest and lowest 1 or 2), only on `BH`, `FB`, `SB`, `PS`, `ARO`; `/P` (forfeits count as games against the scheduled opponent, on `BH`, `FB`, `SB`, `DE`); `/F` (`AOB` only); `/L+n` or `/L-n` (`KS` only: moves the Koya limit by n half points). Examples: `BH/C1`, `SB/M1/P`, `KS/L+2`, `AOB/F`.
+
+Rejected with exit 3 (all problems in the list are reported together, each as `error: [C.07 5] ...`):
+
+- `unknown tie-break <code>`;
+- `<code> is a team tie-break, which is not implemented yet` (the team tie-breaks `MPVGP`, `ESB`, `EMMSB`, `EGMSB`, `EDE`, `SSSC`, `BC`, `TBR`, `BBE` and the rest are **planned**), or a team-score entry such as `MP:BH`;
+- `<code> is self-defined (C.07 4.1) and has no definition here` for `OTHER_...`;
+- `<code> takes no Cut or Median modifier (C.07 14)`, `/F applies only to AOB (C.07 8.2)`, `/L applies only to KS (C.07 14.5)`.
+
+### 6.2 Ranks and shared ranks
+
+Participants are ranked by score, then by the list in order. Those still equal after the whole list **share a rank** (in the table above, 8, 8, 8 and then 11): the program never draws lots. Rating-based tie-breaks (`ARO`, `TPR`, `PTP`, `APRO`, `APPO`, `RTNG`) are dropped, and so separate nobody, when any participant is unrated (art. 10). Virtual points from acceleration never enter a tie-break.
+
+Documented readings of the C.07 text (Art. 16 adjusted scores and the Dummy Opponent, `/P`, Fore Buchholz, TPR and PTP scales, DE 6.3, REP, double forfeits and so on) are listed in `README.md`, section "Readings of the C.07 text". The default list is our choice: C.07 2.1 leaves it to the organiser.
+
+### 6.3 Reading the `standings` output
+
+Columns: `rank`, `id`, `name`, `score`, one column per tie-break in list order, `decided by`. `decided by` is only filled when a row has the same score as the row above; it names the tie-break that put the row below (with both values, for example `BH/C1 4 > 3.5`), or `shared` for a tie the list cannot break. With `--after <r>` the round r standings are shown; `r` must be a recorded round (`Round <r> is not recorded yet`).
+
+`--why <a> <b>` gives the full evidence for the pair: the deciding tie-break, then for each participant the value with its C.07 article and every per-round contribution, for example `round 1 9 2 cut (C.07 16.3; /C1 (C.07 14) low cut)`, meaning that in round 1 the opponent was 9 with value 2 and it was cut by the Cut-1 modifier.
+
+## 7. The tournament generator
+
+The generator plays whole random tournaments through the same pairing engine, so it only ever produces valid tournaments and is used to test the systems (and to give arbiters practice files). Each tournament is written as a TRF26 file (`012 RTG <version> seed <n>`; see 4.4). Every tournament is reproducible from its seed and the generator version.
+
+### 7.1 Commands
+
+```
+fide-swiss generate -o 'out%d.trf' [--seed <n>] [--count <k>] [--profile <name>] [--config <cfg>] [--model <in.trf>] [ranges] [tournament flags]
+fide-swiss -g [<cfg>|<seed>] -o <out.trf> [-s <seed>] [--dutch|--dubov|--burstein|--lim]
+```
+
+- `-o` is required. With `--count` above 1 it must contain `%d`, replaced by the index 0, 1, 2, ... (`-o needs %d in it to name <k> files`).
+- `--seed <n>` is the corpus seed (unsigned 64 bit). Without it a fresh seed is drawn and printed on standard error as `seed <n>`. Tournament k of a corpus has its own seed derived from the corpus seed and k, and it is the one written in `012` and the manifest, so a single tournament can be reproduced alone.
+- `--count <k>`: the number of tournaments (default 1).
+- `-g` is the JaVaFo/bbpPairings form: one tournament, with the argument after `-g` being a configuration file or, when it is all digits, a seed; `-s <seed>` also gives the seed; a system flag may follow.
+- Only the Dutch, Dubov, Burstein and Lim systems generate individual tournaments; the generator does not write team files.
+
+### 7.2 Precedence
+
+1. the **profile** (`--profile individual-swiss`, the default, or `accelerated-open` which is Baku); the profile's number of rounds is a placeholder because the generator draws the rounds;
+2. a **configuration file** (`--config`, or the argument of `-g`), then a **model TRF** (`--model`): the settings and rates observed in an existing tournament (its field size, forfeit rate, bye rate, withdrawals) are copied;
+3. the **flags**.
+
+The profiles `double-swiss`, `team-swiss` and `olympiad` are **planned** and refused (`the <name> profile's system is not implemented yet`); another name gives `unknown profile <name>`.
+
+### 7.3 Ranges
+
+A range flag takes a number, which fixes the parameter, or `A..B`, drawn per tournament. Anything not given is drawn from the defaults, which follow bbpPairings v6's generator:
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--players` | 15..215 | number of participants |
+| `--rounds` | 5..15 (at most players - 1) | number of rounds |
+| `--highest-rating` | 2400..2800 | rating of the top player |
+| `--lowest-rating` | 1400..2300 | rating of the bottom player; ratings are uniform between the two |
+| `--unrated <%>` | 0..10 | percentage of unrated players (with a hidden strength) |
+| `--forfeit-rate` | 1 game in 6..30 | forfeit frequency; each side absent independently, so double forfeits occur; 0 never |
+| `--hpb-rate`, `--zpb-rate` | 1 in 15..3225 player-rounds | half-point and zero-point byes (never in the last round, at most two per participant) |
+| `--fpb-rate` | none | full-point byes (1 in N; 0 never) |
+| `--withdrawals <%>` | 0..5 | withdrawals after a random round |
+| `--late-entries <%>` | 0..5 | late entries in round 2 to ceil(rounds/2) |
+| `--draw-percentage <P>` | Milvang's model (C.02.03 7.2.4) with white advantage | a flat draw share instead |
+
+A range that is not a number or `A..B` gives `<flag> takes a number or a range A..B, not <text>`. The initial colour is drawn and always written to `152`.
+
+### 7.4 Tournament flags
+
+| Flag | Values | Meaning |
+|---|---|---|
+| `--system`, `--dutch`, `--dubov`, `--burstein`, `--lim` | dutch, dubov, burstein, lim | the pairing system |
+| `--maxi-tournament` | | declare Lim a Maxi-tournament |
+| `--edition` | `2026`, `pre-2026` | Swiss Rules Edition |
+| `--tiebreak-edition` | `2026-03`, `2024-08` | C.07 edition |
+| `--acceleration` | `none`, `baku`, `random` | `random` applies Baku to 20 % of the tournaments; Baku is only applied where the scoring allows it |
+| `--tiebreaks` | a list or `random` | `random` draws 3 to 5 entries per tournament |
+| `--random-scoring` | | scores 10 % of the tournaments 3/1/0 or 2/1/0 |
+
+### 7.5 Configuration files
+
+`--config` (and `-g <file>`) read JaVaFo/bbpPairings `Key=Value` files. Recognised keys: `PlayersNumber`, `RoundsNumber`, `DrawPercentage`, `ForfeitRate`, `RetiredRate`, `HalfPointByeRate`, `HighestRating`, `LowestRating`, `PointsForWin`, `PointsForDraw`, `PointsForLoss`. A missing key keeps its random default.
+
+### 7.6 Skipped tournaments and the manifest
+
+If a round of a random tournament has no legal pairing, the tournament is *skipped*, never bent; no file is written for it. `skipped <n> of <k> seeds` is printed on standard error, and the exit code is 7 when more than 0.1 % of the seeds are skipped.
+
+With `--count` above 1, `<pattern>.manifest.tsv` is written (for `-o 't%d.trf'` the file is named `t%d.trf.manifest.tsv`). It is tab separated with the columns: `index`, `seed`, `status` (`ok` or `skipped in round <r>`), `players`, `rounds`, `highest rating`, `lowest rating`, `unrated`, `forfeit rate`, `hpb rate`, `zpb rate`, `fpb rate`, `withdrawals`, `late entries`, `scoring` (`1/0.5/0`), `acceleration` (`none`, `baku`, `explicit`), `tiebreaks`. Example row:
+
+```
+0	7191089600892374487	ok	12	4	2596	1692	0	14	919	336	0	0	0	1/0.5/0	none	BH/C1, BH, SB, DE
+```
+
+A typical use is a corpus for another program:
+
+```sh
+fide-swiss generate -o 'corpus/t%d.trf' --seed 2026 --count 100 --players 20..80 --acceleration random --tiebreaks random
+```
+
+## 8. Checking pairings
+
+`check` is the Pairings Checker (C.02.03 7.2.3). It rebuilds the tournament round by round from the file, and for every recorded round asks the engine of the file's system (or of `--system`) two questions: is the recorded pairing legal, and is it the pairing the system would make? It does not modify anything.
+
+**What it verifies, per round**
+
+- *Legal*: the Basic Rules (C.04.1) violations, each with its article (for example a player paired twice or left unpaired, `Art. 3`, or a rematch, `Art. 2`; the PAB eligibility of Art. 4 and the absolute colour criteria are checked too), and the system's own absolute criteria: [C3] for the Dutch System 2026 (C.3 for the 2017 edition) and Dubov, and 2.1/5.1 for Lim when a pair cannot meet within the colour limits.
+- *System pairing*: whether the recorded pairing is the one the system produces from the previous rounds. Because the systems can have several acceptable pairings under the rules, but pick exactly one by their criteria, DIFFERENT does not by itself mean the arbiter's pairing broke a rule; check for ILLEGAL first.
+
+**What it verifies once, over the whole file** (only when no `--round` is given): the standings after the last recorded round. The Points stated in the `001` records (columns 81-84) must equal the computed scores, and a stated rank (columns 86-89) must fall inside the computed shared-rank range: of the file's own tie-break list when it names one, otherwise of the participant's score group.
+
+**Output**
+
+```
+round 2: ILLEGAL
+  [C.04.1 Art. 3] 7 is paired more than once
+  [C.04.1 Art. 2] 1 and 7 have already played each other
+round 3: DIFFERENT
+  file:   2 1 | 4 3 | 6 8 | 7 5 | 9 10 | 11 12
+  system: 2 1 | 4 3 | 6 5 | 7 8 | 9 10 | 11 12
+standings after round 4: DIFFERENT
+  <id>: points 3.5 in file, 3.0 computed
+  <id>: rank 4 in file, 5-6 computed
+checked 4 rounds and 1 set of standings: 2 consistent, 3 not
+```
+
+- Boards are shown as `white black`, separated by `|`, the bye as `<id> 0`; `system: no legal pairing` appears if the system cannot pair the round from the recorded history.
+- Only rounds with problems are listed; the last line is always printed: `checked <n> rounds[ and 1 set of standings]: <c> consistent, <i> not`.
+- Exit code 0 when everything is consistent, 6 otherwise. `--round <r>` for a round the file does not record is `error: The file records no round <r>`, exit 3.
+- Settings flags change what the file is checked against, for example `check t.trf --dubov` checks a Dutch tournament against Dubov, which typically reports DIFFERENT on most rounds.
+
+Limits: the recorded pairings are facts (ADR 0004), so `check` is the only place rule violations are reported; `pair` will happily pair on top of an illegal history. Check before you pair if the history came from another program.
+
+## 9. Troubleshooting
+
+Errors go to standard error as `error: <message>`; the exit code tells the class (section 3.7). Real messages, by cause:
+
+| Message | Cause and fix |
+|---|---|
+| `InvalidModuleDescriptorException: Unsupported major.minor version 69.0` | The launcher runs on a Java older than 25. Select Java 25 (`sdk env`, or set `JAVA_HOME`). |
+| `error: nofile.trf` (exit 5) | The input cannot be opened; the message is only the file name. Check the path and permissions. Output files that cannot be written also exit 5. |
+| `error: no input file given` | A command was given without a TRF. |
+| `error: nothing to do: give -p to pair the next round or -c to check` | Short form without `-p` or `-c`. |
+| `error: unexpected argument <x>` | Unknown flag, or a second input file. |
+| `error: <flag> needs a value` | A flag at the end of the line. |
+| `error: not a number: <x>` | A numeric flag (`--rounds`, `--after`, `--round`, `--count`) with text. |
+| `error: unsupported pairing system <x>` | `--system` takes `dutch`, `dubov`, `burstein`, `lim`, `swiss-team`. |
+| `error: --edition takes 2026 or pre-2026, not <x>` | Bad edition value. Likewise `--tiebreak-edition takes 2026-03 or 2024-08`, `--initial-colour takes white or black`. |
+| `error: unknown --interpretation <x>` | Use one of the pairs in 5.5. |
+| `error: SwissTeamSystem pairs teams, and the file has no 310 records` | `--swiss-team` used on an individual file. |
+| `error: <system> cannot pair a team file (310 records)` | Another system was asked for on a team file. |
+| `error: Unsupported pairing system in record 192: <CODE>` | The `192` value is not in the table of 4.3 (for example `FIDE_DOUBLESWISS`, or a typo). Correct or remove the record: the record is parsed before any flag applies, so `--system` cannot work around it. |
+| `error: Unknown result code '<c>'` | A result character in a round block that is not in 4.2. |
+| `error: Round <r> refers to unknown player <id>` | An opponent id with no `001` record. |
+| `error: Points must be a number like 11.5, not '...'` / `A rank must be a whole number, not '...'` | Malformed columns 81-84 or 86-89 of a `001` record. |
+| `error: The tournament has only <n> rounds` | Pairing after the last round. Raise `--rounds` if the event is longer. |
+| `error: Participant appears more than once in round <r> (<id>)`, `Expected round <r> but got round <n>`, `Unknown participant in round <r>`, `Two participants share an id` | The file's rounds are structurally inconsistent (checked while the file is read). |
+| `error: [GHR 1.3] The library has only the 2026 text of the <system>, not edition PRE_2026` | `--edition pre-2026` with Dubov, Burstein or Lim; only Dutch has the older edition. |
+| `error: [GHR 1.3] The Dutch System of edition ... cannot pair a tournament of edition ...` | A conflict between the system and the edition. |
+| `error: [C.07 5] unknown tie-break <x>` (and the other C.07 messages of 6.1) | Fix the list of `202`/`212`/`--tiebreaks`. |
+| `error: [C.04.7 1.1] Baku acceleration needs a win worth two draws and a loss worth nothing` | Baku with a scoring such as 3/1/0. Use explicit virtual points or another scoring. |
+| `error: [C.04.4.3 3.2.3] only the Lim System has a Maxi-tournament setting, not <system>` | `--maxi-tournament` without `--lim`. |
+| `error: [C.04.3 1.9.3] ...` / `[C.04.6 3.3.3] The round-pairing cannot be completed` (exit 1) | No legal pairing exists for this round. The pairing trace follows the message on standard error and shows the last bracket the engine reached. Check requested byes and withdrawals, and run `check` on the earlier rounds. |
+| `error: The pairing was cancelled` | Interrupted by Ctrl-C. No reply is written. |
+| `error: A team lists player <id>, who has no 001 record`, `Round <r>: player <id> belongs to no 310 team` | A team file whose `310` lines and `001` records disagree. |
+| `error: -o needs %d in it to name <k> files`, `error: generate needs -o <file or pattern with %d>`, `error: -g needs -o <file>` | Generator arguments (section 7.1). |
+| `error: not a seed: <x>` | `--seed` and `-s` take an unsigned integer. |
+| `error: internal: ...` (exit 2) | A bug. Keep the input file and report it. |
+
+Other things to know:
+
+- A tournament paired with `pair` and the same one paired with `-p` give identical replies.
+- The reply ids are the file's start ranks, not the internal pairing numbers; they can differ when late entries or round-1 absentees exist (ADR 0006).
+- A file whose last round column contains only `0000 - H|F|Z` marks is read as absences for the round to be paired, not as a recorded round; a file whose last column has real pairings is a recorded round, and `pair` then pairs the next one.
+- Progress lines on a terminal are written to standard error; redirect or use `--quiet` if they disturb a script.
+- `check` reports DIFFERENT for a pairing that is legal but not the system's own; see section 8.
+
+## References
+
+- `README.md`: overview, status table, readings of each Handbook text, the library API.
+- `CHANGELOG.md`: added features and pairing changes (every change that can alter an output is listed under "Pairing changes").
+- `docs/adr/`: decisions: 0003 Swiss Team interpretations, 0004 recorded rounds are facts, 0005 the JaVaFo/bbpPairings protocol, 0006 pairing numbers, 0007 Double-Swiss encoding (planned), 0008 a pairing change is a versioned change.
+- `docs/verification/`: the article-to-test map for the Dutch System 2026 and the Known Divergence register.
+- `docs/research/`: notes on the Handbook texts, TRF and the oracles.

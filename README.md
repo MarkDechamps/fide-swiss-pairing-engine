@@ -170,6 +170,8 @@ The pairing carries its boards in GHR 3.6 order, the PAB, everyone left out with
 
 ## Command line
 
+The full user manual, for arbiters and developers, is in [`docs/manual.md`](docs/manual.md).
+
 ```sh
 fide-swiss pair <in.trf> [-o <reply>] [-l [<trace>]]      # canonical
 fide-swiss [--dutch|--dubov|--burstein|--lim|--swiss-team] <in.trf> -p [<reply>] [-l [<trace>]] # JaVaFo / bbpPairings form
