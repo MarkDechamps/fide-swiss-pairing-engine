@@ -4,23 +4,29 @@ import io.github.markdechamps.fideswiss.pairing.NoLegalPairingException;
 import io.github.markdechamps.fideswiss.pairing.PairedBoard;
 import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.BoardNumber;
+import io.github.markdechamps.fideswiss.tournament.ColourPreferenceType;
+import io.github.markdechamps.fideswiss.tournament.CompetitionType;
 import io.github.markdechamps.fideswiss.tournament.GameOutcome;
 import io.github.markdechamps.fideswiss.tournament.InitialColour;
 import io.github.markdechamps.fideswiss.tournament.MatchOutcome;
+import io.github.markdechamps.fideswiss.tournament.MatchScoring;
 import io.github.markdechamps.fideswiss.tournament.Name;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import io.github.markdechamps.fideswiss.tournament.Outcome;
 import io.github.markdechamps.fideswiss.tournament.Participant;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
 import io.github.markdechamps.fideswiss.tournament.Points;
+import io.github.markdechamps.fideswiss.tournament.PrimaryScore;
 import io.github.markdechamps.fideswiss.tournament.RankingKey;
 import io.github.markdechamps.fideswiss.tournament.Rating;
 import io.github.markdechamps.fideswiss.tournament.RequestedBye;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
 import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
+import io.github.markdechamps.fideswiss.tournament.SecondaryScore;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,6 +43,7 @@ import java.util.random.RandomGenerator;
 public final class TournamentGenerator {
 
     private static final int MAXIMUM_REQUESTED_BYES = 2;
+    private static final int BOARD_STRENGTH_STEP = 30;
 
     private static final List<ScoringScheme> NON_STANDARD_SCORINGS = List.of(
             new ScoringScheme(Points.of(3), Points.of(1), Points.ZERO, Optional.empty()),
@@ -94,7 +101,8 @@ public final class TournamentGenerator {
             var players = settings.field()
                     .map(List::size)
                     .orElseGet(() -> settings.players().draw(random));
-            var rounds = Math.max(1, Math.min(settings.rounds().draw(random), players - 1));
+            var rounds = Math.max(1, Math.min(settings.rounds().draw(random), players - (isTeamEvent() ? 2 : 1)));
+            var boards = isTeamEvent() ? settings.boards().draw(random) : 0;
             var highest = settings.highestRating().draw(random);
             var lowest = Math.min(settings.lowestRating().draw(random), highest);
             var unrated = settings.field()
@@ -105,7 +113,7 @@ public final class TournamentGenerator {
                             Math.round(players * settings.unratedPercentage().draw(random) / 100.0));
             var withdrawals =
                     (int) Math.round(players * settings.withdrawalPercentage().draw(random) / 100.0);
-            var variations = variations(draws.stream("variations"));
+            var variations = variations(draws.stream("variations"), boards);
             var lateEntries = rounds < 3 || settings.field().isPresent()
                     ? 0
                     : (int) Math.round(players * settings.lateEntryPercentage().draw(random) / 100.0);
@@ -123,33 +131,76 @@ public final class TournamentGenerator {
                     lateEntries,
                     variations.scoring(),
                     variations.acceleration(),
-                    variations.tieBreakList());
+                    variations.tieBreakList(),
+                    boards,
+                    variations.pairingSystem());
         }
 
         /**
          * The tournament-level variations: a non-standard scoring, then Baku where that scoring allows it (C.04.7
          * 1.1), then a Tie-break List drawn from the Tie-break Edition's catalogue.
          */
-        private TournamentSettings variations(RandomGenerator random) {
+        private TournamentSettings variations(RandomGenerator random, int boards) {
             var variations = settings.tournament();
-            if (settings.nonStandardScoring().happens(random) && gamesInSuccession() == 1) {
+            if (isTeamEvent()) {
+                variations = withBoards(variations, boards);
+                if (settings.variedTeamFormat().happens(random)) {
+                    variations = variedTeamFormat(variations, random);
+                }
+            } else if (settings.nonStandardScoring().happens(random) && gamesInSuccession() == 1) {
                 variations = variations.with(NON_STANDARD_SCORINGS.get(random.nextInt(NON_STANDARD_SCORINGS.size())));
             }
             if (settings.bakuAcceleration().happens(random)
-                    && Acceleration.baku().problemsWith(variations).isEmpty()) {
+                    && Acceleration.baku().problemsWith(variations).isEmpty()
+                    && variations
+                            .pairingSystem()
+                            .problemsWith(variations.with(Acceleration.baku()))
+                            .isEmpty()) {
                 variations = variations.with(Acceleration.baku());
             }
             if (settings.drawnTieBreaks().happens(random)) {
-                variations = variations.with(
-                        TieBreakCatalogue.of(variations.tieBreakEdition()).draw(random));
+                var catalogue = isTeamEvent()
+                        ? TieBreakCatalogue.ofTeams()
+                        : TieBreakCatalogue.of(variations.tieBreakEdition());
+                variations = variations.with(catalogue.draw(random));
             }
             return variations;
+        }
+
+        private static TournamentSettings withBoards(TournamentSettings variations, int boards) {
+            var matches = variations.scoring().matches().orElseThrow().withBoards(boards);
+            return variations.with(variations.scoring().with(matches));
+        }
+
+        /**
+         * A Swiss Team tournament's format (C.04.6 1.2, 1.7): match points of 2 / 1 / 0 or 3 / 1 / 0, match points or
+         * game points primary, the secondary score used for colours or not, and Type A, Type B or no colour
+         * preferences. The Olympiad Pairing Rules have one format (D.02 3.2.1) and are left alone.
+         */
+        private static TournamentSettings variedTeamFormat(TournamentSettings variations, RandomGenerator random) {
+            if (variations.pairingSystem().teamColourPreferences().isEmpty()) {
+                return variations;
+            }
+            var matches = variations.scoring().matches().orElseThrow();
+            var win = random.nextBoolean() ? matches.win() : Points.of(3);
+            var primary = random.nextBoolean() ? PrimaryScore.MATCH_POINTS : PrimaryScore.GAME_POINTS;
+            var secondary = random.nextBoolean() ? SecondaryScore.USED_FOR_COLOUR : SecondaryScore.NOT_USED;
+            var preferences = ColourPreferenceType.values()[random.nextInt(ColourPreferenceType.values().length)];
+            var drawn = new MatchScoring(win, matches.draw(), matches.loss(), primary, secondary, matches.boards());
+            return variations
+                    .with(variations.scoring().with(drawn))
+                    .with(variations.pairingSystem().withTeamColourPreferences(preferences));
+        }
+
+        private boolean isTeamEvent() {
+            return settings.tournament().pairingSystem().competitionType() == CompetitionType.TEAM;
         }
 
         private TournamentSettings tournamentSettings() {
             var initialColour =
                     draws.stream("initial colour").nextBoolean() ? InitialColour.white() : InitialColour.black();
             return settings.tournament()
+                    .with(parameters.pairingSystem())
                     .with(parameters.scoring())
                     .with(parameters.acceleration())
                     .with(parameters.tieBreaks())
@@ -172,6 +223,12 @@ public final class TournamentGenerator {
                 strengthsDrawn.add(random.nextInt(parameters.lowestRating(), parameters.highestRating() + 1));
             }
             strengthsDrawn.sort((a, b) -> Integer.compare(b, a));
+            if (isTeamEvent()) {
+                // A team's strength is what ranks it (TPN 1 is the strongest): no two teams share one.
+                for (var index = 1; index < strengthsDrawn.size(); index++) {
+                    strengthsDrawn.set(index, Math.min(strengthsDrawn.get(index), strengthsDrawn.get(index - 1) - 1));
+                }
+            }
             var unrated = chosenIndexes(random, strengthsDrawn.size(), parameters.unrated());
             var rated = new ArrayList<Integer>();
             var hidden = new ArrayList<Integer>();
@@ -202,7 +259,8 @@ public final class TournamentGenerator {
         private Participant participant(int startRank, Rating rating, int strength) {
             var id = ParticipantId.of(String.valueOf(startRank));
             strengths.put(id, strength);
-            return Participant.of(id, Name.of(String.format("Player %04d", startRank)), rating);
+            var name = isTeamEvent() ? "Team " + startRank : String.format("Player %04d", startRank);
+            return Participant.of(id, Name.of(name), rating);
         }
 
         /** Each chosen participant withdraws after a uniformly chosen round, so it is unpaired from the next. */
@@ -303,7 +361,7 @@ public final class TournamentGenerator {
                         board.white().value(),
                         board.black().value(),
                         board.number().value());
-                outcomes.put(board.number(), outcomeOf(board, random));
+                outcomes.put(board.number(), isTeamEvent() ? matchOutcomeOf(board, random) : outcomeOf(board, random));
             }
             return outcomes;
         }
@@ -330,6 +388,35 @@ public final class TournamentGenerator {
                     .orElseGet(() ->
                             settings.resultModel().outcome(black, white, random).mirrored());
             return MatchOutcome.ofGames(List.of(gameOne, gameTwo));
+        }
+
+        /**
+         * A team match: each side may not show up at all (every board forfeited) and, if it does, forfeits a board at
+         * the game rate; the boards are played between the teams' strengths, the boards' strengths falling by 15 from
+         * board 1, with the colours alternating from the team that has White on board 1 (C.04.6 1.6.1).
+         */
+        private Outcome matchOutcomeOf(PairedBoard match, RandomGenerator random) {
+            var white = strengths.get(match.white());
+            var black = strengths.get(match.black());
+            var boards = parameters.boards();
+            var rate = parameters.forfeitRate();
+            var absence = rate == 0 ? 0 : 1 - Math.sqrt(1 - 1.0 / rate);
+            var noShow = forfeit(random, rate == 0 ? 0 : 1 - Math.sqrt(1 - 1.0 / (rate * boards)));
+            if (noShow.isPresent()) {
+                return MatchOutcome.ofGames(Collections.nCopies(boards, noShow.get()));
+            }
+            var games = new ArrayList<GameOutcome>();
+            for (var board = 1; board <= boards; board++) {
+                var offset = (boards + 1 - 2 * board) * BOARD_STRENGTH_STEP / 2;
+                var boardNumber = board;
+                games.add(forfeit(random, absence)
+                        .orElseGet(() -> boardNumber % 2 == 1
+                                ? settings.resultModel().outcome(white + offset, black + offset, random)
+                                : settings.resultModel()
+                                        .outcome(black + offset, white + offset, random)
+                                        .mirrored()));
+            }
+            return MatchOutcome.ofGames(games);
         }
 
         /** Seen from the sides of the board: WHITE is game 1's White. */

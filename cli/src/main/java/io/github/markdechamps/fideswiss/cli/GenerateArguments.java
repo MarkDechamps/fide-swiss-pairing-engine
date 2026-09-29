@@ -37,18 +37,20 @@ final class GenerateArguments {
         Optional<String> model = Optional.empty();
         var maxiTournament = false;
         var overrides = new ArrayList<UnaryOperator<GeneratorSettings>>();
+        // The system decides the kind of tournament (individual or team) and its ranges, so it is applied first.
+        var systems = new ArrayList<UnaryOperator<GeneratorSettings>>();
         while (!queue.isEmpty()) {
             var argument = queue.removeFirst();
             switch (argument) {
                 case "--seed" -> seed = Optional.of(seed(CommandLineParser.value(queue, argument)));
                 case "--count" -> count = CommandLineParser.number(CommandLineParser.value(queue, argument));
                 case "-o" -> output = CommandLineParser.value(queue, argument);
-                case "--profile" -> baseline = GeneratorSettings.of(profile(CommandLineParser.value(queue, argument)));
+                case "--profile" -> baseline = profile(CommandLineParser.value(queue, argument));
                 case "--config" -> configuration = Optional.of(CommandLineParser.value(queue, argument));
                 case "--model" -> model = Optional.of(CommandLineParser.value(queue, argument));
-                case "--system" -> overrides.add(system(CommandLineParser.value(queue, argument)));
+                case "--system" -> systems.add(system(CommandLineParser.value(queue, argument)));
                 case "--maxi-tournament" -> maxiTournament = true;
-                default -> overrides.add(flag(argument, queue));
+                default -> (isSystemFlag(argument) ? systems : overrides).add(flag(argument, queue));
             }
         }
         if (maxiTournament) {
@@ -58,7 +60,8 @@ final class GenerateArguments {
         if (output == null) {
             throw new UsageException("generate needs -o <file or pattern with %d>");
         }
-        return new Command.Generate(seed, count, output, baseline, configuration, model, overrides);
+        systems.addAll(overrides);
+        return new Command.Generate(seed, count, output, baseline, configuration, model, systems);
     }
 
     /** JaVaFo/bbp: {@code [--dutch|--dubov|--burstein|--lim|--double-swiss] -g [<cfg>|<seed>] -o <out> [-s <seed>]}; one tournament. */
@@ -121,6 +124,8 @@ final class GenerateArguments {
                 var model = new FlatDrawModel(CommandLineParser.number(CommandLineParser.value(queue, flag)));
                 yield settings -> settings.with(model);
             }
+            case "--boards" -> withRange(flag, queue, GeneratorSettings::withBoards);
+            case "--random-team-format" -> GeneratorSettings::withRandomTeamFormat;
             case "--random-scoring" -> GeneratorSettings::withRandomScoring;
             case "--acceleration" -> acceleration(CommandLineParser.value(queue, flag));
             case "--tiebreaks" -> tieBreaks(CommandLineParser.value(queue, flag));
@@ -136,15 +141,20 @@ final class GenerateArguments {
         };
     }
 
-    private static TournamentSettings profile(String name) {
+    private static GeneratorSettings profile(String name) {
         return switch (name) {
-            case "individual-swiss" -> Profiles.individualSwiss(DRAWN);
-            case "accelerated-open" -> Profiles.acceleratedOpen(DRAWN);
-            case "double-swiss" -> Profiles.doubleSwiss(DRAWN);
-            case "team-swiss", "olympiad" ->
-                throw new UsageException("the generator does not generate team tournaments yet (" + name + ")");
+            case "individual-swiss" -> GeneratorSettings.of(Profiles.individualSwiss(DRAWN));
+            case "accelerated-open" -> GeneratorSettings.of(Profiles.acceleratedOpen(DRAWN));
+            case "double-swiss" -> GeneratorSettings.of(Profiles.doubleSwiss(DRAWN));
+            case "team-swiss" -> GeneratorSettings.ofTeams(Profiles.teamSwiss(DRAWN));
+            case "olympiad" -> olympiad(GeneratorSettings.ofTeams(Profiles.olympiad(DRAWN)));
             default -> throw new UsageException("unknown profile " + name);
         };
+    }
+
+    /** D.02 has four boards (3.2.1, TRF 352). */
+    private static GeneratorSettings olympiad(GeneratorSettings teams) {
+        return teams.withBoards(Range.of(4));
     }
 
     private static UnaryOperator<GeneratorSettings> acceleration(String value) {
@@ -186,17 +196,30 @@ final class GenerateArguments {
     }
 
     /**
-     * Double-Swiss brings its scoring along: a bye is worth a match of two games (C.04.5 Preface). The team systems
-     * are refused: the generator writes no team files.
+     * Double-Swiss brings its scoring along: a bye is worth a match of two games (C.04.5 Preface). A team system
+     * starts the team defaults (teams, boards and rates of {@link GeneratorSettings#ofTeams}), an individual system
+     * after a team profile the individual ones; a system of the kind already played keeps the settings.
      */
     private static UnaryOperator<GeneratorSettings> system(String name) {
         var system = CommandLineParser.system(name);
-        if (system.competitionType() == CompetitionType.TEAM) {
-            throw new UsageException("the generator does not generate team tournaments yet (" + name + ")");
-        }
-        return system.gamesInSuccession() == 2
-                ? inTournament(tournament -> tournament.with(system).with(ScoringScheme.doubleSwiss()))
-                : inTournament(tournament -> tournament.with(system));
+        var team = system.competitionType() == CompetitionType.TEAM;
+        return settings -> {
+            var playingTeams = settings.tournament().pairingSystem().competitionType() == CompetitionType.TEAM;
+            if (team && !playingTeams) {
+                var profile = name.equals("olympiad") ? Profiles.olympiad(DRAWN) : Profiles.teamSwiss(DRAWN);
+                var teams = GeneratorSettings.ofTeams(profile.with(system));
+                return name.equals("olympiad") ? olympiad(teams) : teams;
+            }
+            if (team) {
+                var switched = settings.with(settings.tournament().with(system));
+                return name.equals("olympiad") ? olympiad(switched) : switched;
+            }
+            var base = playingTeams ? GeneratorSettings.of(Profiles.individualSwiss(DRAWN)) : settings;
+            return system.gamesInSuccession() == 2
+                    ? inTournament(tournament -> tournament.with(system).with(ScoringScheme.doubleSwiss()))
+                            .apply(base)
+                    : inTournament(tournament -> tournament.with(system)).apply(base);
+        };
     }
 
     private static long seed(String value) {

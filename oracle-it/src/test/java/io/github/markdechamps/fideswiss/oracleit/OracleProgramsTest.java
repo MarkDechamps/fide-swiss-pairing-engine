@@ -35,4 +35,14 @@ class OracleProgramsTest {
     void aBlankPathIsAbsent() {
         assertThat(OraclePrograms.BBP_V5.locate(key -> " ", key -> null)).isEmpty();
     }
+
+    @Test
+    void gacruxIsLocatedByItsCloneAndSaysHowToConfigureIt() {
+        assertThat(OraclePrograms.GACRUX.locate(key -> null, key -> null)).isEmpty();
+        assertThat(OraclePrograms.GACRUX.absence())
+                .contains("-Dfideswiss.oracle.gacrux=<path>")
+                .contains("FIDESWISS_ORACLE_GACRUX=<path>");
+        assertThat(OraclePrograms.GACRUX.locate(key -> "/x/TieBreakServer", key -> null))
+                .hasValueSatisfying(oracle -> assertThat(oracle.dialect()).isEqualTo(OracleDialect.GACRUX));
+    }
 }

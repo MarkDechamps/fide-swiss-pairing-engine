@@ -47,6 +47,34 @@ class InvariantRunTest {
         }
     }
 
+    /** The team systems, whose events have their own ranges, boards and tie-breaks (C.07 12–13). */
+    enum PlayedTeamSystem {
+        SWISS_TEAM_2026(Profiles.teamSwiss(NumberOfRounds.of(9))),
+        OLYMPIAD_2022(Profiles.olympiad(NumberOfRounds.of(9)));
+
+        private final TournamentSettings settings;
+
+        PlayedTeamSystem(TournamentSettings settings) {
+            this.settings = settings;
+        }
+    }
+
+    @ParameterizedTest
+    @EnumSource(PlayedTeamSystem.class)
+    void generatedTeamTournamentsKeepEveryInvariant(PlayedTeamSystem played) {
+        var settings = GeneratorSettings.ofTeams(played.settings)
+                .withPlayers(Range.of(8, 30))
+                .withBoards(played == PlayedTeamSystem.OLYMPIAD_2022 ? Range.of(4) : Range.of(2, 6))
+                .withHalfPointByeRate(Range.of(20, 200))
+                .withZeroPointByeRate(Range.of(20, 200))
+                .withFullPointByeRate(Range.of(30, 200))
+                .withRandomAcceleration()
+                .withRandomTeamFormat()
+                .withRandomTieBreaks();
+
+        assertNoViolations(settings);
+    }
+
     @ParameterizedTest
     @EnumSource(PlayedSystem.class)
     void generatedTournamentsKeepEveryInvariant(PlayedSystem played) {
@@ -61,6 +89,10 @@ class InvariantRunTest {
                 .withRandomAcceleration()
                 .withRandomScoring()
                 .withRandomTieBreaks();
+        assertNoViolations(settings);
+    }
+
+    private static void assertNoViolations(GeneratorSettings settings) {
         var generator = TournamentGenerator.of(settings);
         var violations = new ArrayList<String>();
         var skipped = 0;

@@ -1,5 +1,6 @@
 package io.github.markdechamps.fideswiss.generator;
 
+import io.github.markdechamps.fideswiss.pairing.PairingSystem;
 import io.github.markdechamps.fideswiss.standings.TieBreakList;
 import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.RoundNumber;
@@ -19,7 +20,11 @@ public sealed interface GeneratedTournament {
     record Skipped(TournamentSeed seed, RoundNumber round, String reason, Parameters parameters)
             implements GeneratedTournament {}
 
-    /** The values drawn for one tournament from the settings' ranges (written to the manifest). */
+    /**
+     * The values drawn for one tournament from the settings' ranges (written to the manifest). {@code players} are the
+     * teams of a team tournament, whose matches have {@code boards} boards; an individual tournament has none (0). The pairing system is the settings',
+     * except that a Swiss Team format may draw its colour preferences.
+     */
     record Parameters(
             int players,
             int rounds,
@@ -34,5 +39,7 @@ public sealed interface GeneratedTournament {
             int lateEntries,
             ScoringScheme scoring,
             Acceleration acceleration,
-            TieBreakList tieBreaks) {}
+            TieBreakList tieBreaks,
+            int boards,
+            PairingSystem pairingSystem) {}
 }

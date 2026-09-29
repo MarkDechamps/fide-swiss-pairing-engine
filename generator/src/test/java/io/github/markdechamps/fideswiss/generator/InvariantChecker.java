@@ -3,6 +3,7 @@ package io.github.markdechamps.fideswiss.generator;
 import io.github.markdechamps.fideswiss.tournament.Board;
 import io.github.markdechamps.fideswiss.tournament.Bye;
 import io.github.markdechamps.fideswiss.tournament.Colour;
+import io.github.markdechamps.fideswiss.tournament.CompetitionType;
 import io.github.markdechamps.fideswiss.tournament.GameResult;
 import io.github.markdechamps.fideswiss.tournament.Participant;
 import io.github.markdechamps.fideswiss.tournament.ParticipantId;
@@ -23,7 +24,8 @@ import java.util.Set;
  * bar it, Dutch 2017 reading R9), everyone in every round either on a board or
  * given a reason, nobody on a board after withdrawing (GHR 3.2), and the colour limits of Art. 6–7 in every round
  * but the last, where Dutch topscorers may break them; a Double-Swiss match gives both colours, one per game, and
- * C.04.5 has no colour criterion. A match is a meeting unless a side forfeited both games (C.04.5 Preface). The
+ * C.04.5 has no colour criterion, and neither has C.04.6: a team's colour follows its pairing (the Olympiad's limits of
+ * D.02 7.3–7.4 yield to keeping the pairings, so they are not absolute). A match is a meeting unless a side forfeited both games (C.04.5 Preface). The
  * Standings after the last round rank everyone.
  */
 final class InvariantChecker {
@@ -45,10 +47,12 @@ final class InvariantChecker {
             noRematches(round, met, violations);
             pairingAllocatedByes(round, barredFromPab, violations);
             recordColours(round, colours);
-            if (number < lastRound && tournament.settings().pairingSystem().gamesInSuccession() == 1) {
+            if (number < lastRound
+                    && tournament.settings().pairingSystem().gamesInSuccession() == 1
+                    && tournament.settings().pairingSystem().competitionType() == CompetitionType.INDIVIDUAL) {
                 colourLimits(number, colours, violations);
             }
-            bars(round, edition, barredFromPab);
+            bars(round, fullPointByeBars(tournament), barredFromPab);
         }
         everyoneRanked(tournament, violations);
         return violations;
@@ -109,9 +113,14 @@ final class InvariantChecker {
                         violations.add("round " + round.number() + ": " + participant + " may not receive the PAB"));
     }
 
+    /** From 2026 a full-point bye bars a later PAB; the Olympiad's bar is a PAB, a forfeit win or a late entry (D.02 4.3). */
+    private static boolean fullPointByeBars(Tournament tournament) {
+        return tournament.settings().swissRulesEdition() == SwissRulesEdition.EDITION_2026
+                && !tournament.settings().pairingSystem().name().startsWith("D.02 ");
+    }
+
     /** After this round: a PAB, a forfeit win or (from 2026) a full-point bye bars a later PAB (C.04.1 Art. 4). */
-    private static void bars(Round round, SwissRulesEdition edition, Set<ParticipantId> barred) {
-        var fullPointByeBars = edition == SwissRulesEdition.EDITION_2026;
+    private static void bars(Round round, boolean fullPointByeBars, Set<ParticipantId> barred) {
         round.byes().forEach((participant, bye) -> {
             if (bye == Bye.PAIRING_ALLOCATED || (bye == Bye.FULL_POINT && fullPointByeBars)) {
                 barred.add(participant);

@@ -16,16 +16,20 @@ final class Help {
             generator ranges (a number, or A..B drawn per tournament):
               --players --rounds --highest-rating --lowest-rating --unrated <%>
               --forfeit-rate --hpb-rate --zpb-rate --fpb-rate <1 in N>  --withdrawals <%>  --late-entries <%>
+              --boards <n|A..B>  the boards of a team match (team systems; the Olympiad has four)
               --draw-percentage <P> (a flat draw share instead of Milvang's model)
 
             generator tournament flags:
-              --profile individual-swiss|accelerated-open|double-swiss   the starting settings
-              --system dutch|dubov|burstein|lim|double-swiss (or --dutch, --dubov, --burstein, --lim, --double-swiss)
+              --profile individual-swiss|accelerated-open|double-swiss|team-swiss|olympiad   the starting settings
+              --system dutch|dubov|burstein|lim|double-swiss|swiss-team|olympiad (or --dutch, ..., --swiss-team,
+                                                --olympiad): a team system generates team tournaments
               --maxi-tournament (Lim)
               --edition 2026|pre-2026  --tiebreak-edition 2026-03|2024-08
               --acceleration none|baku|random   random: Baku for 20% of the tournaments
               --tiebreaks "<list>"|random       random: 3-5 entries drawn per tournament
               --random-scoring                  3/1/0 or 2/1/0 for 10% of the tournaments
+              --random-team-format              Swiss Team: match points 2/1/0 or 3/1/0, MP or GP primary, secondary
+                                                score used or not, Type A, B or no colour preferences
 
             settings (override the file's records):
               --system dutch|dubov|burstein|lim|double-swiss|swiss-team|olympiad  the pairing system (also --dutch,

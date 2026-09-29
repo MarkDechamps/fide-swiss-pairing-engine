@@ -1,6 +1,7 @@
 package io.github.markdechamps.fideswiss.pairing;
 
 import io.github.markdechamps.fideswiss.rules.BasicRules;
+import io.github.markdechamps.fideswiss.tournament.ColourPreferenceType;
 import io.github.markdechamps.fideswiss.tournament.CompetitionType;
 import io.github.markdechamps.fideswiss.tournament.Interpretation;
 import io.github.markdechamps.fideswiss.tournament.InvalidSettingsException;
@@ -10,6 +11,7 @@ import io.github.markdechamps.fideswiss.tournament.ScoringScheme;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import io.github.markdechamps.fideswiss.tournament.TournamentSettings;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A named ruleset that decides who plays whom, and with which colour, in the next round. Obtain the FIDE systems
@@ -37,6 +39,17 @@ public interface PairingSystem {
     /** Whether the system pairs players or teams. */
     default CompetitionType competitionType() {
         return CompetitionType.INDIVIDUAL;
+    }
+
+    /** The colour preferences of a Swiss Team competition (C.04.6 1.7); empty for every other system. */
+    default Optional<ColourPreferenceType> teamColourPreferences() {
+        return Optional.empty();
+    }
+
+    /** The same system with other colour preferences (C.04.6 1.7); only the Swiss Team System has them. */
+    default PairingSystem withTeamColourPreferences(ColourPreferenceType preferences) {
+        throw new InvalidSettingsException(
+                List.of(Problem.of("The pairing system has no colour preference type " + preferences)));
     }
 
     /**

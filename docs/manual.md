@@ -342,7 +342,9 @@ Any other `192` code for a team file gives `Unsupported 192 code <code> for a te
 
 ### 4.4 What is written
 
-The `generate` command writes TRF26 files with: `012` (the name `RTG <version> seed <n>`), `142`, `152`, `162` (only when different from the standard scoring), `192` (with `_BAKU` when Baku is on), `212` (`PTS` followed by the tie-break list, when the list is not empty) and one `001` record per participant. The writer reads back to the same rounds and settings. The writer can also emit `XXR` and `XXC` for JaVaFo. It does not write team files, so the provisional `FIDE_OLYMPIAD` is never written. A Double-Swiss tournament is written with two columns per match (4.2), `142` as twice the number of matches, `192 FIDE_DOUBLESWISS`, and a `162` that always carries `P`, `F` and `H`, the per-match bye values, so another reader never has to guess them.
+The `generate` command writes TRF26 files with: `012` (the name `RTG <version> seed <n>`), `142`, `152`, `162` (only when different from the standard scoring), `192` (with `_BAKU` when Baku is on), `212` (`PTS` followed by the tie-break list, when the list is not empty) and one `001` record per participant (a team tournament is written as a team file, below). The writer reads back to the same rounds and settings. The writer can also emit `XXR` and `XXC` for JaVaFo. A Double-Swiss tournament is written with two columns per match (4.2), `142` as twice the number of matches, `192 FIDE_DOUBLESWISS`, and a `162` that always carries `P`, `F` and `H`, the per-match bye values, so another reader never has to guess them.
+
+A **team tournament** is written as a team file that reads back to the same teams, settings and matches. Its header has `012`, `062` (players), `072` (rated players), `082` (teams), `142`, `152`, `162` (`W`, `D`, `L` and `P`, always all four: `P` is the PAB's game points per board, so that Gacrux never guesses it, Known Divergence KD-2), `192` (`FIDE_TEAM_TYPEA|TYPEB` or none, then `_MP_GP`, `_MP`, `_GP_MP` or `_GP`, and `_BAKU`; or the provisional `FIDE_OLYMPIAD`), `212` (`PTS` and the team tie-breaks, when not empty), `362` (match points), `320` (only when a Swiss Team scoring states the PAB's match points) and `352` (`WBWB...`, one letter per board). Then one `310` per team in team-number order (number, name, strength, match points, game points, rank from the standings, and the start ranks of its members) and one `001` per member: as many members as boards, member *b* of team *t* being start rank (t-1) x boards + b. Each `001` line has one block per round: the opponent team's member on the same board, the colour (board 1 has the team's colour, C.04.6 1.6.1, the others alternate), and the result of that board, `+`/`-` for a forfeit; a team without a match (PAB `U`, requested bye `F`, `H` or `Z`) has the same block on every member's line. The model has no players, so the line-up is the `310` order in every round and no `300` is written. A TRF does not number the boards of a round: they come back in team order, so the reader does not restore the boards' order (GHR 3.6), only who met whom and how it ended. What is not written: the Interpretations of ADR 0003 (they are settings, not TRF records), which read back at their defaults.
 
 ## 5. Pairing systems
 
@@ -565,15 +567,15 @@ fide-swiss -g [<cfg>|<seed>] -o <out.trf> [-s <seed>] [--dutch|--dubov|--burstei
 - `--seed <n>` is the corpus seed (unsigned 64 bit). Without it a fresh seed is drawn and printed on standard error as `seed <n>`. Tournament k of a corpus has its own seed derived from the corpus seed and k, and it is the one written in `012` and the manifest, so a single tournament can be reproduced alone.
 - `--count <k>`: the number of tournaments (default 1).
 - `-g` is the JaVaFo/bbpPairings form: one tournament, with the argument after `-g` being a configuration file or, when it is all digits, a seed; `-s <seed>` also gives the seed; a system flag may follow.
-- The Dutch, Dubov, Burstein, Lim and Double-Swiss systems generate individual tournaments; the generator does not write team files, so `--swiss-team` and `--olympiad` are refused (`the generator does not generate team tournaments yet (<name>)`).
+- The Dutch, Dubov, Burstein, Lim and Double-Swiss systems generate individual tournaments; `--swiss-team` and `--olympiad` (or `--system swiss-team|olympiad`, or the profiles below) generate **team tournaments** (7.7): teams play matches over boards, and the file is a team file with `310` records (4.4). A team system is applied before the other flags whatever their order, since it changes the defaults of the ranges; an individual system after a team profile brings back the individual defaults.
 
 ### 7.2 Precedence
 
-1. the **profile** (`--profile individual-swiss`, the default, `accelerated-open` which is Baku, or `double-swiss`, two-game matches with the PAB worth 1.5); the profile's number of rounds is a placeholder because the generator draws the rounds;
+1. the **profile** (`--profile individual-swiss`, the default, `accelerated-open` which is Baku, `double-swiss`, two-game matches with the PAB worth 1.5, `team-swiss`, the Swiss Team System of C.04.6, or `olympiad`, the Olympiad Pairing Rules of D.02 on four boards); the profile's number of rounds is a placeholder because the generator draws the rounds;
 2. a **configuration file** (`--config`, or the argument of `-g`), then a **model TRF** (`--model`): the settings and rates observed in an existing tournament (its field size, forfeit rate, bye rate, withdrawals) are copied;
 3. the **flags**.
 
-The profiles `team-swiss` and `olympiad` are **planned** and refused, since the generator does not generate team tournaments yet (`the generator does not generate team tournaments yet (<name>)`); another name gives `unknown profile <name>`.
+Another profile name gives `unknown profile <name>`.
 
 ### 7.3 Ranges
 
@@ -599,13 +601,15 @@ A range that is not a number or `A..B` gives `<flag> takes a number or a range A
 
 | Flag | Values | Meaning |
 |---|---|---|
-| `--system`, `--dutch`, `--dubov`, `--burstein`, `--lim`, `--double-swiss` | dutch, dubov, burstein, lim, double-swiss | the pairing system; `double-swiss` also takes the Double-Swiss scoring (byes worth a match) |
+| `--system`, `--dutch`, `--dubov`, `--burstein`, `--lim`, `--double-swiss`, `--swiss-team`, `--olympiad` | dutch, dubov, burstein, lim, double-swiss, swiss-team, olympiad | the pairing system; `double-swiss` also takes the Double-Swiss scoring (byes worth a match); the team systems generate team tournaments (7.7) |
 | `--maxi-tournament` | | declare Lim a Maxi-tournament |
 | `--edition` | `2026`, `pre-2026` | Swiss Rules Edition |
 | `--tiebreak-edition` | `2026-03`, `2024-08` | C.07 edition |
 | `--acceleration` | `none`, `baku`, `random` | `random` applies Baku to 20 % of the tournaments; Baku is only applied where the scoring allows it |
-| `--tiebreaks` | a list or `random` | `random` draws 3 to 5 entries per tournament |
-| `--random-scoring` | | scores 10 % of the tournaments 3/1/0 or 2/1/0 (never a Double-Swiss one) |
+| `--tiebreaks` | a list or `random` | `random` draws 3 to 5 entries per tournament; for a team tournament from the team tie-breaks of C.07 art. 12–13 (`MPvGP`, the four `E?MSB`/`E?GSB` with Cut-1, the `EDE` family, `SSSC`, `BC`, `TBR`, `BBE`) and the individual ones over a team score (`WIN:MP`, `BH:GP/C1`, `PS:MP`, ...) |
+| `--random-scoring` | | scores 10 % of the tournaments 3/1/0 or 2/1/0 (never a Double-Swiss or a team one) |
+| `--random-team-format` | | Swiss Team only: every tournament draws its match points (2/1/0 or 3/1/0), its primary score (match or game points), whether the secondary score is used for colours, and Type A, Type B or no colour preferences (C.04.6 1.2, 1.7); the Olympiad has one format (D.02 3.2.1) |
+| `--boards` | a number or `A..B` | boards per team match (7.7) |
 
 ### 7.5 Configuration files
 
@@ -615,10 +619,10 @@ A range that is not a number or `A..B` gives `<flag> takes a number or a range A
 
 If a round of a random tournament has no legal pairing, the tournament is *skipped*, never bent; no file is written for it. `skipped <n> of <k> seeds` is printed on standard error, and the exit code is 7 when more than 0.1 % of the seeds are skipped.
 
-With `--count` above 1, `<pattern>.manifest.tsv` is written (for `-o 't%d.trf'` the file is named `t%d.trf.manifest.tsv`). It is tab separated with the columns: `index`, `seed`, `status` (`ok` or `skipped in round <r>`), `players`, `rounds`, `highest rating`, `lowest rating`, `unrated`, `forfeit rate`, `hpb rate`, `zpb rate`, `fpb rate`, `withdrawals`, `late entries`, `scoring` (`1/0.5/0`), `acceleration` (`none`, `baku`, `explicit`), `tiebreaks`. Example row:
+With `--count` above 1, `<pattern>.manifest.tsv` is written (for `-o 't%d.trf'` the file is named `t%d.trf.manifest.tsv`). It is tab separated with the columns: `index`, `seed`, `status` (`ok` or `skipped in round <r>`), `players`, `rounds`, `highest rating`, `lowest rating`, `unrated`, `forfeit rate`, `hpb rate`, `zpb rate`, `fpb rate`, `withdrawals`, `late entries`, `scoring` (`1/0.5/0`), `acceleration` (`none`, `baku`, `explicit`), `tiebreaks`, `boards` (the boards of a team match, 0 for an individual tournament). Example row:
 
 ```
-0	7191089600892374487	ok	12	4	2596	1692	0	14	919	336	0	0	0	1/0.5/0	none	BH/C1, BH, SB, DE
+0	7191089600892374487	ok	12	4	2596	1692	0	14	919	336	0	0	0	1/0.5/0	none	BH/C1, BH, SB, DE	0
 ```
 
 A typical use is a corpus for another program:
@@ -626,6 +630,22 @@ A typical use is a corpus for another program:
 ```sh
 fide-swiss generate -o 'corpus/t%d.trf' --seed 2026 --count 100 --players 20..80 --acceleration random --tiebreaks random
 ```
+
+### 7.7 Team tournaments
+
+With `--swiss-team` or `--olympiad` the generator plays **teams** instead of players, through the same engine, and writes a team file (4.4). What changes:
+
+- `--players` is the number of teams (default 8..40 for a team system); `--rounds` defaults to 5..11 (at most teams - 2, so that every round can be paired); `--boards` is the number of boards of a match (default 2..6 for the Swiss Team System; the Olympiad always has 4, D.02 3.2.1). Teams are all rated (`--unrated` defaults to 0) with distinct strengths, strongest first: the strength is the team's rating in `310`, and TPN 1 is the strongest.
+- A match is decided over its boards: board *b* is played between players whose strength is the team's, shifted by 15 per board from board 1 down, with Milvang's model; the team with White on board 1 has White on the odd boards (the `352` pattern is `WBWB...`, C.04.6 1.6.1). `--forfeit-rate` (default 1 in 30..300, rarer than for players) is per board, and a team may also not show up at all with the chance of a forfeit on every board, so that forfeited matches (`+`/`-` on every board) occur; `--hpb-rate` and `--zpb-rate` (default 1 in 100..3225 team-rounds) give requested half- and zero-point byes. Withdrawals and late entries default to 0.
+- `--random-team-format` and `--tiebreaks random` draw the format and the team tie-breaks (7.4).
+- Baku (`--acceleration baku|random`) applies where the format allows it: with match points primary, and only for the Swiss Team System (C.04.7 1.4.4; the Olympiad has no acceleration).
+
+```sh
+fide-swiss generate -o 'teams/t%d.trf' --swiss-team --seed 2026 --count 50 --random-team-format --tiebreaks random
+fide-swiss generate -o olympiad.trf --olympiad --players 40 --rounds 9 --seed 7
+```
+
+The invariant checker (test scope) runs on 200 tournaments of each team system in every build: no rematch of a match with a board played (a match lost by default on every board is not a meeting), at most one PAB per round and none for a team that had one or won a match by forfeit (a full-point bye also bars it under the Swiss Team System; the Olympiad's bar is D.02 4.3's), nobody unpaired, and the standings rank every team under the drawn tie-breaks. There is no colour invariant: C.04.6 has no colour criterion, and the Olympiad's limits (7.3) yield to keeping the pairings (7.4).
 
 ## 8. Checking pairings
 
@@ -720,6 +740,7 @@ For every gate, the Random Tournament Generator plays a corpus of Dutch tourname
 | `bbpPairingsV6PairsDutch2026AsWeDo` | bbpPairings v6.0.0 | Dutch 2026 |
 | `bbpPairingsV5PairsDutch2017AsWeDo` | bbpPairings v5.0.1 | Dutch 2017 (pre-2026 edition) |
 | `jaVaFoPairsDutch2017AsWeDo` | JaVaFo 2.2 | Dutch 2017, without requested byes (Known Divergence KD-4) |
+| `SwissTeamOracleIT.gacruxPairsSwissTeam2026AsWeDo` | Gacrux (TieBreakServer) @ 6419149 with the `tpn-order` patch | Swiss Team 2026, team tournaments of every colour preference type and score format, with forfeits and requested byes (10.1) |
 
 Point each gate to its program with a system property or an environment variable. A gate whose program is not configured is skipped, and the skip message names both.
 
@@ -728,6 +749,8 @@ Point each gate to its program with a system property or an environment variable
 | bbpPairings v6.0.0 | `fideswiss.oracle.bbp6` | `FIDESWISS_ORACLE_BBP6` |
 | bbpPairings v5.0.1 | `fideswiss.oracle.bbp5` | `FIDESWISS_ORACLE_BBP5` |
 | JaVaFo 2.2 (a `.jar`, run with `java -jar`) | `fideswiss.oracle.javafo` | `FIDESWISS_ORACLE_JAVAFO` |
+| Gacrux (the path of a clone of its repository) | `fideswiss.oracle.gacrux` | `FIDESWISS_ORACLE_GACRUX` |
+| the Python for Gacrux (default `python3`; it needs `networkx`) | `fideswiss.oracle.gacrux.python` | `FIDESWISS_ORACLE_GACRUX_PYTHON` |
 
 Corpus settings, all system properties: `fideswiss.oracle.tournaments` (default 100), `fideswiss.oracle.seed` (default 20260929; the nightly job rotates it) and `fideswiss.oracle.events`, a comma list of what besides plain results is played (`forfeits`, `byes`, `withdrawals`, `late-entries`). The printed summary reads, for example, `bbpPairings v6.0.0: 822 of 822 rounds agree in 100 tournaments, 0 with a difference`.
 
@@ -737,7 +760,21 @@ FIDESWISS_ORACLE_BBP6=$HOME/oracles/bbpPairings.exe \
   -Dfideswiss.oracle.tournaments=500 -Dfideswiss.oracle.seed=42
 ```
 
-Not covered yet: Gacrux for the Swiss Team System (it needs its `tpn-order` patch and a Python driver), our `check` on the oracle's own generated tournaments, the 50,000-tournament release gate's both-direction run, and reading the Known Divergence register automatically.
+Not covered yet: our `check` on the oracle's own generated tournaments, the 50,000-tournament release gate's both-direction run, and reading the Known Divergence register automatically.
+
+### 10.1 Gacrux and the Swiss Team System
+
+The Gacrux gate plays team tournaments (7.7) with `--swiss-team`'s defaults narrowed to 6..24 teams, 4..11 rounds and 2..6 boards, a drawn format for each (`--random-team-format`), Baku at random, forfeits and requested half- and zero-point byes (`fideswiss.oracle.events` defaults to `forfeits,byes` here). It runs Gacrux as `python -c <driver> <clone> <file> <round>` in the clone's `gacrux` directory; the driver is ours and only imports Gacrux's own modules (nothing of Gacrux is in this repository). It applies **Ruling G1** in front of Gacrux's bracket seating, `update_bracket` over the nodes sorted by TPN (C.04.6 3.6.1; Known Divergence KD-1), which is what "patched" means. Gacrux must be at commit 6419149 (v1.10.62), and its Python needs `networkx`:
+
+```sh
+git clone <TieBreakServer> ~/oracles/TieBreakServer && git -C ~/oracles/TieBreakServer checkout 6419149
+python3 -m venv ~/oracles/gacrux-venv && ~/oracles/gacrux-venv/bin/pip install networkx
+FIDESWISS_ORACLE_GACRUX=$HOME/oracles/TieBreakServer FIDESWISS_ORACLE_GACRUX_PYTHON=$HOME/oracles/gacrux-venv/bin/python \
+  ./mvnw verify -pl oracle-it -am -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false \
+  -Dit.test=SwissTeamOracleIT -Dfideswiss.oracle.tournaments=50
+```
+
+The input is the team file of 4.4 with three additions for Gacrux (the `OracleDialect.GACRUX` writer): the members' points (columns 81-84) are 0.0, because Gacrux refuses a file whose stated points differ from the results it adds up, pending absences included, and does not check a 0.0; an accelerated tournament carries its Virtual Points as explicit `250` records, since Gacrux accelerates only from them; and `162` states `P` (KD-2). Tournaments with Baku and the secondary score used for colours are left out (KD-3). Locally, 359 of 359 rounds agree in 50 tournaments and 2,653 of 2,653 in 385 tournaments (seed 77; 15 of 400 were Baku with the secondary score and left out): no new Known Divergence. A reply that leaves a team unpaired, or gives two PABs, counts as a refusal, and both refusing is agreement.
 
 ## References
 
