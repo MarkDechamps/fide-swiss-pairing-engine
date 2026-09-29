@@ -38,7 +38,7 @@ class OracleGateTest {
         }
     };
 
-    private static List<GeneratedTournament.Completed> corpus() {
+    static List<GeneratedTournament.Completed> corpus() {
         var settings = GeneratorSettings.of(Profiles.individualSwiss(NumberOfRounds.of(5))
                         .with(PairingSystems.dutch())
                         .with(SwissRulesEdition.EDITION_2026))

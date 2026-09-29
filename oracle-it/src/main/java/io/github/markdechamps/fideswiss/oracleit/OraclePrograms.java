@@ -62,8 +62,22 @@ public enum OraclePrograms {
         if (dialect == OracleDialect.GACRUX) {
             return new GacruxProgram(label, Path.of(path), python());
         }
+        return external(path);
+    }
+
+    private ExternalPairingProgram external(String path) {
         var command = path.endsWith(".jar") ? List.of(java(), "-jar", path) : List.of(path);
         return new ExternalPairingProgram(label, command, flags, dialect);
+    }
+
+    /** The program that also checks and generates tournaments (bbpPairings, JaVaFo; not Gacrux). */
+    public Optional<ExternalPairingProgram> locateChecker() {
+        return dialect == OracleDialect.GACRUX
+                ? Optional.empty()
+                : Optional.ofNullable(System.getProperty(property()))
+                        .or(() -> Optional.ofNullable(System.getenv(variable())))
+                        .filter(value -> !value.isBlank())
+                        .map(this::external);
     }
 
     /** The Python that has Gacrux's requirements: {@code -Dfideswiss.oracle.gacrux.python} or {@code FIDESWISS_ORACLE_GACRUX_PYTHON}. */
