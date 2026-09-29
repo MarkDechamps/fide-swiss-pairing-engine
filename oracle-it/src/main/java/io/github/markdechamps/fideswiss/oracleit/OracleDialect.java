@@ -6,6 +6,7 @@ import io.github.markdechamps.fideswiss.tournament.RoundNumber;
 import io.github.markdechamps.fideswiss.tournament.Tournament;
 import io.github.markdechamps.fideswiss.trf.TrfWriter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -25,7 +26,43 @@ public enum OracleDialect {
             return withVirtualPoints(
                     tournament, withoutMemberPoints(TrfWriter.write(tournament, TrfWriter.Options.named(name))));
         }
-        return TrfWriter.write(tournament, TrfWriter.Options.named(name).withJaVaFoLines());
+        return withXxa(
+                tournament,
+                TrfWriter.write(tournament, TrfWriter.Options.named(name).withJaVaFoLines()));
+    }
+
+    /**
+     * JaVaFo and bbpPairings accelerate only from explicit fictitious points, {@code XXA} (JaVaFo manual, "Accelerated
+     * rounds"; bbpPairings reads the same): {@code XXA} at column 1, the player's id at 5-8 and round r's Virtual
+     * Points at column 10+5(r-1), one record per player with any, placed before the first player line.
+     */
+    static String withXxa(Tournament tournament, String trf) {
+        var records = xxaRecords(tournament);
+        if (records.isEmpty()) {
+            return trf;
+        }
+        var at = trf.indexOf("001 ");
+        return trf.substring(0, at) + String.join("\r\n", records) + "\r\n" + trf.substring(at);
+    }
+
+    private static List<String> xxaRecords(Tournament tournament) {
+        var records = new ArrayList<String>();
+        var rounds = tournament.settings().numberOfRounds().value();
+        for (var index = 0; index < tournament.participants().size(); index++) {
+            var id = tournament.participants().get(index).id();
+            var record = new StringBuilder(String.format(Locale.ROOT, "XXA %4d", index + 1));
+            var any = false;
+            for (var round = 1; round <= rounds; round++) {
+                var points = tournament.virtualPointsOf(id, RoundNumber.of(round));
+                any |= points.isGreaterThan(Points.ZERO);
+                record.append(String.format(
+                        Locale.ROOT, " %4.1f", points.toBigDecimal().doubleValue()));
+            }
+            if (any) {
+                records.add(record.toString());
+            }
+        }
+        return records;
     }
 
     /**

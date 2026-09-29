@@ -3,6 +3,7 @@ package io.github.markdechamps.fideswiss.oracleit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import io.github.markdechamps.fideswiss.generator.Chance;
 import io.github.markdechamps.fideswiss.generator.Corpus;
 import io.github.markdechamps.fideswiss.generator.CorpusSeed;
 import io.github.markdechamps.fideswiss.generator.GeneratedTournament;
@@ -10,6 +11,7 @@ import io.github.markdechamps.fideswiss.generator.GeneratorSettings;
 import io.github.markdechamps.fideswiss.generator.Range;
 import io.github.markdechamps.fideswiss.generator.TournamentGenerator;
 import io.github.markdechamps.fideswiss.pairing.PairingSystems;
+import io.github.markdechamps.fideswiss.tournament.Acceleration;
 import io.github.markdechamps.fideswiss.tournament.NumberOfRounds;
 import io.github.markdechamps.fideswiss.tournament.Profiles;
 import io.github.markdechamps.fideswiss.tournament.SwissRulesEdition;
@@ -34,6 +36,9 @@ class DutchOracleIT {
 
     private static final CorpusSeed CORPUS = CorpusSeed.of(Long.getLong("fideswiss.oracle.seed", 20260929L));
     private static final int TOURNAMENTS = Integer.getInteger("fideswiss.oracle.tournaments", 100);
+    /** The share of tournaments accelerated by Baku, {@code fideswiss.oracle.baku} percent (default 20). */
+    private static final int BAKU_PERCENT = Integer.getInteger("fideswiss.oracle.baku", 20);
+
     private static final String ALL_EVENTS = "forfeits,byes,withdrawals,late-entries";
 
     private static final Range NEVER = Range.of(1_000_000, 1_000_000);
@@ -58,8 +63,9 @@ class DutchOracleIT {
             throws IOException {
         var oracle = program.locate();
         assumeTrue(oracle.isPresent(), program::absence);
-        var report = new OracleGate(oracle.get(), edition).compare(corpus(edition, events(defaultEvents)));
-        System.out.println(report.summary());
+        var tournaments = corpus(edition, events(defaultEvents));
+        var report = new OracleGate(oracle.get(), edition).compare(tournaments);
+        System.out.println(report.summary() + "; " + accelerated(tournaments) + " accelerated");
         for (var difference : report.differences()) {
             System.out.println("  " + difference.describe());
             save(program, difference);
@@ -73,10 +79,17 @@ class DutchOracleIT {
                 System.getProperty("fideswiss.oracle.events", defaultEvents).split(","));
     }
 
+    private static long accelerated(List<GeneratedTournament.Completed> tournaments) {
+        return tournaments.stream()
+                .filter(done -> done.tournament().settings().acceleration() instanceof Acceleration.Baku)
+                .count();
+    }
+
     private static List<GeneratedTournament.Completed> corpus(SwissRulesEdition edition, Set<String> events) {
         var settings = GeneratorSettings.of(Profiles.individualSwiss(NumberOfRounds.of(9))
                         .with(PairingSystems.dutch())
                         .with(edition))
+                .withBakuAcceleration(Chance.percent(BAKU_PERCENT))
                 .withPlayers(Range.of(14, 60))
                 .withRounds(Range.of(5, 11))
                 .withForfeitRate(events.contains("forfeits") ? Range.of(8, 30) : NEVER)
