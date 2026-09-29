@@ -33,7 +33,14 @@ def pair_one_round(path, rnd):
 
 
 def primary_is_game_points(kind):
-    return "_GP_MP" in kind or kind.endswith("_GP")
+    scores = [part for part in kind.split("_") if part in ("MP", "GP")]
+    return scores[:1] == ["GP"]
+
+
+def rank(team, kind, mp, gp):
+    """The rank on the primary score alone, ties shared: the standings of a file without 202/212."""
+    score = gp if primary_is_game_points(kind) else mp
+    return 1 + sum(1 for other in score if score[other] > score[team])
 
 
 def write(path, name, teams, boards, rounds, kind, top, pattern, history, mp, gp):
@@ -45,7 +52,7 @@ def write(path, name, teams, boards, rounds, kind, top, pattern, history, mp, gp
     for t in range(1, teams + 1):
         members = "".join("%5d" % ((t - 1) * boards + b) for b in range(1, boards + 1))
         lines.append("310 %3d %-32s %-5s %6d %6.1f %6.1f %3d %s" % (
-            t, "Team %d" % t, "T%d" % t, 2400 - 10 * t, mp[t], gp[t], t, members))
+            t, "Team %d" % t, "T%d" % t, 2400 - 10 * t, mp[t], gp[t], rank(t, kind, mp, gp), members))
     for t in range(1, teams + 1):
         for b in range(1, boards + 1):
             pid = (t - 1) * boards + b
