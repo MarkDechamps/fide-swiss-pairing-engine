@@ -28,8 +28,13 @@ jobs:
           done
       # JaVaFo refuses plain curl (HTTP 999); its licence has no redistribution grant, so it is used here only.
       - name: Fetch JaVaFo 2.2
-        continue-on-error: true
-        run: curl -fsSL -A "Mozilla/5.0" -o javafo.jar https://www.rrweb.org/javafo/current/javafo.jar
+        # The site blocks CI runners (HTTP 999). Without the jar the JaVaFo gates skip themselves (the harness treats a
+        # missing path as an absent Oracle); the warning keeps that visible on the run.
+        run: |
+          curl -fsSL -A "Mozilla/5.0" -o javafo.jar https://www.rrweb.org/javafo/current/javafo.jar || {
+            rm -f javafo.jar
+            echo "::warning title=JaVaFo unavailable::JaVaFo 2.2 could not be fetched; its gates are skipped in this run"
+          }
       # Gacrux (FIDE's TieBreakServer), the Swiss Team System Oracle, pinned to the commit its Known Divergences
       # were measured on; its Python needs networkx only.
       - name: Fetch Gacrux @ 6419149 and its Python environment

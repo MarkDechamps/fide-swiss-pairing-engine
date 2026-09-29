@@ -750,7 +750,7 @@ For every gate, the Random Tournament Generator plays a corpus of Dutch tourname
 | `jaVaFoPairsDutch2017AsWeDo` | JaVaFo 2.2 | Dutch 2017; rounds that differ only through KD-4 (half-point byes) are registered, not failed |
 | `SwissTeamOracleIT.gacruxPairsSwissTeam2026AsWeDo` | Gacrux (TieBreakServer) @ 6419149, plain (with the `tpn-order` patch and the literal readings under `-Dfideswiss.oracle.gacrux.literal=true`) | Swiss Team 2026 under the defaults, team tournaments of every colour preference type and score format, with forfeits and requested byes (10.1) |
 
-Point each gate to its program with a system property or an environment variable. A gate whose program is not configured is skipped, and the skip message names both.
+Point each gate to its program with a system property or an environment variable. A gate whose program is not configured, or whose configured path does not exist, is skipped (never failed and never counted as a difference); the skip message names both variables, or the missing path. The nightly and release workflows try to fetch JaVaFo, whose site blocks CI runners; when that fails they log a warning and the JaVaFo gates skip, while the bbpPairings and Gacrux gates still decide the run.
 
 | Program | System property | Environment variable |
 |---|---|---|
@@ -778,7 +778,7 @@ FIDESWISS_ORACLE_BBP6=$HOME/oracles/bbpPairings.exe \
 
 | Gate | What it does |
 |---|---|
-| `OracleOwnTournamentsIT` | the program's own random tournament generator (`-g <config> -o <file>`, with `-s <seed>` for bbpPairings; JaVaFo takes no seed) plays `fideswiss.oracle.tournaments` tournaments of 14..60 players and 5..11 rounds; our `check` (`Tournament.check`, as `fide-swiss check` runs it, and the declared points) must find every round legal and the system's own pairing. A JaVaFo tournament that fails is kept as generated |
+| `OracleOwnTournamentsIT` | the program's own random tournament generator (`-g <config> -o <file>`, with `-s <seed>` for bbpPairings; JaVaFo takes no seed) plays `fideswiss.oracle.tournaments` tournaments of 14..60 players and 5..11 rounds; our `check` (`Tournament.check`, as `fide-swiss check` runs it, and the declared points) must find every round legal and the system's own pairing. A JaVaFo tournament that fails is kept as generated. A tournament the generator cannot finish (bbpPairings: `No valid pairing`) is skipped, not counted as a failure of ours, and reported in the summary line as `n skipped`; the gate fails when more than 5 % of the tournaments are skipped, so a broken Oracle cannot pass by generating nothing. The skips are deterministic per seed |
 | `OracleCheckerIT` | the tournaments our generator plays, with every event of the corpus and Baku, are written whole in the program's dialect and given to its checker (`<file> -c`); every round must be accepted |
 | `OracleControlsIT` | positive controls: a bbpPairings tournament with one round re-paired by hand is refused by both Oracle checkers and by ours |
 
