@@ -21,6 +21,8 @@ An implementation-ready spec for an **arbiter web app** that runs a real individ
 
 ## Decisions so far
 
+- [Current Spring Boot, Thymeleaf and htmx stack on Java 25](05-webapp-stack.md): Boot 4.1.1 + Thymeleaf 3.1.5 + htmx-spring-boot 5.1.0 on Java 25; htmx 2.0.11 vendored (htmx 4 later); library on the classpath with ArchUnit guarding its public API; fragments + `FragmentsRendering` OOB swaps; tests are `@WebMvcTest`, HtmlUnit for no-JS, Playwright in a profile.
+
 ## Not yet specified
 
 - **Team tournaments**: team rosters, board lineups per round, board results rolling up into match points, and Olympiad specifics. In scope after the individual flow works.
