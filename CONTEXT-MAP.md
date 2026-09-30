@@ -5,4 +5,5 @@
 
 ## Relationships
 
-- Tournament Administration is a downstream client of Pairing and uses only its public API. One anti-corruption adapter in the app translates between the two languages; Pairing knows nothing of Tournament Administration.
+- Tournament Administration is **Conformist** to Pairing: it adopts Pairing's language and types (Participant, Rating, Outcome, Round Pairing, Standings, Tournament Settings) as its own and adds only what Pairing lacks. It uses only Pairing's public API. Pairing knows nothing of Tournament Administration.
+- Both contexts have a *Tournament*. In Tournament Administration it is the tournament the arbiter runs, and it holds Pairing's Tournament as the record it is replayed into.
