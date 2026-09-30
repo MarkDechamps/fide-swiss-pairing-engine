@@ -21,6 +21,7 @@ An implementation-ready spec for an **arbiter web app** that runs a real individ
 
 ## Decisions so far
 
+- [Arbiter workflow and tournament lifecycle](01-arbiter-workflow.md): Preparing / Running / Finished (system, edition, scoring and acceleration freeze at round 1); pair, adjust (checked; illegal only as a logged Override), publish, enter results, round complete; unpublish only before any result; GHR 4.3 corrections any time, with later pairings left standing; withdrawals, requested byes and late entries through the library; no general undo, a Tournament Log instead.
 - [Current Spring Boot, Thymeleaf and htmx stack on Java 25](05-webapp-stack.md): Boot 4.1.1 + Thymeleaf 3.1.5 + htmx-spring-boot 5.1.0 on Java 25; htmx 2.0.11 vendored (htmx 4 later); library on the classpath with ArchUnit guarding its public API; fragments + `FragmentsRendering` OOB swaps; tests are `@WebMvcTest`, HtmlUnit for no-JS, Playwright in a profile.
 
 ## Not yet specified
