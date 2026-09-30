@@ -2,7 +2,7 @@
 title: App domain model and its bounded context
 labels: [wayfinder:grilling]
 status: open
-assignee:
+assignee: mark
 blocked_by: [01]
 ---
 
