@@ -14,7 +14,8 @@ An implementation-ready spec for an **arbiter web app** that runs a real individ
 - The user accepted the recommended answers for Q3–Q5 while away from keyboard. Revisit them if a ticket shows they don't hold.
 - Stack: Java 25, Spring Boot, Thymeleaf, htmx. Clean code, DDD, clean architecture: a pure domain core, ports and adapters, aggregates and value objects in the ubiquitous language.
 - The app is an **outside client** of the library: it uses only the library's public API. A library gap becomes a ticket on the library, never a workaround in the app.
-- Skills every session should consult: `grilling`, `domain-modeling`, `clean-java`, `clean-code`, `codebase-design`, `tdd`.
+- **Encapsulation is key**: objects hide state and expose behaviour (tell, don't ask). **TDD** always. **First-class collections** (Object Calisthenics) for every domain collection.
+- Skills every session should consult: `grilling`, `domain-modeling`, `clean-java`, `clean-code`, `codebase-design`, `tdd`, `object-calisthenics`.
 - Glossary: the library's `CONTEXT.md`. The app is likely its own bounded context (see its ticket); keep glossaries current with `domain-modeling`.
 - Credit budget: one agent at a time, the cheapest model that fits the job.
 - Research findings go in `docs/research/<name>.md`.
